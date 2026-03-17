@@ -1,0 +1,16 @@
+# Credentials
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Data (large files)
+data/raw/
+data/interim/
+data/processed/
+
+# Models cache
+*.pt

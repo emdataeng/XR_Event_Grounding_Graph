@@ -1,0 +1,15 @@
+pandas
+numpy
+pydantic
+pyyaml
+networkx
+open3d
+opencv-python
+pillow
+matplotlib
+rich
+typer
+python-dotenv
+neo4j
+scipy
+ultralytics

@@ -1,0 +1,34 @@
+# Tracking thresholds
+tracking:
+  max_spatial_jump_m: 0.8       # max distance (m) to link two observations as same object
+  max_time_gap_ns: 5000000000   # max time gap (ns) = 5 seconds
+  min_iou_3d: 0.0               # min 3D IoU (0 = disabled)
+  size_ratio_threshold: 3.0     # max ratio of sizes to still link
+  class_must_match: true        # require same semantic class to link
+
+# Event detection thresholds
+events:
+  min_move_distance_m: 0.05     # minimum displacement to count as MOVE
+  near_threshold_m: 0.5         # two objects are "near" if within this distance
+  event_merge_gap_ns: 2000000000  # merge event windows within this gap (2s)
+  min_event_duration_ns: 500000000  # ignore very short events (<0.5s)
+  disappear_frames: 3           # frames without observation before DISAPPEAR
+
+# Object detection (shared)
+detection:
+  depth_min_m: 0.1              # ignore depth values below this
+  depth_max_m: 5.0              # ignore depth values above this
+  min_blob_pixels: 200          # minimum blob size in pixels (depth_blobs backend)
+  max_blobs_per_frame: 20       # maximum objects to extract per frame (depth_blobs backend)
+  depth_cluster_tolerance_m: 0.1  # depth difference within a blob (depth_blobs backend)
+
+# Grounding DINO detection thresholds
+grounding_dino:
+  box_threshold: 0.30           # minimum objectness score to keep a box (passed as `threshold`)
+  text_threshold: 0.25          # minimum text-alignment score to assign a label
+
+# Confidence thresholds
+confidence:
+  min_observation: 0.3          # discard observations below this confidence
+  min_track: 0.4                # discard tracks below this confidence
+  min_event: 0.5                # discard events below this confidence

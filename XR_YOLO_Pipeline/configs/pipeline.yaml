@@ -1,0 +1,54 @@
+# Pipeline configuration
+session_id: session_002
+
+# Raw data source - Quest 3 captures
+raw_data_root: "../Quest_Capture/session_002/quest_capture"
+
+# Processed output root
+processed_root: "data/processed"
+interim_root: "data/interim"
+
+# Input format
+input_format: quest3_capture    # quest3_capture | custom_csv
+
+# Depth configuration
+depth_source: npy               # npy | f32 | alpha_channel | none
+depth_scale: 1.0                # stored values are already in meters
+depth_aligned: true             # depth is pixel-aligned with RGB
+
+# Camera intrinsics (Quest 3 mixed-reality camera)
+# NOTE: metadata reports 320x240 but actual stored RGB is 640x480 (2x).
+# Depth is 640x320 (same width, 2/3 of height).
+# Intrinsics are scaled to match the actual 640x480 RGB resolution.
+# fx_nominal=240 at 320px wide → fx_actual=480 at 640px wide (2x scale)
+camera:
+  width: 640
+  height: 480
+  depth_width: 640
+  depth_height: 320
+  fx: 480.0
+  fy: 480.0
+  cx: 320.0
+  cy: 240.0
+
+# Object observations source
+# "grounding_dino" = open-vocabulary detection with text prompts + depth back-projection (requires transformers)
+# "yolo"           = YOLOv8 detection + depth back-projection (requires ultralytics)
+# "depth_blobs"    = depth-based blob segmentation (fast fallback, no semantic labels)
+# "spatialobjects_csv" = ingest from spatialobjects.csv (if available)
+observations_source: grounding_dino
+
+# Grounding DINO model (auto-downloaded on first run, ~700MB)
+grounding_dino_model: IDEA-Research/grounding-dino-base
+
+# Candidate object categories for Grounding DINO detection.
+# Lowercase, dot-separated. Add any object you expect to appear in your scene.
+detection_prompt: "table. book. cup. white surface."
+
+# Event summaries source
+# "rules" = deterministic templates
+# "vlm" = VLM integration (future)
+event_summary_source: rules
+
+# Room / workstation label (single room for now)
+default_room_id: workstation_A
