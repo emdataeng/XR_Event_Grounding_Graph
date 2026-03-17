@@ -1,1 +1,1 @@
-# XR_EGG-Claude
+# XR_Event-Grounding Graph
