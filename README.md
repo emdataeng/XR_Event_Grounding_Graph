@@ -47,7 +47,7 @@ The pipeline processes raw Quest 3 captures frame by frame:
 Install Python dependencies:
 
 ```bash
-pip install -r XR_YOLO_Pipeline/requirements.txt
+pip install -r XR_Pipeline/requirements.txt
 ```
 
 Key packages: `transformers`, `torch`, `pandas`, `numpy`, `networkx`, `neo4j`, `typer`, `rich`
@@ -60,14 +60,14 @@ Key packages: `transformers`, `torch`, `pandas`, `numpy`, `networkx`, `neo4j`, `
 git clone <repo-url>
 cd XR_EGG-Claude
 
-pip install -r XR_YOLO_Pipeline/requirements.txt
+pip install -r XR_Pipeline/requirements.txt
 
 # Copy and fill in your Neo4j Aura credentials
-cp XR_YOLO_Pipeline/.env.example XR_YOLO_Pipeline/.env
+cp XR_Pipeline/.env.example XR_Pipeline/.env
 # Edit .env with your NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
 
 # Bootstrap output directories
-cd XR_YOLO_Pipeline
+cd XR_Pipeline
 python scripts/00_bootstrap_repo.py
 ```
 
@@ -94,15 +94,15 @@ Find these in the [Neo4j Aura console](https://console.neo4j.io) → your instan
    Quest_Capture/session_002/quest_capture/
    ```
 
-2. Update `XR_YOLO_Pipeline/configs/pipeline.yaml`:
+2. Update `XR_Pipeline/configs/pipeline.yaml`:
    ```yaml
    raw_data_root: "../Quest_Capture/session_002/quest_capture"
    detection_prompt: "laptop. mouse. hands. cup."   # objects in your scene
    ```
 
-3. Run all pipeline scripts from inside `XR_YOLO_Pipeline/`:
+3. Run all pipeline scripts from inside `XR_Pipeline/`:
    ```bash
-   cd XR_YOLO_Pipeline
+   cd XR_Pipeline
 
    python scripts/01_build_frame_manifest.py      --session session_002
    python scripts/02_validate_manifest.py         --session session_002
@@ -121,7 +121,7 @@ Find these in the [Neo4j Aura console](https://console.neo4j.io) → your instan
    python scripts/12_demo_queries.py --session session_002
    ```
 
-Each session's output is fully isolated under `XR_YOLO_Pipeline/data/processed/<session_id>/`.
+Each session's output is fully isolated under `XR_Pipeline/data/processed/<session_id>/`.
 
 ---
 
@@ -226,7 +226,7 @@ The model is downloaded automatically from HuggingFace on first run (~700 MB). N
 
 Detection overlays (bounding boxes + confidence scores per frame) are saved to:
 ```
-XR_YOLO_Pipeline/data/processed/<session>/graphs/debug_boxes/frame_XXXXXX_detections.png
+XR_Pipeline/data/processed/<session>/graphs/debug_boxes/frame_XXXXXX_detections.png
 ```
 
 ### Depth Blobs (fallback, no model required)
@@ -270,7 +270,7 @@ temporal_edges[]                   # Event → Event BEFORE relationships
 Script `14_import_neo4j.py` pushes data directly to Neo4j Aura via the Bolt driver — no manual CSV upload needed.
 
 ```bash
-cd XR_YOLO_Pipeline
+cd XR_Pipeline
 python scripts/14_import_neo4j.py --session session_001
 ```
 
@@ -335,7 +335,7 @@ XR_EGG-Claude/
 ├── Quest_Capture/                 # raw Quest 3 captures (gitignored)
 │   └── session_001/
 │       └── quest_capture/
-├── XR_YOLO_Pipeline/
+├── XR_Pipeline/
 │   ├── configs/
 │   │   ├── pipeline.yaml          # session config, detection backend, prompts
 │   │   └── thresholds.yaml        # tracking, event, and detection thresholds
@@ -388,6 +388,6 @@ XR_EGG-Claude/
 ## Running Tests
 
 ```bash
-cd XR_YOLO_Pipeline
+cd XR_Pipeline
 python -m pytest tests/ -v
 ```

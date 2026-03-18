@@ -17,7 +17,7 @@ app = typer.Typer()
 console = Console()
 
 NEO4J_CYPHER = """\
-// XR_YOLO_Pipeline — Neo4j import commands
+// XR_Pipeline — Neo4j import commands
 // Run these in order against your Neo4j Aura instance
 
 CREATE CONSTRAINT room_id IF NOT EXISTS

@@ -58,7 +58,7 @@ Key packages: `transformers`, `torch`, `pandas`, `numpy`, `networkx`, `neo4j`, `
 
 ```bash
 git clone <repo-url>
-cd XR_YOLO_Pipeline
+cd XR_Pipeline
 
 pip install -r requirements.txt
 
@@ -336,7 +336,7 @@ RETURN e, n
 ## Project Structure
 
 ```
-XR_YOLO_Pipeline/
+XR_Pipeline/
 ├── configs/
 │   ├── pipeline.yaml          # session config, detection backend, prompts
 │   └── thresholds.yaml        # tracking, event, and detection thresholds
@@ -389,6 +389,6 @@ XR_YOLO_Pipeline/
 ## Running Tests
 
 ```bash
-cd XR_YOLO_Pipeline
+cd XR_Pipeline
 python -m pytest tests/ -v
 ```

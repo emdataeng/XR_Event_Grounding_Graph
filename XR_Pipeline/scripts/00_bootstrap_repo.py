@@ -10,7 +10,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-app = typer.Typer(help="Bootstrap XR_YOLO_Pipeline repo structure.")
+app = typer.Typer(help="Bootstrap XR_Pipeline repo structure.")
 console = Console()
 
 
@@ -40,9 +40,9 @@ DIRS = [
 
 @app.command()
 def main():
-    """Bootstrap the XR_YOLO_Pipeline repository structure."""
+    """Bootstrap the XR_Pipeline repository structure."""
     project_root = Path(__file__).resolve().parent.parent
-    console.print(Panel(f"[bold green]Bootstrapping XR_YOLO_Pipeline[/bold green]\n{project_root}"))
+    console.print(Panel(f"[bold green]Bootstrapping XR_Pipeline[/bold green]\n{project_root}"))
 
     # Create directories
     for d in DIRS:
