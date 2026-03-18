@@ -188,7 +188,7 @@ Frames without a matching `_depth.npy` are processed for detection but skipped d
 |-----|---------|-------------|
 | `session_id` | `session_001` | Session label (used for output paths) |
 | `raw_data_root` | `../Quest_Capture/quest_capture` | Path to raw capture folder |
-| `observations_source` | `grounding_dino` | Detection backend: `grounding_dino`, `yolo`, `depth_blobs` |
+| `observations_source` | `grounding_dino` | Detection backend: `grounding_dino` (default), `depth_blobs` (fallback) |
 | `grounding_dino_model` | `IDEA-Research/grounding-dino-base` | HuggingFace model ID (auto-downloaded ~700 MB) |
 | `detection_prompt` | `"monitor. laptop. mouse. hands."` | Dot-separated list of objects to detect |
 | `default_room_id` | `workstation_A` | Room label for all objects in this session |
@@ -229,16 +229,7 @@ Detection overlays (bounding boxes + confidence scores per frame) are saved to:
 XR_YOLO_Pipeline/data/processed/<session>/graphs/debug_boxes/frame_XXXXXX_detections.png
 ```
 
-### YOLO
-
-```yaml
-observations_source: yolo
-yolo_model: yolov8n.pt
-```
-
-Requires: `pip install ultralytics`. Limited to COCO 80-class vocabulary.
-
-### Depth Blobs (fallback)
+### Depth Blobs (fallback, no model required)
 
 ```yaml
 observations_source: depth_blobs
@@ -370,7 +361,7 @@ XR_EGG-Claude/
 │   │   ├── depth_utils.py         # depth decoding and blob detection
 │   │   ├── pose_utils.py          # quaternion → rotation matrix, world projection
 │   │   ├── geometry.py            # spatial_relation(), distance helpers
-│   │   ├── objects.py             # Grounding DINO + YOLO detection wrappers
+│   │   ├── objects.py             # Grounding DINO detection wrappers
 │   │   ├── tracking.py            # observation → track linking
 │   │   ├── events.py              # event detection state machines
 │   │   ├── egg.py                 # EGG graph assembly and serialisation
