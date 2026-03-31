@@ -24,6 +24,7 @@ def detect_event_windows(
     disappear_frames: int = 3,
     event_merge_gap_ns: int = 2_000_000_000,
     room_id: str = "workstation_A",
+    position_smooth_window: int = 1,
 ) -> pd.DataFrame:
     """Detect coarse event windows from object track data.
 
@@ -46,6 +47,16 @@ def detect_event_windows(
     # ---- Per-track events (APPEAR, DISAPPEAR, MOVE) ----
     for tid, grp in tracks_df.groupby("track_id"):
         grp_s = grp.sort_values("timestamp_ns").reset_index(drop=True)
+
+        # Smooth raw world positions to suppress depth/bbox noise before MOVE detection.
+        # Uses a centred rolling mean; min_periods=1 keeps end observations.
+        if position_smooth_window > 1:
+            for col in ("x", "y", "z"):
+                grp_s[col] = (
+                    grp_s[col]
+                    .rolling(window=position_smooth_window, center=True, min_periods=1)
+                    .mean()
+                )
 
         # APPEAR
         first = grp_s.iloc[0]

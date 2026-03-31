@@ -43,9 +43,14 @@ def deproject_pixel_to_world(
     fx: float, fy: float, cx: float, cy: float,
     T_world_cam: np.ndarray,
 ) -> np.ndarray:
-    """Back-project a single pixel (u, v) with depth to world coordinates."""
+    """Back-project a single pixel (u, v) with depth to world coordinates.
+
+    Uses Unity/Quest camera convention where the camera y-axis points UP.
+    Pixel v increases downward in image space, so below-centre pixels
+    (v > cy) map to negative y_cam.
+    """
     x_cam = (u - cx) * depth_m / fx
-    y_cam = (v - cy) * depth_m / fy
+    y_cam = -(v - cy) * depth_m / fy   # negate: Unity y-up, image v-down
     z_cam = depth_m
     p_cam = np.array([x_cam, y_cam, z_cam, 1.0])
     p_world = T_world_cam @ p_cam
@@ -72,7 +77,7 @@ def deproject_depth_image(
     mask = (d > depth_min) & (d < depth_max)
     r = rows[mask]; c = cols[mask]; dv = d[mask]
     x_cam = (c - cx) * dv / fx
-    y_cam = (r - cy) * dv / fy
+    y_cam = -(r - cy) * dv / fy   # negate: Unity y-up, image row-down
     z_cam = dv
     ones = np.ones_like(z_cam)
     pts_cam = np.stack([x_cam, y_cam, z_cam, ones], axis=1)  # (N, 4)

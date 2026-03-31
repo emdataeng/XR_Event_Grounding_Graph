@@ -46,22 +46,31 @@ def link_observations_to_tracks(
     obs_df: pd.DataFrame,
     max_spatial_jump: float = 0.8,
     max_time_gap_ns: int = 5_000_000_000,
+    reid_max_age_ns: int = 60_000_000_000,
     size_ratio_threshold: float = 3.0,
     class_must_match: bool = True,
 ) -> pd.DataFrame:
-    """Greedy nearest-neighbor track linking for sparse frames.
+    """Greedy nearest-neighbor track linking with re-identification for sparse frames.
 
-    Processes observations frame by frame, linking each to the best
-    existing track or creating a new one.
+    Processes observations frame by frame. Active tracks that exceed
+    max_time_gap_ns without a detection are moved to a lost pool rather than
+    discarded. A new detection first tries to match active tracks, then checks
+    the lost pool (re-identification). This prevents the same physical object
+    from spawning multiple track IDs when it temporarily leaves the frame.
 
     Returns DataFrame with TRACK_COLUMNS.
     """
     obs_sorted = obs_df.sort_values("timestamp_ns").reset_index(drop=True)
 
-    # active_tracks: track_id -> last observation dict
+    # active_tracks: track_id -> last observation dict (within time gap)
     active_tracks: Dict[str, dict] = {}
+    # lost_tracks: expired tracks kept for re-identification
+    lost_tracks: Dict[str, dict] = {}
     track_counter = [0]
     rows = []
+
+    # Re-ID uses a slightly looser spatial threshold to handle pose jitter
+    reid_spatial_jump = max_spatial_jump * 1.5
 
     def new_track_id() -> str:
         track_counter[0] += 1
@@ -71,13 +80,21 @@ def link_observations_to_tracks(
         obs_dict = obs.to_dict()
         ts = obs_dict["timestamp_ns"]
 
+        # Move expired active tracks to the lost pool
+        for tid in list(active_tracks.keys()):
+            if ts - active_tracks[tid]["timestamp_ns"] > max_time_gap_ns:
+                lost_tracks[tid] = active_tracks.pop(tid)
+
+        # Expire lost tracks that are too old to re-identify
+        for tid in list(lost_tracks.keys()):
+            if ts - lost_tracks[tid]["timestamp_ns"] > reid_max_age_ns:
+                del lost_tracks[tid]
+
         best_track_id = None
         best_score = 0.0
 
-        for tid, prev_obs in list(active_tracks.items()):
-            # Expire stale tracks
-            if ts - prev_obs["timestamp_ns"] > max_time_gap_ns:
-                continue
+        # 1. Try active tracks first
+        for tid, prev_obs in active_tracks.items():
             score = compute_linkage_score(
                 prev_obs, obs_dict,
                 max_spatial_jump=max_spatial_jump,
@@ -88,6 +105,24 @@ def link_observations_to_tracks(
                 best_score = score
                 best_track_id = tid
 
+        # 2. If no active match, try re-identifying from the lost pool
+        if best_track_id is None or best_score == 0.0:
+            for tid, prev_obs in lost_tracks.items():
+                score = compute_linkage_score(
+                    prev_obs, obs_dict,
+                    max_spatial_jump=reid_spatial_jump,
+                    size_ratio_threshold=size_ratio_threshold,
+                    class_must_match=class_must_match,
+                )
+                if score > best_score:
+                    best_score = score
+                    best_track_id = tid
+
+            # Resurrect matched lost track back into active pool
+            if best_track_id is not None and best_score > 0.0:
+                del lost_tracks[best_track_id]
+
+        # 3. Still no match — this is a genuinely new object
         if best_track_id is None or best_score == 0.0:
             best_track_id = new_track_id()
 

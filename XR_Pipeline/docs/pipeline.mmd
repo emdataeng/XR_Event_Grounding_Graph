@@ -1,0 +1,128 @@
+flowchart TD
+    %% ── INPUT ──────────────────────────────────────────
+    CAP(["`**Quest 3 Capture**
+    RGB frames · Depth frames · Pose data`"])
+
+    %% ── STAGE 0 : SETUP ────────────────────────────────
+    S00["**00** bootstrap_repo
+    Create folder structure & configs"]
+
+    %% ── STAGE 1 : INGEST ───────────────────────────────
+    S01["**01** build_frame_manifest
+    Scan capture → frame_manifest.csv"]
+    S02["**02** validate_manifest
+    Check completeness & pose plausibility"]
+    S03["**03** visualize_rgb_depth_pose
+    RGB+depth overlays · pose trajectory"]
+
+    FM[(frame_manifest.csv)]
+
+    %% ── STAGE 2 : DETECTION ────────────────────────────
+    S04["**04** ingest_spatialobjects
+    Legacy passthrough"]
+    S05["**05** build_object_observations
+    Grounding DINO → 3D backprojection"]
+
+    OO[(object_observations.csv)]
+
+    %% ── STAGE 3 : TRACKING ─────────────────────────────
+    S06["**06** link_object_tracks
+    Associate detections across frames"]
+
+    OT[(object_tracks.csv)]
+
+    %% ── STAGE 4 : EVENTS ───────────────────────────────
+    S07["**07** build_event_windows
+    Detect motion & activity bursts"]
+    S08["**08** generate_event_summaries
+    Add summaries & semantic roles"]
+
+    EW[(event_windows.csv)]
+    EV[(events.csv)]
+    ER[(event_object_roles.csv)]
+
+    %% ── STAGE 5A : EGG GRAPH ───────────────────────────
+    S09["**09** build_egg_graph
+    Assemble Event-Grounding Graph"]
+
+    EGG[(egg_graph.json)]
+
+    %% ── STAGE 5B : SCENE STATE PACKAGE (NEW) ───────────
+    S09B["**09b** build_scene_state_package
+    Normalise all outputs into reasoning contract"]
+
+    SSP[("**scene_state_package.json**
+    entities · relations · hypotheses
+    observations · provenance · constraints")]
+
+    %% ── STAGE 6 : GRAPH OPS ────────────────────────────
+    S10["**10** prune_egg_graph
+    NL query → pruned subgraph + answer"]
+    S12["**12** demo_queries
+    Demo Q&A over EGG graph"]
+
+    %% ── STAGE 7 : NEO4J EXPORT ─────────────────────────
+    S11["**11** export_neo4j_csv
+    EGG → nodes.csv + relationships.csv"]
+    S14["**14** import_neo4j
+    Push CSVs into Neo4j Aura"]
+
+    NEO4J[(Neo4j Aura)]
+
+    %% ── STAGE 8 : DEBUG ────────────────────────────────
+    S13["**13** visualize_3d_debug
+    Point clouds · 3D bounding boxes"]
+
+    %% ── REASONING LAYER ────────────────────────────────
+    RL(["`**Reasoning Layer**
+    LLM · Rule engine · Query agent`"])
+
+    %% ── CONNECTIONS ────────────────────────────────────
+    CAP --> S00
+    CAP --> S01
+    S01 --> S02
+    S01 --> FM
+    S02 --> S03
+    FM --> S05
+    FM --> S04
+    S05 --> OO
+    S04 --> OO
+    OO --> S06
+    OO --> S13
+    S06 --> OT
+    OT --> S07
+    S07 --> EW
+    EW --> S08
+    S08 --> EV
+    S08 --> ER
+    EW --> S09
+    EW --> S09B
+    EV --> S09
+    EV --> S09B
+    ER --> S09
+    ER --> S09B
+    OT --> S09
+    OT --> S09B
+    OO --> S09B
+    S09 --> EGG
+    S09B --> SSP
+    EGG --> S10
+    EGG --> S12
+    EGG --> S11
+    S11 --> S14
+    S14 --> NEO4J
+    SSP --> RL
+
+    %% ── STYLES ─────────────────────────────────────────
+    classDef stage      fill:#1e3a5f,stroke:#4a90d9,color:#ffffff,rx:6
+    classDef data       fill:#0d2b0d,stroke:#4caf50,color:#b9f6ca
+    classDef io         fill:#3b1f00,stroke:#ff9800,color:#ffe0b2,rx:20
+    classDef new        fill:#4a1060,stroke:#ce93d8,color:#f3e5f5,rx:6
+    classDef reasoning  fill:#1a237e,stroke:#7986cb,color:#e8eaf6,rx:20
+
+    class S00,S01,S02,S03,S04,S05,S06,S07,S08,S09,S10,S11,S12,S13,S14 stage
+    class FM,OO,OT,EW,EV,ER,EGG data
+    class CAP io
+    class S09B,SSP new
+    class RL reasoning
+    class NEO4J data

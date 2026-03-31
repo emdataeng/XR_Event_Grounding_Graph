@@ -43,7 +43,7 @@ grounding_dino_model: IDEA-Research/grounding-dino-base
 
 # Candidate object categories for Grounding DINO detection.
 # Lowercase, dot-separated. Add any object you expect to appear in your scene.
-detection_prompt: "table. book. cup. white surface."
+detection_prompt: "white surface. hardcover book. ceramic cup. table."
 
 # Event summaries source
 # "rules" = deterministic templates

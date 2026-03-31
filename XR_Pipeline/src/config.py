@@ -74,6 +74,7 @@ class PipelinePaths:
         self.events_csv = self.events_dir / "events.csv"
         self.event_object_roles = self.events_dir / "event_object_roles.csv"
         self.egg_graph = self.graphs_dir / "egg_graph.json"
+        self.scene_state_package = self.graphs_dir / "scene_state_package.json"
         self.pruned_subgraph = self.queries_dir / "pruned_subgraph.json"
         self.query_answer = self.queries_dir / "query_answer.json"
 

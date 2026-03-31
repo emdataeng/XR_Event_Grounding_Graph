@@ -34,7 +34,7 @@ def main(
         raise typer.Exit(1)
 
     obs_df = pd.read_csv(paths.object_observations)
-    console.print(f"[bold]Linking {len(obs_df)} observations into tracks...[/bold]")
+    console.print(f"[bold]Loaded {len(obs_df)} observations.[/bold]")
 
     if obs_df.empty:
         console.print("[yellow]No observations — writing empty tracks.[/yellow]")
@@ -44,14 +44,49 @@ def main(
                     ).to_csv(paths.object_tracks, index=False)
         return
 
+    # Per-frame, per-class deduplication: keep only the top-N detections by
+    # confidence for each (frame, class) pair. Suppresses Grounding DINO
+    # duplicate boxes where the same object is detected multiple times per frame.
+    d_cfg = thr.get("detection", {})
+    max_per_class = int(d_cfg.get("max_detections_per_class_per_frame", 0))
+    if max_per_class > 0:
+        obs_df = (
+            obs_df
+            .sort_values("confidence", ascending=False)
+            .groupby(["frame_idx", "semantic_class"], sort=False)
+            .head(max_per_class)
+            .reset_index(drop=True)
+        )
+        console.print(
+            f"[dim]After per-frame deduplication (top {max_per_class} per class): "
+            f"{len(obs_df)} observations remain.[/dim]"
+        )
+
     t_cfg = thr.get("tracking", {})
     tracks_df = link_observations_to_tracks(
         obs_df,
         max_spatial_jump=float(t_cfg.get("max_spatial_jump_m", 0.8)),
         max_time_gap_ns=int(t_cfg.get("max_time_gap_ns", 5_000_000_000)),
+        reid_max_age_ns=int(t_cfg.get("reid_max_age_ns", 60_000_000_000)),
         size_ratio_threshold=float(t_cfg.get("size_ratio_threshold", 3.0)),
         class_must_match=bool(t_cfg.get("class_must_match", True)),
     )
+
+    # Minimum observations filter: remove tracks that appear in too few frames.
+    # Short-lived tracks are typically false positives from the detector rather
+    # than real objects. This threshold is tuned in thresholds.yaml and applies
+    # to every session — set to 0 to disable.
+    min_obs = int(t_cfg.get("min_track_observations", 0))
+    if min_obs > 0:
+        obs_counts = tracks_df.groupby("track_id")["observation_id"].count()
+        valid_tids = obs_counts[obs_counts >= min_obs].index
+        removed = set(obs_counts.index) - set(valid_tids)
+        if removed:
+            console.print(
+                f"[dim]Removed {len(removed)} short-lived track(s) "
+                f"(< {min_obs} observations): {sorted(removed)}[/dim]"
+            )
+        tracks_df = tracks_df[tracks_df["track_id"].isin(valid_tids)].reset_index(drop=True)
 
     tracks_df.to_csv(paths.object_tracks, index=False)
     console.print(f"[green]✓ Wrote {len(tracks_df)} track rows → {paths.object_tracks}[/green]")

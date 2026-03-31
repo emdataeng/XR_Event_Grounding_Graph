@@ -1,18 +1,21 @@
 # Tracking thresholds
 tracking:
   max_spatial_jump_m: 0.8       # max distance (m) to link two observations as same object
-  max_time_gap_ns: 5000000000   # max time gap (ns) = 5 seconds
+  max_time_gap_ns: 5000000000   # max time gap (ns) = 5 seconds before track goes to lost pool
+  reid_max_age_ns: 60000000000  # max age (ns) = 60 seconds for a lost track to be re-identified
+  min_track_observations: 4     # discard tracks with fewer observations than this (removes 1–3 frame false positives)
   min_iou_3d: 0.0               # min 3D IoU (0 = disabled)
   size_ratio_threshold: 3.0     # max ratio of sizes to still link
   class_must_match: true        # require same semantic class to link
 
 # Event detection thresholds
 events:
-  min_move_distance_m: 0.05     # minimum displacement to count as MOVE
+  min_move_distance_m: 0.20     # minimum displacement (after smoothing) to count as MOVE
   near_threshold_m: 0.5         # two objects are "near" if within this distance
   event_merge_gap_ns: 2000000000  # merge event windows within this gap (2s)
   min_event_duration_ns: 500000000  # ignore very short events (<0.5s)
   disappear_frames: 3           # frames without observation before DISAPPEAR
+  position_smooth_window: 7     # rolling-mean window for track positions before MOVE detection (suppresses depth/bbox noise; ~0.7s at 10fps)
 
 # Object detection (shared)
 detection:
@@ -21,6 +24,7 @@ detection:
   min_blob_pixels: 200          # minimum blob size in pixels (depth_blobs backend)
   max_blobs_per_frame: 20       # maximum objects to extract per frame (depth_blobs backend)
   depth_cluster_tolerance_m: 0.1  # depth difference within a blob (depth_blobs backend)
+  max_detections_per_class_per_frame: 1  # keep only top-confidence detection per class per frame (suppresses Grounding DINO duplicates)
 
 # Grounding DINO detection thresholds
 grounding_dino:

@@ -53,6 +53,7 @@ def main(
         disappear_frames=int(e_cfg.get("disappear_frames", 3)),
         event_merge_gap_ns=int(e_cfg.get("event_merge_gap_ns", 2_000_000_000)),
         room_id=room_id,
+        position_smooth_window=int(e_cfg.get("position_smooth_window", 1)),
     )
 
     events_df.to_csv(paths.event_windows, index=False)
