@@ -35,6 +35,7 @@ def main(
         raise typer.Exit(1)
 
     df = pd.read_csv(paths.frame_manifest)
+    flip_vertical = cfg.get("camera", {}).get("flip_vertical", True)
     console.print(f"[bold]Validating manifest[/bold] ({len(df)} rows)")
 
     report = {
@@ -111,7 +112,7 @@ def main(
         try:
             rp = df.loc[idx, "rgb_path"]
             p = Path(rp) if Path(rp).is_absolute() else project_root.parent / rp
-            img = load_rgba(p)
+            img = load_rgba(p, stereo_eye=cfg.get("stereo_eye"), flip_vertical=flip_vertical)
             assert img.ndim == 3 and img.shape[2] == 4, f"Unexpected shape {img.shape}"
             assert img.shape[0] > 0 and img.shape[1] > 0
             sample_decode_ok += 1
@@ -123,7 +124,7 @@ def main(
         try:
             dp = df.loc[idx, "depth_path"]
             p = Path(dp) if Path(dp).is_absolute() else project_root.parent / dp
-            d = load_depth_npy(p)
+            d = load_depth_npy(p, flip_vertical=flip_vertical)
             assert d is not None and d.ndim == 2
             assert np.nanmin(d) >= 0
             depth_decode_ok += 1

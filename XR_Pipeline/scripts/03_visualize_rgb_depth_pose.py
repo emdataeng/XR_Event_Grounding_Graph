@@ -36,6 +36,7 @@ def main(
         raise typer.Exit(1)
 
     df = pd.read_csv(paths.frame_manifest)
+    flip_vertical = cfg.get("camera", {}).get("flip_vertical", True)
     pose_cols = [f"T_world_cam_{i:02d}" for i in range(16)]
 
     # Sample evenly across the session
@@ -49,7 +50,8 @@ def main(
         # Load RGB
         rp = _resolve(row["rgb_path"])
         try:
-            rgba = load_rgba(rp, width=int(row["width"]), height=int(row["height"]))
+            rgba = load_rgba(rp, width=int(row["width"]), height=int(row["height"]),
+                             stereo_eye=cfg.get("stereo_eye"), flip_vertical=flip_vertical)
             rgb = rgba_to_rgb(rgba)
         except Exception as e:
             console.print(f"  [yellow]WARN[/yellow] frame {fidx}: RGB load failed: {e}")
@@ -59,7 +61,7 @@ def main(
         depth = None
         if row["depth_encoding"] not in ("none", "") and pd.notna(row["depth_path"]) and row["depth_path"]:
             dp = _resolve(row["depth_path"])
-            depth = load_depth_npy(dp, width=int(row["width"]), height=int(row["height"]))
+            depth = load_depth_npy(dp, width=int(row["width"]), height=int(row["height"]), flip_vertical=flip_vertical)
 
         out = paths.sample_vis_dir / f"frame_{fidx:06d}_rgb_depth.png"
         save_rgb_depth_overlay(rgb, depth, out, title=f"Frame {fidx} | ts={row['timestamp_ns']/1e9:.2f}s")

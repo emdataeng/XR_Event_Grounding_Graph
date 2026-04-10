@@ -45,6 +45,7 @@ def main(
         console.print("[yellow]No frames with depth. Cannot generate 3D debug.[/yellow]")
         return
 
+    flip_vertical = cfg.get("camera", {}).get("flip_vertical", True)
     step = max(1, len(depth_rows) // n_frames)
     sample = depth_rows.iloc[::step].head(n_frames)
     console.print(f"Generating 3D debug for {len(sample)} frames...")
@@ -63,13 +64,13 @@ def main(
         dp = _resolve(row["depth_path"])
 
         try:
-            rgba = load_rgba(rp, width=w, height=h)
+            rgba = load_rgba(rp, width=w, height=h, stereo_eye=cfg.get("stereo_eye"), flip_vertical=flip_vertical)
             rgb = rgba_to_rgb(rgba)
         except Exception as e:
             console.print(f"  [yellow]WARN[/yellow] frame {fidx}: RGB failed: {e}")
             continue
 
-        depth = load_depth_npy(dp, width=w, height=h)
+        depth = load_depth_npy(dp, width=w, height=h, flip_vertical=flip_vertical)
         if depth is None:
             console.print(f"  [yellow]WARN[/yellow] frame {fidx}: depth not available")
             continue

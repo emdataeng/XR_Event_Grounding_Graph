@@ -35,17 +35,30 @@ def load_meta(meta_path: Path) -> Dict:
         return json.load(f)
 
 
-def load_rgba(rgba_path: Path, width: int = 0, height: int = 0) -> np.ndarray:
+def load_rgba(rgba_path: Path, width: int = 0, height: int = 0,
+              stereo_eye: Optional[str] = None,
+              flip_vertical: bool = True) -> np.ndarray:
     """Load raw RGBA32 file and return uint8 array (H, W, 4).
 
     Auto-detects actual dimensions from file size if width/height not given or
     don't match the actual data. Quest 3 stores data at 2x the reported resolution.
+
+    stereo_eye: 'left', 'right', or None. When a sparse stereo buffer is detected
+    (content only in the top rows of a 4:3 frame), selects which horizontal half to
+    return. If None and both halves contain non-zero content, raises ValueError to
+    prevent silent eye-selection errors. Configure via pipeline.yaml → stereo_eye.
+
+    flip_vertical: whether to flip the image vertically after loading. True for
+    Quest 3 (buffer is stored inverted). Set via pipeline.yaml → camera.flip_vertical.
     """
+    def _maybe_flip(a: np.ndarray) -> np.ndarray:
+        return np.flipud(a) if flip_vertical else a
+
     raw = np.frombuffer(rgba_path.read_bytes(), dtype=np.uint8)
     n_pixels = len(raw) // 4  # 4 bytes per RGBA pixel
     # Use provided dims if they match
     if width > 0 and height > 0 and width * height == n_pixels:
-        return raw.reshape(height, width, 4)
+        return _maybe_flip(raw.reshape(height, width, 4))
     # Auto-detect: assume 4:3 aspect ratio
     # n_pixels = w * h, w/h = 4/3 → w = 4k, h = 3k → 12k^2 = n_pixels
     import math
@@ -53,11 +66,31 @@ def load_rgba(rgba_path: Path, width: int = 0, height: int = 0) -> np.ndarray:
     h_det = round(3 * k)
     w_det = round(4 * k)
     if w_det * h_det == n_pixels:
-        return raw.reshape(h_det, w_det, 4)
+        arr = raw.reshape(h_det, w_det, 4)
+        # Check for sparse stereo buffer (Quest 3: content only in top rows, zeros below)
+        row_max = arr[:, :, :3].max(axis=(1, 2))
+        has_content = row_max > 0
+        first_empty = int(np.argmax(~has_content)) if not has_content.all() else h_det
+        if 0 < first_empty < h_det // 2:
+            content = arr[:first_empty, :, :]
+            left_max = int(content[:, :w_det // 2, :3].max())
+            right_max = int(content[:, w_det // 2:, :3].max())
+            if left_max > 0 and right_max > 0 and stereo_eye is None:
+                raise ValueError(
+                    f"{rgba_path.name}: sparse stereo buffer — both left and right halves "
+                    f"have content in rows 0:{first_empty}. Set stereo_eye='left' or 'right' "
+                    "(e.g. via pipeline.yaml) to explicitly select the depth-aligned eye."
+                )
+            eye = stereo_eye if stereo_eye in ("left", "right") else (
+                "left" if left_max >= right_max else "right"
+            )
+            col_start = 0 if eye == "left" else w_det // 2
+            return _maybe_flip(content[:, col_start:col_start + w_det // 2, :])
+        return _maybe_flip(arr)
     # Fallback: try provided or default dims
     if width > 0 and height > 0:
-        return raw.reshape(height, width, 4)
-    return raw.reshape(240, 320, 4)
+        return _maybe_flip(raw.reshape(height, width, 4))
+    return _maybe_flip(raw.reshape(240, 320, 4))
 
 
 def rgba_to_rgb(rgba: np.ndarray) -> np.ndarray:
@@ -65,44 +98,58 @@ def rgba_to_rgb(rgba: np.ndarray) -> np.ndarray:
     return rgba[:, :, :3]
 
 
-def load_depth_npy(depth_path: Path, width: int = 0, height: int = 0) -> Optional[np.ndarray]:
+def load_depth_npy(depth_path: Path, width: int = 0, height: int = 0,
+                   flip_vertical: bool = True) -> Optional[np.ndarray]:
     """Load .npy depth file and return float32 array (H, W) in meters.
 
     Auto-detects dimensions. Quest 3 depth is typically 640x320.
+
+    flip_vertical: whether to flip vertically after loading. Set via
+    pipeline.yaml → camera.flip_vertical.
     """
     if not depth_path.exists():
         return None
+
+    def _maybe_flip(a: np.ndarray) -> np.ndarray:
+        return np.flipud(a) if flip_vertical else a
+
     arr = np.load(str(depth_path)).astype(np.float32)
     if arr.ndim == 2:
-        return arr
+        return _maybe_flip(arr)
     if arr.ndim == 1:
         n = arr.shape[0]
         # Use provided dims if they match
         if width > 0 and height > 0 and width * height == n:
-            return arr.reshape(height, width)
+            return _maybe_flip(arr.reshape(height, width))
         # Auto-detect: try common depth resolutions
         for (h, w) in [(320, 640), (480, 640), (240, 320), (400, 512), (360, 640)]:
             if h * w == n:
-                return arr.reshape(h, w)
+                return _maybe_flip(arr.reshape(h, w))
         # Fallback: square-ish reshape
         import math
         s = int(math.sqrt(n))
         if s * s == n:
-            return arr.reshape(s, s)
+            return _maybe_flip(arr.reshape(s, s))
         if width > 0 and height > 0:
-            return arr.reshape(height, width)
-        return arr.reshape(320, 640)  # Quest 3 default
-    return arr
+            return _maybe_flip(arr.reshape(height, width))
+        return _maybe_flip(arr.reshape(320, 640))  # Quest 3 default
+    return _maybe_flip(arr)
 
 
-def load_depth_f32(depth_path: Path, width: int = 320, height: int = 240) -> Optional[np.ndarray]:
-    """Load raw .f32 depth file and return float32 array (H, W) in meters."""
+def load_depth_f32(depth_path: Path, width: int = 320, height: int = 240,
+                   flip_vertical: bool = True) -> Optional[np.ndarray]:
+    """Load raw .f32 depth file and return float32 array (H, W) in meters.
+
+    flip_vertical: whether to flip vertically after loading. Set via
+    pipeline.yaml → camera.flip_vertical.
+    """
     if not depth_path.exists():
         return None
     raw = np.frombuffer(depth_path.read_bytes(), dtype="<f4")  # little-endian float32
     if raw.size == 0:
         return None
-    return raw.reshape(height, width)
+    arr = raw.reshape(height, width)
+    return np.flipud(arr) if flip_vertical else arr
 
 
 def load_depth(frame_dir: Path, stem: str, width: int = 320, height: int = 240) -> Optional[np.ndarray]:

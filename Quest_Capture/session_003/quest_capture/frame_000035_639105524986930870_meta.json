@@ -1,0 +1,43 @@
+{
+  "frame_index": 35,
+  "ticks": 639105524986930870,
+  "version": 3,
+  "pose": {
+    "position": [
+      -0.10032764077186584,
+      1.1982557773590088,
+      0.3015248477458954
+    ],
+    "rotation_xyzw": [
+      0.00372492428869009,
+      -0.1321915239095688,
+      0.08107910305261612,
+      0.9878955483436584
+    ]
+  },
+  "intrinsics": {
+    "fx": 448.1328430175781,
+    "fy": 432.1939392089844,
+    "cx": 640.0,
+    "cy": 480.0
+  },
+  "intrinsics_source": "estimated",
+  "distortion": {
+    "k1": 0.0,
+    "k2": 0.0,
+    "p1": 0.0,
+    "p2": 0.0,
+    "k3": 0.0
+  },
+  "rgb": {
+    "width": 1280,
+    "height": 960,
+    "byte_len": 4915200,
+    "format": "RGBA32 raw bytes"
+  },
+  "depth": {
+    "count": 204800,
+    "byte_len": 819200,
+    "format": "float32 meters (little-endian)"
+  }
+}

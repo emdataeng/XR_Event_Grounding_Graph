@@ -51,6 +51,7 @@ def main(
         df_manifest = df_manifest.head(max_frames)
 
     obs_source = cfg.get("observations_source", "grounding_dino")
+    flip_vertical = cfg.get("camera", {}).get("flip_vertical", True)
     det_cfg = thr.get("detection", {})
     dino_cfg = thr.get("grounding_dino", {})
     depth_min = float(det_cfg.get("depth_min_m", 0.1))
@@ -127,7 +128,7 @@ def main(
             rp = _resolve(row["rgb_path"])
             if rp.exists():
                 try:
-                    rgba = load_rgba(rp, width=w, height=h)
+                    rgba = load_rgba(rp, width=w, height=h, stereo_eye=cfg.get("stereo_eye"), flip_vertical=flip_vertical)
                     rgb = rgba_to_rgb(rgba)
                 except Exception:
                     pass
@@ -136,7 +137,7 @@ def main(
             depth = None
             if row["depth_encoding"] not in ("none", "") and pd.notna(row["depth_path"]) and row["depth_path"]:
                 dp = _resolve(row["depth_path"])
-                depth = load_depth_npy(dp, width=w, height=h)
+                depth = load_depth_npy(dp, width=w, height=h, flip_vertical=flip_vertical)
 
             T_world_cam = flat_to_matrix([row[c] for c in pose_cols])
 

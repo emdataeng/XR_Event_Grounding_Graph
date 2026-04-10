@@ -1,8 +1,8 @@
 # Pipeline configuration
-session_id: session_002
+session_id: session_003
 
 # Raw data source - Quest 3 captures
-raw_data_root: "../Quest_Capture/session_002/quest_capture"
+raw_data_root: "../Quest_Capture/session_003/quest_capture"
 
 # Processed output root
 processed_root: "data/processed"
@@ -14,22 +14,28 @@ input_format: quest3_capture    # quest3_capture | custom_csv
 # Depth configuration
 depth_source: npy               # npy | f32 | alpha_channel | none
 depth_scale: 1.0                # stored values are already in meters
-depth_aligned: true             # depth is pixel-aligned with RGB
+depth_aligned: false            # RGB is 640x240 (stereo crop); depth is 640x320 — not pixel-aligned
 
-# Camera intrinsics (Quest 3 mixed-reality camera)
-# NOTE: metadata reports 320x240 but actual stored RGB is 640x480 (2x).
-# Depth is 640x320 (same width, 2/3 of height).
-# Intrinsics are scaled to match the actual 640x480 RGB resolution.
-# fx_nominal=240 at 320px wide → fx_actual=480 at 640px wide (2x scale)
+# Stereo eye selection (Quest 3 sparse stereo buffer)
+# session_003 RGBA buffers are 1280x960 with content only in the top 240 rows.
+# Both left (cols 0:640) and right (cols 640:1280) halves contain distinct imagery.
+# 'left' is assumed depth-aligned; change to 'right' if projections look mirrored.
+stereo_eye: "left"
+
+# Camera intrinsics (Quest 3 mixed-reality camera, left eye, 640x240 crop)
+# session_003: sparse stereo buffer (1280x960), content in top 240 rows only.
+# Left eye crop → 640x240 RGB. Depth is 640x320 (same width, taller — not pixel-aligned).
+# Intrinsics calibrated for the 640x240 left-eye crop.
 camera:
   width: 640
-  height: 480
+  height: 240
   depth_width: 640
   depth_height: 320
-  fx: 480.0
-  fy: 480.0
+  fx: 448.0
+  fy: 432.0
   cx: 320.0
-  cy: 240.0
+  cy: 120.0
+  flip_vertical: true   # Quest 3 RGB-D buffer is stored vertically inverted; set false for other devices
 
 # Object observations source
 # "grounding_dino" = open-vocabulary detection with text prompts + depth back-projection (requires transformers)
@@ -43,7 +49,7 @@ grounding_dino_model: IDEA-Research/grounding-dino-base
 
 # Candidate object categories for Grounding DINO detection.
 # Lowercase, dot-separated. Add any object you expect to appear in your scene.
-detection_prompt: "white surface. hardcover book. ceramic cup. table."
+detection_prompt: "red lego. blue lego."
 
 # Event summaries source
 # "rules" = deterministic templates
