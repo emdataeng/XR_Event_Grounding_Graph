@@ -66,12 +66,14 @@ detection_prompt: "a red lego brick. a blue lego brick."
 #                             (useful for transient context like hands/sleeves)
 object_vocabulary:
   red_lego:
-    prompts: ["a red lego brick", "red lego", "red brick", "red block"]
-    aliases: ["red lego blue", "red lego blue lego", "red lego brick"]
+    # "red block" first — sweep showed it gives cleanest single-class labels (17/29 frames)
+    # with almost no composite outputs vs "a red lego brick" (8/29 composite)
+    prompts: ["red block", "a red lego brick", "red lego", "red brick"]
+    aliases: ["red lego blue", "red lego blue lego", "red lego brick", "red block blue block"]
     ignore_for_object_tracks: false
   blue_lego:
-    prompts: ["a blue lego brick", "blue lego", "blue brick", "blue block"]
-    aliases: ["blue lego red", "blue lego red lego", "blue lego brick"]
+    prompts: ["blue block", "a blue lego brick", "blue lego", "blue brick"]
+    aliases: ["blue lego red", "blue lego red lego", "blue lego brick", "blue block red block"]
     ignore_for_object_tracks: false
 
 # Event summaries source

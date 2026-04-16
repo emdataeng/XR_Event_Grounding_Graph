@@ -31,7 +31,7 @@ detection:
 
 # Grounding DINO detection thresholds
 grounding_dino:
-  box_threshold: 0.22           # minimum objectness score to keep a box (passed as `threshold`)
+  box_threshold: 0.25           # sweep result: 0.25 cleanest for "red block. blue block." prompt
   text_threshold: 0.25          # minimum text-alignment score to assign a label
 
 # MM-Grounding-DINO detection thresholds
