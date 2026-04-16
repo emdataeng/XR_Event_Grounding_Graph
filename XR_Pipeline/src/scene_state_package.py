@@ -728,6 +728,9 @@ def _is_nan(val: Any) -> bool:
     if val is None:
         return True
     try:
-        return float(val) != float(val)
+        v = float(val)
+        return v != v  # True only for IEEE NaN
     except (TypeError, ValueError):
-        return True
+        # Non-numeric strings (e.g. track IDs like "trk_0003") are valid values,
+        # not NaN — return False so they are preserved, not dropped.
+        return False

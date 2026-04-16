@@ -77,11 +77,17 @@ object_vocabulary:
     aliases: ["blue lego red", "blue lego red lego", "blue lego brick", "blue block red block"]
     object_role: workpiece
     ignore_for_object_tracks: false
-  # ── Future entries (add when detecting hands/tools in later sessions) ──────
-  # hand:
-  #   prompts: ["hand", "human hand", "open hand", "fingers"]
-  #   object_role: hand
-  #   ignore_for_object_tracks: false
+  hand:
+    # "hand" first — sweep showed it's the only combined-prompt phrase that
+    # produces zero composite labels alongside the lego prompts (box_thr=0.25).
+    # Note: token competition with lego entries reduces hand recall to ~26 % of
+    # frames; "hand." alone detects the hand in ~85 % of frames but cannot be
+    # used without a separate detector pass. Accept this trade-off for now.
+    prompts: ["hand", "human hand", "open hand"]
+    aliases: ["person hand", "glove", "arm", "hand holding"]
+    object_role: hand
+    ignore_for_object_tracks: false
+  # ── Future entries ──────────────────────────────────────────────────────────
   # screwdriver:
   #   prompts: ["screwdriver", "hand tool", "fastening tool"]
   #   object_role: tool
