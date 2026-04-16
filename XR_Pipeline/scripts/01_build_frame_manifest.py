@@ -13,6 +13,7 @@ from rich.progress import track as rich_track
 from src.config import PipelinePaths, load_pipeline_config
 from src.io_utils import scan_quest_capture, ticks_to_ns
 from src.pose_utils import meta_to_pose_flat
+from src.run_metadata import build_run_metadata, save_run_metadata
 
 app = typer.Typer()
 console = Console()
@@ -138,6 +139,22 @@ def main(
     # Print a sample pose translation to sanity-check
     t = df[["T_world_cam_03", "T_world_cam_07", "T_world_cam_11"]].iloc[0].tolist()
     console.print(f"  First frame camera position: ({t[0]:.3f}, {t[1]:.3f}, {t[2]:.3f})")
+
+    # Write run metadata so downstream stages can detect staleness
+    from src.config import load_thresholds
+    thr = load_thresholds()
+    from src.config import PROJECT_ROOT as _PR
+    meta = build_run_metadata(
+        session_id=session,
+        stage="01_build_frame_manifest",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        pipeline_yaml_path=_PR / "configs" / "pipeline.yaml",
+        thresholds_yaml_path=_PR / "configs" / "thresholds.yaml",
+        extra={"n_frames": len(df), "frames_with_depth": int((df["depth_encoding"] != "none").sum())},
+    )
+    meta_path = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]  Run metadata → {meta_path}[/dim]")
 
 
 if __name__ == "__main__":

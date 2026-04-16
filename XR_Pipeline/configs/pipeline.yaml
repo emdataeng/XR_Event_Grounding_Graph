@@ -48,8 +48,26 @@ observations_source: grounding_dino
 grounding_dino_model: IDEA-Research/grounding-dino-base
 
 # Candidate object categories for Grounding DINO detection.
-# Lowercase, dot-separated. Add any object you expect to appear in your scene.
-detection_prompt: "red lego. blue lego."
+# When object_vocabulary is defined below, script 05 automatically builds the
+# prompt from vocabulary entries (using each entry's first prompt phrase).
+# This field is the fallback when object_vocabulary is absent or empty.
+detection_prompt: "a red lego brick. a blue lego brick."
+
+# Object vocabulary: maps raw detector labels to stable canonical class names.
+# prompts   — text phrases sent to Grounding DINO (first phrase used in prompt)
+# aliases   — additional raw labels that should map to this canonical class
+#             (catches composite outputs like "red lego blue lego")
+# ignore_for_object_tracks — if true, observations are created but not tracked
+#                             (useful for transient context like hands/sleeves)
+object_vocabulary:
+  red_lego:
+    prompts: ["a red lego brick", "red lego", "red brick", "red block"]
+    aliases: ["red lego blue", "red lego blue lego", "red lego brick"]
+    ignore_for_object_tracks: false
+  blue_lego:
+    prompts: ["a blue lego brick", "blue lego", "blue brick", "blue block"]
+    aliases: ["blue lego red", "blue lego red lego", "blue lego brick"]
+    ignore_for_object_tracks: false
 
 # Event summaries source
 # "rules" = deterministic templates

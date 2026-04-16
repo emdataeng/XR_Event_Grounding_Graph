@@ -25,6 +25,9 @@ detection:
   max_blobs_per_frame: 20       # maximum objects to extract per frame (depth_blobs backend)
   depth_cluster_tolerance_m: 0.1  # depth difference within a blob (depth_blobs backend)
   max_detections_per_class_per_frame: 1  # keep only top-confidence detection per class per frame (suppresses Grounding DINO duplicates)
+  # V2 post-processing controls
+  min_bbox_area_px: 100         # drop detections whose pixel-space bbox area is below this
+  nms_iou_threshold: 0.5        # IoU threshold for class-aware 2D NMS (0 = disabled)
 
 # Grounding DINO detection thresholds
 grounding_dino:
