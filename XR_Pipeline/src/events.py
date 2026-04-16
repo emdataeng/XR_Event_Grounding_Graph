@@ -25,8 +25,22 @@ def detect_event_windows(
     event_merge_gap_ns: int = 2_000_000_000,
     room_id: str = "workstation_A",
     position_smooth_window: int = 1,
+    hand_classes: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """Detect coarse event windows from object track data.
+
+    Parameters
+    ----------
+    tracks_df : pd.DataFrame
+        object_tracks.csv — must contain at least track_id, frame_idx,
+        timestamp_ns, x, y, z, semantic_class.  If an ``object_role``
+        column is present it is used to identify hand-role tracks for
+        INTERACTION detection; otherwise the legacy fallback (checking
+        semantic_class == "hands") is used.
+    hand_classes : list of str, optional
+        Explicit list of canonical class names that carry the "hand" role.
+        When provided, overrides any ``object_role`` column and the legacy
+        fallback.  Pass ``vocab.classes_with_role("hand")`` from the caller.
 
     Logic:
     - APPEAR: first observation of a track
@@ -34,6 +48,7 @@ def detect_event_windows(
     - MOVE: track position changes more than threshold between consecutive obs
     - CO_LOCATE: two tracks come within near_threshold of each other
     - SEPARATE: two tracks that were near move apart
+    - INTERACTION: hand-role track near a non-hand track
 
     Returns event_windows DataFrame.
     """
@@ -162,10 +177,25 @@ def detect_event_windows(
                     })
                 was_near = now_near
 
-    # ---- INTERACTION events (hands near non-hands object) ----
-    hands_tids = set(
-        tracks_df.loc[tracks_df["semantic_class"] == "hands", "track_id"].tolist()
-    )
+    # ---- INTERACTION events (hand-role track near a non-hand object) ----
+    # Resolution order:
+    #   1. explicit hand_classes argument (vocab.classes_with_role("hand"))
+    #   2. object_role column in tracks_df  (populated by script 06 when vocab has roles)
+    #   3. legacy fallback: semantic_class == "hands"
+    if hand_classes is not None:
+        hand_class_set = set(hand_classes)
+        hands_tids = set(
+            tracks_df.loc[tracks_df["semantic_class"].isin(hand_class_set), "track_id"].tolist()
+        )
+    elif "object_role" in tracks_df.columns:
+        hands_tids = set(
+            tracks_df.loc[tracks_df["object_role"] == "hand", "track_id"].tolist()
+        )
+    else:
+        # Legacy fallback — keeps pre-taxonomy sessions working
+        hands_tids = set(
+            tracks_df.loc[tracks_df["semantic_class"] == "hands", "track_id"].tolist()
+        )
     for htid in hands_tids:
         h_grp = tracks_df[tracks_df["track_id"] == htid].sort_values("timestamp_ns")
         h_frames = set(h_grp["frame_idx"].tolist())

@@ -40,6 +40,10 @@ from src.scene_state_package import (
     save_scene_state_package,
     load_scene_state_package,
 )
+from src.run_metadata import (
+    build_run_metadata, save_run_metadata,
+    check_staleness, emit_staleness_warnings,
+)
 
 app = typer.Typer()
 console = Console()
@@ -49,12 +53,18 @@ console = Console()
 def main(
     session: str = typer.Option("session_001", help="Session identifier"),
     config:  str = typer.Option(None,          help="Path to pipeline.yaml override"),
+    force:   bool = typer.Option(False, "--force", help="Continue even if upstream output is stale."),
 ):
     """Build scene_state_package.json from all pipeline outputs."""
     cfg   = load_pipeline_config(Path(config) if config else None)
     thr   = load_thresholds()
     paths = PipelinePaths(session, cfg)
     paths.ensure_dirs()
+
+    # Staleness guard — check that the EGG graph was built under the current config.
+    warnings = check_staleness(paths.processed_root, "09_build_egg_graph", cfg, thr)
+    if not emit_staleness_warnings(warnings, console=console, force=force):
+        raise typer.Exit(1)
 
     # ── Check prerequisites ───────────────────────────────────────────────────
     required = [
@@ -91,6 +101,20 @@ def main(
         f"{len(events_df)} events"
     )
 
+    # ── Load optional operation events (stage 10b) ────────────────────────────
+    ops_path = paths.objects_dir / "operation_events.csv"
+    ops_df: pd.DataFrame | None = None
+    if ops_path.exists():
+        ops_df = pd.read_csv(ops_path)
+        console.print(
+            f"[dim]Loaded {len(ops_df)} operation events from {ops_path.name}[/dim]"
+        )
+    else:
+        console.print(
+            "[dim]operation_events.csv not found — "
+            "SSP will not include operation state. Run 10b to add it.[/dim]"
+        )
+
     # ── Build ─────────────────────────────────────────────────────────────────
     cfg["session_id"] = session   # make session_id available inside builders
     pkg = build_scene_state_package(
@@ -101,6 +125,7 @@ def main(
         roles_df=roles_df,
         cfg=cfg,
         thr=thr,
+        ops_df=ops_df,
     )
 
     # ── Save ──────────────────────────────────────────────────────────────────
@@ -141,7 +166,19 @@ def main(
     # Active entities from state_summary
     active = pkg.get("state_summary", {}).get("active_entities", [])
     if active:
-        console.print(f"  Active entities (last {5} frames): {active}")
+        console.print(f"  Active entities (last 5 frames): {active}")
+
+    # Operation layer summary
+    active_ops = pkg.get("state_summary", {}).get("active_operations", [])
+    if active_ops:
+        console.print(f"  Active operations: {[o['operation_type'] for o in active_ops]}")
+
+    wf_phase = pkg.get("state_summary", {}).get("workflow_phase")
+    if wf_phase:
+        console.print(
+            f"  Workflow phase: {wf_phase['label']}  "
+            f"(conf={wf_phase['confidence']:.2f}, {wf_phase['evidence']})"
+        )
 
     # Top salient relations
     salient = pkg.get("state_summary", {}).get("salient_relations", [])
@@ -158,6 +195,21 @@ def main(
         f"{pkg['time_window']['end']}\n"
         f"  frames         : {pkg['time_window']['frames_aggregated']}"
     )
+
+    # Write run metadata.
+    meta = build_run_metadata(
+        session_id=session,
+        stage="09b_build_scene_state_package",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        extra={
+            "n_entities": n_entities,
+            "n_relations": n_relations,
+            "n_hypotheses": n_hypotheses,
+        },
+    )
+    saved = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]Run metadata → {saved}[/dim]")
 
 
 if __name__ == "__main__":

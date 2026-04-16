@@ -11,15 +11,28 @@ Config format (pipeline.yaml → object_vocabulary):
       red_lego:
         prompts: ["red lego", "red brick", "red block"]
         aliases: ["red lego blue", "red lego blue lego"]
-        ignore_for_object_tracks: false   # optional, default false
+        object_role: workpiece          # industrial role (see VALID_ROLES)
+        ignore_for_object_tracks: false # optional, default false
       blue_lego:
         prompts: ["blue lego", "blue brick", "blue block"]
+        object_role: workpiece
       hand:
         prompts: ["hand", "human hand", "fingers"]
+        object_role: hand
         ignore_for_object_tracks: false
       sleeve:
         prompts: ["sleeve", "arm", "forearm"]
+        object_role: context
         ignore_for_object_tracks: true
+
+Industrial roles (object_role):
+  hand         — the human agent performing actions
+  tool         — instrument used to act on a workpiece (screwdriver, wrench …)
+  workpiece    — the object being manipulated / assembled (default)
+  fixture      — stationary reference / mount (vice, jig, table surface …)
+  container    — bin, tray, or storage holding other objects
+  machine_part — a component of a machine that moves or is assembled
+  context      — background / environmental object, not part of the workflow
 
 Matching is case-insensitive and strips leading/trailing whitespace.
 """
@@ -28,12 +41,22 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
+# Controlled vocabulary for object roles in industrial workflows.
+VALID_ROLES = frozenset({
+    "hand", "tool", "workpiece", "fixture",
+    "container", "machine_part", "context",
+})
+
+# Default role used when object_role is absent from the config entry.
+DEFAULT_ROLE = "workpiece"
+
 
 @dataclass
 class VocabEntry:
     canonical: str
     prompts: List[str]
     aliases: List[str] = field(default_factory=list)
+    object_role: str = DEFAULT_ROLE
     ignore_for_object_tracks: bool = False
 
 
@@ -68,10 +91,13 @@ class Vocabulary:
         for canonical, spec in raw.items():
             if not isinstance(spec, dict):
                 continue
+            raw_role = str(spec.get("object_role") or DEFAULT_ROLE).lower()
+            role = raw_role if raw_role in VALID_ROLES else DEFAULT_ROLE
             entries.append(VocabEntry(
                 canonical=canonical,
                 prompts=spec.get("prompts") or [],
                 aliases=spec.get("aliases") or [],
+                object_role=role,
                 ignore_for_object_tracks=bool(spec.get("ignore_for_object_tracks", False)),
             ))
         return cls(entries)
@@ -108,6 +134,21 @@ class Vocabulary:
         # We return None here — composite labels are a known detector artefact
         # and should be rejected so postprocess NMS can apply prompt hygiene.
         return None
+
+    def object_role(self, canonical_class: str) -> str:
+        """Return the industrial role for a canonical class.
+
+        Returns DEFAULT_ROLE ("workpiece") for unknown classes so callers
+        can always rely on a valid role string.
+        """
+        for entry in self._entries:
+            if entry.canonical == canonical_class:
+                return entry.object_role
+        return DEFAULT_ROLE
+
+    def classes_with_role(self, role: str) -> List[str]:
+        """Return all canonical class names that carry the given role."""
+        return [e.canonical for e in self._entries if e.object_role == role]
 
     def should_ignore_for_tracks(self, canonical_class: str) -> bool:
         for entry in self._entries:

@@ -14,6 +14,7 @@ from rich.table import Table
 from src.config import PipelinePaths, load_pipeline_config, load_thresholds
 from src.tracking import link_observations_to_tracks, build_track_summary
 from src.vocabulary import Vocabulary
+from src.run_metadata import build_run_metadata, save_run_metadata
 
 app = typer.Typer()
 console = Console()
@@ -107,6 +108,17 @@ def main(
             )
         tracks_df = tracks_df[tracks_df["track_id"].isin(valid_tids)].reset_index(drop=True)
 
+    # Enrich tracks with object_role from vocabulary taxonomy.
+    # This lets downstream stages (events, operation events, SSP) use
+    # role-based logic instead of hardcoded class-name string matching.
+    if not vocab.is_empty:
+        class_col = "canonical_class" if "canonical_class" in tracks_df.columns else "semantic_class"
+        tracks_df["object_role"] = tracks_df[class_col].map(
+            lambda cls: vocab.object_role(cls)
+        )
+    else:
+        tracks_df["object_role"] = "workpiece"
+
     tracks_df.to_csv(paths.object_tracks, index=False)
     console.print(f"[green]✓ Wrote {len(tracks_df)} track rows → {paths.object_tracks}[/green]")
 
@@ -135,6 +147,17 @@ def main(
     }
     paths.track_debug.write_text(json.dumps(debug, indent=2))
     console.print(f"[green]✓ Debug JSON → {paths.track_debug}[/green]")
+
+    # Write run metadata for staleness detection by downstream stages.
+    meta = build_run_metadata(
+        session_id=session,
+        stage="06_link_object_tracks",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        extra={"n_tracks": len(summary_df), "n_track_rows": len(tracks_df)},
+    )
+    saved = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]Run metadata → {saved}[/dim]")
 
 
 if __name__ == "__main__":

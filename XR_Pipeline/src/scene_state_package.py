@@ -117,6 +117,7 @@ def build_scene_state_package(
     roles_df: pd.DataFrame,
     cfg: Dict[str, Any],
     thr: Dict[str, Any],
+    ops_df: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
     """Assemble a Scene State Package from pipeline DataFrames.
 
@@ -136,6 +137,9 @@ def build_scene_state_package(
         pipeline.yaml config dict.
     thr : dict
         thresholds.yaml config dict.
+    ops_df : pd.DataFrame | None
+        operation_events.csv from stage 10b (optional).  When provided,
+        the state_summary includes active_operations and workflow_phase.
 
     Returns
     -------
@@ -174,7 +178,7 @@ def build_scene_state_package(
 
     observations = _build_observations(obs_df, tracks_df, session_epoch)
 
-    state_summary = _build_state_summary(tracks_df, all_relations, events_df)
+    state_summary = _build_state_summary(tracks_df, all_relations, events_df, ops_df)
     provenance    = _build_provenance(obs_df, tracks_df, cfg)
     constraints   = _build_constraints(cfg, thr)
 
@@ -544,8 +548,15 @@ def _build_state_summary(
     tracks_df: pd.DataFrame,
     relations: List[Dict],
     events_df: pd.DataFrame,
+    ops_df: Optional[pd.DataFrame] = None,
 ) -> Dict:
-    """Compact scene snapshot — aids debugging and fast reasoning bootstrapping."""
+    """Compact scene snapshot — aids debugging and fast reasoning bootstrapping.
+
+    When ops_df (operation_events.csv) is provided the summary also includes:
+      active_operations     — operations that span the final ACTIVE_FRAME_WINDOW
+      tool_workpiece_relations — current tool↔workpiece proximity facts
+      workflow_phase        — dominant operation type over the recent session
+    """
     if tracks_df.empty:
         return {}
 
@@ -585,11 +596,64 @@ def _build_state_summary(
         if len(salient) == 5:
             break
 
-    return {
+    summary: Dict = {
         "current_phase_candidates": phase_candidates,
         "active_entities":          active_tids,
         "salient_relations":        salient,
     }
+
+    # ── Operation layer (if available) ────────────────────────────────────────
+    if ops_df is not None and not ops_df.empty:
+        # Active operations: those whose frame window touches the final frames
+        active_ops: List[Dict] = []
+        for _, op in ops_df.iterrows():
+            if int(op["end_frame_idx"]) >= global_max_frame - ACTIVE_FRAME_WINDOW:
+                active_ops.append({
+                    "operation_id":   op["operation_id"],
+                    "operation_type": op["operation_type"],
+                    "agent":          op["agent_track_id"] if not _is_nan(op["agent_track_id"]) else None,
+                    "object":         op["object_track_id"] if not _is_nan(op["object_track_id"]) else None,
+                    "confidence":     round(float(op["confidence"]), 3),
+                })
+        summary["active_operations"] = active_ops
+
+        # Tool–workpiece relations: any USE_TOOL operations
+        tool_wp: List[Dict] = []
+        for _, op in ops_df[ops_df["operation_type"] == "USE_TOOL"].iterrows():
+            tool_wp.append({
+                "tool":      op["agent_track_id"],
+                "workpiece": op["object_track_id"],
+                "confidence": round(float(op["confidence"]), 3),
+            })
+        summary["tool_workpiece_relations"] = tool_wp
+
+        # Workflow phase: dominant operation type by frequency × confidence
+        op_weights = (
+            ops_df
+            .groupby("operation_type")["confidence"]
+            .agg(["count", "mean"])
+        )
+        op_weights["score"] = op_weights["count"] * op_weights["mean"]
+        best_row = op_weights["score"].idxmax()
+        best_score = float(op_weights.loc[best_row, "score"])
+        total_score = float(op_weights["score"].sum())
+        summary["workflow_phase"] = {
+            "label":      str(best_row).lower(),
+            "confidence": round(best_score / total_score if total_score > 0 else 0.0, 3),
+            "evidence":   f"{int(op_weights.loc[best_row, 'count'])} {best_row} events",
+        }
+
+        # Recent completed operations (last 5 by end frame, sorted)
+        recent_ops = (
+            ops_df
+            .sort_values("end_frame_idx", ascending=False)
+            .head(5)[["operation_id", "operation_type", "object_track_id",
+                       "end_frame_idx", "confidence"]]
+            .to_dict(orient="records")
+        )
+        summary["recent_completed_operations"] = recent_ops
+
+    return summary
 
 
 def _build_provenance(

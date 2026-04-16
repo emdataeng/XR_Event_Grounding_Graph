@@ -9,8 +9,12 @@ import typer
 import pandas as pd
 from rich.console import Console
 
-from src.config import PipelinePaths, load_pipeline_config
+from src.config import PipelinePaths, load_pipeline_config, load_thresholds
 from src.egg import build_egg_graph, save_egg, load_egg
+from src.run_metadata import (
+    build_run_metadata, save_run_metadata,
+    check_staleness, emit_staleness_warnings,
+)
 
 app = typer.Typer()
 console = Console()
@@ -20,11 +24,18 @@ console = Console()
 def main(
     session: str = typer.Option("session_001"),
     config: str = typer.Option(None),
+    force: bool = typer.Option(False, "--force", help="Continue even if upstream output is stale."),
 ):
     """Build egg_graph.json from tracks, events, and roles."""
     cfg = load_pipeline_config(Path(config) if config else None)
+    thr = load_thresholds()
     paths = PipelinePaths(session, cfg)
     paths.ensure_dirs()
+
+    # Staleness guard.
+    warnings = check_staleness(paths.processed_root, "08_generate_event_summaries", cfg, thr)
+    if not emit_staleness_warnings(warnings, console=console, force=force):
+        raise typer.Exit(1)
 
     # Check prerequisites
     for name, p in [("object_tracks.csv", paths.object_tracks),
@@ -68,6 +79,20 @@ def main(
     console.print(f"  Room edges:     {len(graph['room_edges'])}")
     console.print(f"  Temporal edges: {len(graph['temporal_edges'])}")
     console.print("[green]✓ Round-trip serialization verified.[/green]")
+
+    # Write run metadata.
+    meta = build_run_metadata(
+        session_id=session,
+        stage="09_build_egg_graph",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        extra={
+            "n_objects": len(graph["objects"]),
+            "n_events": len(graph["events"]),
+        },
+    )
+    saved = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]Run metadata → {saved}[/dim]")
 
 
 if __name__ == "__main__":

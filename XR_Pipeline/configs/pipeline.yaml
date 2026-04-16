@@ -70,11 +70,26 @@ object_vocabulary:
     # with almost no composite outputs vs "a red lego brick" (8/29 composite)
     prompts: ["red block", "a red lego brick", "red lego", "red brick"]
     aliases: ["red lego blue", "red lego blue lego", "red lego brick", "red block blue block"]
+    object_role: workpiece
     ignore_for_object_tracks: false
   blue_lego:
     prompts: ["blue block", "a blue lego brick", "blue lego", "blue brick"]
     aliases: ["blue lego red", "blue lego red lego", "blue lego brick", "blue block red block"]
+    object_role: workpiece
     ignore_for_object_tracks: false
+  # ── Future entries (add when detecting hands/tools in later sessions) ──────
+  # hand:
+  #   prompts: ["hand", "human hand", "open hand", "fingers"]
+  #   object_role: hand
+  #   ignore_for_object_tracks: false
+  # screwdriver:
+  #   prompts: ["screwdriver", "hand tool", "fastening tool"]
+  #   object_role: tool
+  #   ignore_for_object_tracks: false
+  # assembly_fixture:
+  #   prompts: ["fixture", "jig", "workbench"]
+  #   object_role: fixture
+  #   ignore_for_object_tracks: true
 
 # Event summaries source
 # "rules" = deterministic templates
