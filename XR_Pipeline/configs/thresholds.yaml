@@ -34,6 +34,12 @@ grounding_dino:
   box_threshold: 0.22           # minimum objectness score to keep a box (passed as `threshold`)
   text_threshold: 0.25          # minimum text-alignment score to assign a label
 
+# MM-Grounding-DINO detection thresholds
+# MM-GDINO is generally more conservative — start lower and tune via sweep.
+mm_grounding_dino:
+  box_threshold: 0.20           # slightly lower default; MM-GDINO scores tend to spread wider
+  text_threshold: 0.20
+
 # Confidence thresholds
 confidence:
   min_observation: 0.3          # discard observations below this confidence

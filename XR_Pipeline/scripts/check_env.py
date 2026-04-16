@@ -53,11 +53,18 @@ def main():
     for pkg, imp in [
         ("pandas", None), ("numpy", None), ("scipy", None),
         ("yaml", "yaml"), ("pydantic", None), ("networkx", None),
-        ("cv2", "cv2"), ("PIL", "PIL"), ("matplotlib", None),
+        ("PIL", "PIL"), ("matplotlib", None),
         ("rich", None), ("typer", None), ("dotenv", "dotenv"),
     ]:
         if not _check(pkg, imp):
             ok = False
+    # cv2 install name differs from import name
+    try:
+        import cv2
+        _ok(f"cv2  ({cv2.__version__})")
+    except ImportError:
+        _fail("cv2  — MISSING (required)  →  pip install opencv-python-headless")
+        ok = False
 
     print(f"\n{BOLD}Open-vocabulary detection (required for grounding_dino / mm_grounding_dino backends){RESET}")
     torch_ok = _check("torch", required=False)

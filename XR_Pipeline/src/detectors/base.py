@@ -120,6 +120,20 @@ def load_detector(
             text_threshold=float(dino_cfg.get("text_threshold", 0.25)),
         )
 
+    elif obs_source == "mm_grounding_dino":
+        from .mm_grounding_dino import MMGroundingDINODetector
+        mm_cfg = thr.get("mm_grounding_dino", {})
+        resolved_prompt = prompt or cfg.get("detection_prompt", "object.")
+        return MMGroundingDINODetector(
+            model_id=cfg.get(
+                "mm_grounding_dino_model",
+                MMGroundingDINODetector.DEFAULT_MODEL,
+            ),
+            prompt=resolved_prompt,
+            box_threshold=float(mm_cfg.get("box_threshold", 0.30)),
+            text_threshold=float(mm_cfg.get("text_threshold", 0.25)),
+        )
+
     elif obs_source == "yolo":
         from .yolo import YOLODetector
         yolo_model = cfg.get("yolo_model")

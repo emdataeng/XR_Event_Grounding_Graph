@@ -47,6 +47,11 @@ observations_source: grounding_dino
 # Grounding DINO model (auto-downloaded on first run, ~700MB)
 grounding_dino_model: IDEA-Research/grounding-dino-base
 
+# MM-Grounding-DINO model (auto-downloaded on first run, ~830MB)
+# Trained on Objects365 + COCO + RefCOCO — better recall on small objects.
+# Switch observations_source to mm_grounding_dino to use this backend.
+mm_grounding_dino_model: openmmlab-community/mm_grounding_dino_base_all
+
 # Candidate object categories for Grounding DINO detection.
 # When object_vocabulary is defined below, script 05 automatically builds the
 # prompt from vocabulary entries (using each entry's first prompt phrase).
