@@ -34,7 +34,8 @@ from rich.console import Console
 from rich.table import Table
 
 from src.config import PipelinePaths, load_pipeline_config, load_thresholds
-from src.operation_events import detect_operation_events
+from src.operation_events import detect_operation_events, _DEFAULT_ENABLED
+from src.domain_config import load_domain_config, validate_domain_config
 from src.run_metadata import (
     build_run_metadata, save_run_metadata,
     check_staleness, emit_staleness_warnings,
@@ -79,6 +80,32 @@ def main(
         f"{len(events_df)} primitive events"
     )
 
+    # ── Domain config integration ─────────────────────────────────────────────
+    # If a domain_config is specified in pipeline.yaml, its enabled_operations
+    # list overrides the thresholds.yaml toggles — domain is authoritative.
+    domain = load_domain_config(cfg=cfg)
+    domain_name = None
+    if domain:
+        domain_name = domain.domain_name
+        domain_warnings = validate_domain_config(domain)
+        for w in domain_warnings:
+            console.print(f"[yellow]Domain warning: {w}[/yellow]")
+        if domain.enabled_operations:
+            # Build a full toggle map: disable everything not in domain list
+            override = {op: False for op in _DEFAULT_ENABLED}
+            override.update({op: True for op in domain.enabled_operations})
+            thr.setdefault("operation_events", {})["enabled_operations"] = override
+            console.print(
+                f"[cyan]Domain '{domain_name}' v{domain.domain_version}: "
+                f"enabled operations = {domain.enabled_operations}[/cyan]"
+            )
+        else:
+            console.print(
+                f"[dim]Domain '{domain_name}' loaded (no enabled_operations override)[/dim]"
+            )
+    else:
+        console.print("[dim]No domain config — using thresholds.yaml operation toggles[/dim]")
+
     # ── Detect ────────────────────────────────────────────────────────────────
     ops_df = detect_operation_events(tracks_df, events_df, thr)
 
@@ -120,7 +147,13 @@ def main(
         stage="10b_build_operation_events",
         pipeline_cfg=cfg,
         thresholds_cfg=thr,
-        extra={"n_operations": len(ops_df)},
+        extra={
+            "n_operations": len(ops_df),
+            "domain_config": domain_name,
+            "enabled_operations": list(
+                thr.get("operation_events", {}).get("enabled_operations", {}).keys()
+            ),
+        },
     )
     saved = save_run_metadata(paths.processed_root, meta)
     console.print(f"[dim]Run metadata → {saved}[/dim]")

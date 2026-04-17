@@ -1,0 +1,56 @@
+# domain_lego.yaml — Lego brick assembly domain configuration
+# Use this with: domain_config: configs/domain_lego.yaml in pipeline.yaml
+
+domain_name: "lego_assembly"
+domain_version: "1.0"
+description: >
+  Two-color Lego brick assembly workflow.
+  A single operator (hand) picks up, holds, and stacks red and blue Lego bricks
+  on a workbench.  No tools or fixtures are required.
+
+# Object classes present in this domain
+object_classes:
+  - canonical: "red_lego"
+    role: workpiece
+    description: "Red Lego brick (primary workpiece)"
+  - canonical: "blue_lego"
+    role: workpiece
+    description: "Blue Lego brick (secondary workpiece)"
+  - canonical: "hand"
+    role: hand
+    description: "Operator hand performing manipulation"
+
+# Workflow phases relevant to this domain (in rough temporal order)
+workflow_phases:
+  - label: "idle"
+    description: "No manipulation activity"
+  - label: "hold"
+    description: "Operator is holding one or more Lego bricks"
+  - label: "manipulation"
+    description: "Operator is picking up or putting down a brick"
+  - label: "contact"
+    description: "Two bricks are in physical contact (stacking)"
+  - label: "transfer"
+    description: "Brick is moving without a visible hand agent"
+
+# Operations enabled in this domain.
+# Hand recall is currently ~26% in single-pass mode; PICK_UP/PUT_DOWN may be
+# inferred as TRANSFER or CANDIDATE.  Enable multi-pass detection (see
+# detection_groups in pipeline.yaml) to improve hand recall.
+enabled_operations:
+  - HOLD
+  - PICK_UP
+  - PUT_DOWN
+  - PICK_UP_CANDIDATE
+  - PUT_DOWN_CANDIDATE
+  - CONTACT
+  - TRANSFER
+
+# Role interaction rules
+role_pairings:
+  - agent_role: hand
+    patient_role: workpiece
+    valid_operations: [HOLD, PICK_UP, PUT_DOWN]
+  - agent_role: workpiece
+    patient_role: workpiece
+    valid_operations: [CONTACT, TRANSFER]

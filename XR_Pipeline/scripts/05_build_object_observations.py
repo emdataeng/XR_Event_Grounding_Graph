@@ -35,6 +35,7 @@ from src.objects import (
 from src.detectors.base import load_detector, DetectionResult
 from src.detection_postprocess import postprocess_detections
 from src.vocabulary import Vocabulary
+from src.detection_groups import parse_detection_groups, cross_pass_nms
 from src.run_metadata import build_run_metadata, save_run_metadata, check_staleness, emit_staleness_warnings
 from src.viz import draw_detections_on_rgb
 
@@ -99,6 +100,18 @@ def main(
 
     # Vocabulary rejection only applies to open-vocabulary detectors.
     apply_vocab = obs_source in _OPEN_VOCAB_BACKENDS
+
+    # ── Multi-pass group config ───────────────────────────────────────────────
+    # parse_detection_groups returns [] when detection_groups absent → single-pass
+    group_passes = parse_detection_groups(cfg, vocab) if apply_vocab else []
+    if group_passes:
+        console.print(
+            f"[cyan]Multi-pass detection: {len(group_passes)} group(s) — "
+            + ", ".join(f"{gp.group.name}({len(gp.group.classes)} cls)" for gp in group_passes)
+            + "[/cyan]"
+        )
+    else:
+        console.print("[dim]  Single-pass detection (no detection_groups configured)[/dim]")
 
     # ── Load detector ─────────────────────────────────────────────────────────
     console.print(f"Loading detector backend: [bold]{obs_source}[/bold]")
@@ -184,34 +197,69 @@ def main(
                 progress.advance(task)
                 continue
 
-            raw_detections: list[DetectionResult] = detector.detect(
-                rgb=rgb, depth=depth, frame_context=frame_context,
-            )
+            if group_passes:
+                # ── Multi-pass: one detector call per group ───────────────────
+                # The detector model is loaded once; we swap the prompt
+                # attribute between passes (safe in single-threaded context).
+                _original_prompt = detector.prompt
+                frame_obs_all = []
+                for gp in group_passes:
+                    detector.prompt = gp.prompt
+                    raw_g: list[DetectionResult] = detector.detect(
+                        rgb=rgb, depth=depth, frame_context=frame_context,
+                    )
+                    dets_g = postprocess_detections(
+                        raw_g,
+                        vocab=gp.vocab,
+                        conf_min=conf_min,
+                        min_area_px=min_area_px,
+                        nms_iou_threshold=nms_iou_thr,
+                        apply_vocab=True,
+                    )
+                    for det in dets_g:
+                        obs = _detection_to_observation(
+                            det, depth,
+                            fidx, ts_ns,
+                            fx, fy, cx, cy,
+                            d_fx, d_fy, d_cx, d_cy,
+                            scale_x, scale_y,
+                            T_world_cam, room_id,
+                            depth_min, depth_max,
+                            detector_group=gp.group.name,
+                            detector_pass_id=gp.group.pass_id,
+                        )
+                        if obs is not None:
+                            frame_obs_all.append(obs)
+                detector.prompt = _original_prompt
+                # Cross-pass NMS: remove duplicates from overlapping groups
+                frame_obs = cross_pass_nms(frame_obs_all, iou_threshold=nms_iou_thr)
 
-            # ── Postprocess: vocabulary mapping, NMS, area/confidence filter ──
-            detections = postprocess_detections(
-                raw_detections,
-                vocab=vocab,
-                conf_min=conf_min,
-                min_area_px=min_area_px,
-                nms_iou_threshold=nms_iou_thr,
-                apply_vocab=apply_vocab,
-            )
-
-            # ── Depth backprojection + observation construction ───────────────
-            frame_obs = []
-            for det in detections:
-                obs = _detection_to_observation(
-                    det, depth,
-                    fidx, ts_ns,
-                    fx, fy, cx, cy,
-                    d_fx, d_fy, d_cx, d_cy,
-                    scale_x, scale_y,
-                    T_world_cam, room_id,
-                    depth_min, depth_max,
+            else:
+                # ── Single-pass (backward-compatible) ────────────────────────
+                raw_detections: list[DetectionResult] = detector.detect(
+                    rgb=rgb, depth=depth, frame_context=frame_context,
                 )
-                if obs is not None:
-                    frame_obs.append(obs)
+                detections = postprocess_detections(
+                    raw_detections,
+                    vocab=vocab,
+                    conf_min=conf_min,
+                    min_area_px=min_area_px,
+                    nms_iou_threshold=nms_iou_thr,
+                    apply_vocab=apply_vocab,
+                )
+                frame_obs = []
+                for det in detections:
+                    obs = _detection_to_observation(
+                        det, depth,
+                        fidx, ts_ns,
+                        fx, fy, cx, cy,
+                        d_fx, d_fy, d_cx, d_cy,
+                        scale_x, scale_y,
+                        T_world_cam, room_id,
+                        depth_min, depth_max,
+                    )
+                    if obs is not None:
+                        frame_obs.append(obs)
 
             all_obs.extend(frame_obs)
 
@@ -222,11 +270,16 @@ def main(
 
             progress.advance(task)
 
+    # Build group_prompts dict for metadata (populated only in multi-pass mode)
+    _group_prompts = {gp.group.name: gp.prompt for gp in group_passes} if group_passes else {}
+    _actual_prompt = group_passes[0].prompt if len(group_passes) == 1 else resolved_prompt
+
     if not all_obs:
         console.print("[yellow]WARN: No observations generated.[/yellow]")
         console.print("  Check detection_prompt and thresholds in pipeline.yaml / thresholds.yaml.")
         pd.DataFrame(columns=OBSERVATION_COLUMNS).to_csv(paths.object_observations, index=False)
-        _write_run_metadata(session, cfg, thr, paths, n_observations=0)
+        _write_run_metadata(session, cfg, thr, paths, n_observations=0,
+                            resolved_prompt=_actual_prompt, group_prompts=_group_prompts)
         return
 
     # Strip private keys (prefixed _) used internally during processing
@@ -244,7 +297,8 @@ def main(
     if "canonical_class" in obs_df.columns:
         console.print(f"  Canonical classes: {obs_df['canonical_class'].value_counts().to_dict()}")
 
-    _write_run_metadata(session, cfg, thr, paths, n_observations=len(obs_df))
+    _write_run_metadata(session, cfg, thr, paths, n_observations=len(obs_df),
+                        resolved_prompt=_actual_prompt, group_prompts=_group_prompts)
 
 
 # ── Depth backprojection ──────────────────────────────────────────────────────
@@ -258,6 +312,8 @@ def _detection_to_observation(
     scale_x, scale_y,
     T_world_cam, room_id,
     depth_min, depth_max,
+    detector_group: "str | None" = None,
+    detector_pass_id: "str | None" = None,
 ):
     """Convert a DetectionResult to an observation dict with 3D coordinates.
 
@@ -301,6 +357,8 @@ def _detection_to_observation(
             depth_min=meta.get("blob_depth_min"),
             depth_max=meta.get("blob_depth_max"),
             depth_valid_px=int(meta.get("blob_area_px", 0)),
+            detector_group=detector_group,
+            detector_pass_id=detector_pass_id,
         )
         # Private keys for debug overlay (stripped before CSV write)
         obs["_u_min"] = int(x1); obs["_u_max"] = int(x2)
@@ -351,6 +409,8 @@ def _detection_to_observation(
         depth_min=depth_stats.get("depth_min"),
         depth_max=depth_stats.get("depth_max"),
         depth_valid_px=depth_stats.get("depth_valid_px"),
+        detector_group=detector_group,
+        detector_pass_id=detector_pass_id,
     )
     # Private keys for debug overlay (stripped before CSV write)
     obs["_u_min"] = int(x1); obs["_u_max"] = int(x2)
@@ -360,7 +420,10 @@ def _detection_to_observation(
 
 # ── Metadata helper ───────────────────────────────────────────────────────────
 
-def _write_run_metadata(session, cfg, thr, paths, n_observations):
+def _write_run_metadata(
+    session, cfg, thr, paths, n_observations,
+    resolved_prompt=None, group_prompts=None,
+):
     from src.config import PROJECT_ROOT as _PR
     meta = build_run_metadata(
         session_id=session,
@@ -371,9 +434,15 @@ def _write_run_metadata(session, cfg, thr, paths, n_observations):
         thresholds_yaml_path=_PR / "configs" / "thresholds.yaml",
         extra={
             "observations_source": cfg.get("observations_source", "grounding_dino"),
-            "detection_prompt": cfg.get("detection_prompt"),
+            # resolved_prompt is the actual prompt sent to the detector
+            # (overrides the raw detection_prompt field when vocab is configured)
+            "resolved_prompt": resolved_prompt or cfg.get("detection_prompt"),
             "grounding_dino_model": cfg.get("grounding_dino_model"),
             "n_observations": n_observations,
+            "multi_pass": bool(cfg.get("detection_groups")),
+            "detection_groups": list(cfg.get("detection_groups", {}).keys()),
+            # Per-group prompts when multi-pass is active
+            "group_prompts": group_prompts or {},
         },
     )
     path = save_run_metadata(paths.processed_root, meta)

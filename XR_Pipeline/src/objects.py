@@ -39,6 +39,9 @@ _V2_COLUMNS = [
     "depth_min",          # minimum valid depth in ROI
     "depth_max",          # maximum valid depth in ROI
     "depth_valid_px",     # number of valid (non-NaN) depth pixels in ROI
+    # Multi-pass detection provenance (Phase 1 — None for single-pass runs)
+    "detector_group",     # group name from detection_groups config, e.g. "hands"
+    "detector_pass_id",   # pass index string, e.g. "pass_00", "pass_01"
 ]
 
 OBSERVATION_COLUMNS = _V1_COLUMNS + _V2_COLUMNS
@@ -81,6 +84,9 @@ def make_observation(
     depth_min: Optional[float] = None,
     depth_max: Optional[float] = None,
     depth_valid_px: Optional[int] = None,
+    # Multi-pass detection provenance
+    detector_group: Optional[str] = None,
+    detector_pass_id: Optional[str] = None,
 ) -> dict:
     return {
         # V1 fields
@@ -114,6 +120,8 @@ def make_observation(
         "depth_min": depth_min,
         "depth_max": depth_max,
         "depth_valid_px": depth_valid_px,
+        "detector_group": detector_group,
+        "detector_pass_id": detector_pass_id,
     }
 
 

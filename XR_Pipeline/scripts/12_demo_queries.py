@@ -12,10 +12,12 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from src.config import PipelinePaths, load_pipeline_config
+from src.config import PipelinePaths, load_pipeline_config, load_thresholds
 from src.egg import load_egg
 from src.pruning import answer_query
 from src.scene_state_package import load_scene_state_package
+from src.workflow_queries import answer_workflow_query
+from src.run_metadata import build_run_metadata, save_run_metadata
 
 app = typer.Typer()
 console = Console()
@@ -27,7 +29,7 @@ GRAPH_QUERIES = [
     "Which events happened in workstation_A?",
 ]
 
-# ── Workflow queries (answered against operation_events.csv + SSP) ─────────────
+# ── Workflow queries (answered against operation_events.csv + SSP + timeline) ──
 # These are the business-relevant questions for industrial process understanding.
 WORKFLOW_QUERIES = [
     "What step is happening now?",
@@ -35,6 +37,10 @@ WORKFLOW_QUERIES = [
     "What changed in the scene?",
     "Which operation has the strongest evidence?",
     "What is the current workflow phase?",
+    # Phase 3 timeline-aware queries
+    "How many phases were there?",
+    "What phase transition just happened?",
+    "What happened before this phase?",
 ]
 
 
@@ -45,6 +51,7 @@ def main(
 ):
     """Run demo queries against the EGG graph and workflow operation layer."""
     cfg   = load_pipeline_config(Path(config) if config else None)
+    thr   = load_thresholds()
     paths = PipelinePaths(session, cfg)
 
     if not paths.egg_graph.exists():
@@ -75,6 +82,23 @@ def main(
     if paths.scene_state_package.exists():
         ssp = load_scene_state_package(paths.scene_state_package)
 
+    # ── Load workflow timeline (Phase 3 — optional) ───────────────────────────
+    timeline: dict | None = None
+    if paths.workflow_timeline.exists():
+        with open(paths.workflow_timeline) as f:
+            timeline = json.load(f)
+        summary = timeline.get("summary", {})
+        console.print(
+            f"[dim]Workflow timeline: {summary.get('total_phases', 0)} phases, "
+            f"dominant='{summary.get('dominant_phase', 'idle')}', "
+            f"sequence={summary.get('phase_sequence', [])}[/dim]"
+        )
+    else:
+        console.print(
+            "[dim]workflow_timeline.json not found — "
+            "run 10c for timeline-aware answers.[/dim]"
+        )
+
     # ── Graph queries ─────────────────────────────────────────────────────────
     results = []
     console.print("\n[bold cyan]── Primitive graph queries ──[/bold cyan]")
@@ -97,7 +121,7 @@ def main(
     # ── Workflow queries ───────────────────────────────────────────────────────
     console.print("\n[bold cyan]── Workflow queries ──[/bold cyan]")
     for q in WORKFLOW_QUERIES:
-        answer = _answer_workflow_query(q, ops_df, ssp, graph)
+        answer = answer_workflow_query(q, ops_df, ssp, graph, timeline=timeline)
         results.append({
             "query": q,
             "layer": "workflow",
@@ -129,123 +153,21 @@ def main(
     out.write_text(json.dumps(results, indent=2))
     console.print(f"[green]✓ Results → {out}[/green]")
 
-
-# ── Workflow query router ──────────────────────────────────────────────────────
-
-def _answer_workflow_query(
-    query: str,
-    ops_df: "pd.DataFrame | None",
-    ssp: "dict | None",
-    graph: dict,
-) -> str:
-    q = query.lower().strip()
-
-    # ── "What step is happening now?" ─────────────────────────────────────────
-    if "step" in q or "happening now" in q:
-        if ssp:
-            active_ops = ssp.get("state_summary", {}).get("active_operations", [])
-            if active_ops:
-                items = [
-                    f"{op['operation_type']} (agent={op['agent'] or '?'}, "
-                    f"obj={op['object'] or '?'}, conf={op['confidence']:.2f})"
-                    for op in active_ops
-                ]
-                return "Active: " + "; ".join(items)
-            wf = ssp.get("state_summary", {}).get("workflow_phase")
-            if wf:
-                return (
-                    f"No operations active in the final frames, but the "
-                    f"dominant phase was '{wf['label']}' (conf={wf['confidence']:.2f})."
-                )
-        if ops_df is not None and not ops_df.empty:
-            last_op = ops_df.sort_values("end_frame_idx", ascending=False).iloc[0]
-            return (
-                f"Most recent operation: {last_op['operation_type']} "
-                f"(frame {last_op['end_frame_idx']}, conf={last_op['confidence']:.2f})."
-            )
-        return "No operation events available. Run 10b first."
-
-    # ── "What object is being manipulated?" ───────────────────────────────────
-    if "manipulat" in q or "object is being" in q:
-        if ops_df is not None and not ops_df.empty:
-            # Highest-confidence operation with a workpiece
-            best = ops_df.dropna(subset=["object_track_id"]).sort_values(
-                "confidence", ascending=False
-            ).head(1)
-            if not best.empty:
-                r = best.iloc[0]
-                return (
-                    f"Track '{r['object_track_id']}' — involved in "
-                    f"{r['operation_type']} "
-                    f"(frames {r['start_frame_idx']}–{r['end_frame_idx']}, "
-                    f"conf={r['confidence']:.2f})."
-                )
-        return "No manipulation events detected."
-
-    # ── "What changed in the scene?" ─────────────────────────────────────────
-    if "changed" in q:
-        changes = []
-        # From graph: MOVE events
-        move_objs = [
-            o["semantic_class"]
-            for e in graph["events"] if e["event_type"] == "MOVE"
-            for edge in graph["event_edges"] if edge["event_id"] == e["event_id"]
-            for o in graph["objects"] if o["track_id"] == edge["track_id"]
-        ]
-        if move_objs:
-            changes.append(
-                f"Moved: {', '.join(sorted(set(move_objs)))}"
-            )
-        # From ops: any operation type that implies change
-        if ops_df is not None and not ops_df.empty:
-            change_ops = ops_df[
-                ops_df["operation_type"].isin(
-                    ["PICK_UP", "PUT_DOWN", "CONTACT", "TRANSFER",
-                     "PICK_UP_CANDIDATE", "PUT_DOWN_CANDIDATE"]
-                )
-            ]
-            if not change_ops.empty:
-                op_summary = change_ops["operation_type"].value_counts()
-                changes.append(
-                    "Operations: " + ", ".join(
-                        f"{cnt}×{ot}" for ot, cnt in op_summary.items()
-                    )
-                )
-        return "; ".join(changes) if changes else "No significant changes detected."
-
-    # ── "Which operation has the strongest evidence?" ─────────────────────────
-    if "strongest" in q or "evidence" in q or "best" in q:
-        if ops_df is not None and not ops_df.empty:
-            best = ops_df.sort_values("confidence", ascending=False).iloc[0]
-            n_evidence = len(json.loads(best["evidence_event_ids"])
-                             if isinstance(best["evidence_event_ids"], str) else [])
-            return (
-                f"{best['operation_type']} (id={best['operation_id']}) — "
-                f"conf={best['confidence']:.2f}, "
-                f"{n_evidence} evidence event(s). "
-                f"Notes: {best['notes']}"
-            )
-        return "No operation events available."
-
-    # ── "What is the current workflow phase?" ─────────────────────────────────
-    if "workflow" in q or "phase" in q:
-        if ssp:
-            wf = ssp.get("state_summary", {}).get("workflow_phase")
-            if wf:
-                return (
-                    f"Phase: '{wf['label']}' "
-                    f"(confidence={wf['confidence']:.2f}, {wf['evidence']})."
-                )
-        if ops_df is not None and not ops_df.empty:
-            dominant = ops_df["operation_type"].value_counts().idxmax()
-            return (
-                f"Dominant operation type: {dominant} "
-                f"({ops_df['operation_type'].value_counts()[dominant]} occurrences). "
-                "Run 09b after 10b for full workflow phase analysis."
-            )
-        return "No operation events or SSP available."
-
-    return "Query not specifically matched."
+    # ── Write run metadata ────────────────────────────────────────────────────
+    meta = build_run_metadata(
+        session_id=session,
+        stage="12_demo_queries",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        extra={
+            "n_graph_queries":    len(GRAPH_QUERIES),
+            "n_workflow_queries": len(WORKFLOW_QUERIES),
+            "n_results":          len(results),
+            "timeline_loaded":    timeline is not None,
+        },
+    )
+    saved = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]Run metadata → {saved}[/dim]")
 
 
 if __name__ == "__main__":

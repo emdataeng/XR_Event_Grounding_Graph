@@ -62,6 +62,7 @@ class PipelinePaths:
         self.neo4j_dir = processed_root / "neo4j"
         self.debug_pc_dir = self.graphs_dir / "debug_pointclouds"
         self.debug_box_dir = self.graphs_dir / "debug_boxes"
+        self.reviews_dir = processed_root / "reviews" / "operations"
 
         # Key output files
         self.frame_manifest = self.manifests_dir / "frame_manifest.csv"
@@ -75,6 +76,8 @@ class PipelinePaths:
         self.event_object_roles = self.events_dir / "event_object_roles.csv"
         self.egg_graph = self.graphs_dir / "egg_graph.json"
         self.scene_state_package = self.graphs_dir / "scene_state_package.json"
+        self.workflow_timeline = self.graphs_dir / "workflow_timeline.json"
+        self.workflow_timeline_csv = self.graphs_dir / "workflow_timeline.csv"
         self.pruned_subgraph = self.queries_dir / "pruned_subgraph.json"
         self.query_answer = self.queries_dir / "query_answer.json"
 
@@ -83,6 +86,7 @@ class PipelinePaths:
             self.manifests_dir, self.sample_vis_dir, self.objects_dir,
             self.events_dir, self.graphs_dir, self.queries_dir,
             self.neo4j_dir, self.debug_pc_dir, self.debug_box_dir,
+            self.reviews_dir,
         ]:
             d.mkdir(parents=True, exist_ok=True)
 

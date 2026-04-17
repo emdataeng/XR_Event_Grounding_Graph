@@ -1,0 +1,101 @@
+# domain_industrial_example.yaml — Example industrial assembly domain
+#
+# This config demonstrates how to adapt the pipeline to an industrial
+# workstation scenario (e.g. fastener assembly, component insertion) using
+# only configuration — no Python code changes.
+#
+# Use with: domain_config: configs/domain_industrial_example.yaml
+
+domain_name: "industrial_assembly_example"
+domain_version: "1.0"
+description: >
+  Example industrial assembly workstation.
+  An operator uses hand tools to assemble components onto a fixture.
+  Demonstrates tool-use, insertion, and alignment detection.
+
+# Object classes for this domain
+object_classes:
+  - canonical: "hand"
+    role: hand
+    description: "Operator hand"
+  - canonical: "screwdriver"
+    role: tool
+    description: "Fastening tool used to drive screws"
+  - canonical: "wrench"
+    role: tool
+    description: "Torque tool for bolts and fittings"
+  - canonical: "component"
+    role: workpiece
+    description: "Assembly component being installed"
+  - canonical: "sub_assembly"
+    role: workpiece
+    description: "Partially assembled subunit"
+  - canonical: "fixture"
+    role: fixture
+    description: "Stationary mounting jig or vice that holds workpieces"
+  - canonical: "tray"
+    role: container
+    description: "Parts tray or bin"
+  - canonical: "machine_frame"
+    role: machine_part
+    description: "Fixed machine structure or chassis"
+
+# Workflow phases for this domain
+workflow_phases:
+  - label: "idle"
+    description: "No active manipulation"
+  - label: "approach"
+    description: "Operator approaching the workpiece or fixture"
+  - label: "manipulation"
+    description: "Active pick-up or placement"
+  - label: "hold"
+    description: "Component held in position"
+  - label: "tool_use"
+    description: "Tool being applied to a workpiece"
+  - label: "placement"
+    description: "Component being placed onto or inserted into fixture"
+  - label: "contact"
+    description: "Two components in physical contact"
+  - label: "transfer"
+    description: "Component moved between locations"
+
+# Operations enabled for this domain
+enabled_operations:
+  - PICK_UP
+  - PUT_DOWN
+  - HOLD
+  - USE_TOOL
+  - CONTACT
+  - TRANSFER
+  - PICK_UP_CANDIDATE
+  - PUT_DOWN_CANDIDATE
+  - APPROACH
+  - PLACE_ONTO_CANDIDATE
+  - INSERT_CANDIDATE
+  - ALIGN_CANDIDATE
+  - ATTACH_CANDIDATE
+
+# Role interaction rules
+role_pairings:
+  - agent_role: hand
+    patient_role: workpiece
+    valid_operations: [HOLD, PICK_UP, PUT_DOWN]
+  - agent_role: tool
+    patient_role: workpiece
+    valid_operations: [USE_TOOL]
+  - agent_role: tool
+    patient_role: machine_part
+    valid_operations: [USE_TOOL]
+  - agent_role: workpiece
+    patient_role: fixture
+    valid_operations: [APPROACH, PLACE_ONTO_CANDIDATE, INSERT_CANDIDATE,
+                       ALIGN_CANDIDATE, ATTACH_CANDIDATE]
+  - agent_role: workpiece
+    patient_role: machine_part
+    valid_operations: [INSERT_CANDIDATE, ATTACH_CANDIDATE]
+  - agent_role: workpiece
+    patient_role: workpiece
+    valid_operations: [CONTACT, TRANSFER]
+  - agent_role: workpiece
+    patient_role: container
+    valid_operations: [PLACE_ONTO_CANDIDATE]

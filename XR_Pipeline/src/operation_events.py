@@ -6,13 +6,23 @@ happening* rather than *what geometry changed*.
 
 Supported operations
 --------------------
-PICK_UP         hand picks a workpiece off a surface / another object
-PUT_DOWN        hand places a workpiece onto a surface / another object
-HOLD            hand maintains continuous proximity to a workpiece
-APPROACH        entity position delta converging toward a target over time
-CONTACT         two entities come within contact_threshold_m of each other
-TRANSFER        workpiece moves while no hand is present (hand-off / slide)
-USE_TOOL        tool-role entity is proximate to a workpiece
+PICK_UP                 hand picks a workpiece off a surface / another object
+PUT_DOWN                hand places a workpiece onto a surface / another object
+HOLD                    hand maintains continuous proximity to a workpiece
+APPROACH                entity position delta converging toward a target over time
+CONTACT                 two entities come within contact_threshold_m of each other
+TRANSFER                workpiece moves while no hand is present (hand-off / slide)
+USE_TOOL                tool-role entity is proximate to a workpiece
+PLACE_ONTO_CANDIDATE    workpiece moves close to a fixture and comes to rest
+INSERT_CANDIDATE        workpiece ends up within contact range of a fixture after a move
+ALIGN_CANDIDATE         workpiece reaches alignment tolerance of a fixture
+ATTACH_CANDIDATE        sustained contact between workpiece and fixture after a move
+
+Candidates vs promoted
+----------------------
+Operations ending in _CANDIDATE carry partial evidence and lower confidence.
+They are promoted to full operations when additional evidence is available
+(e.g. a following INTERACTION or a confirmed spatial match).
 
 Detection strategy
 ------------------
@@ -28,6 +38,27 @@ Without hands (current lego-only sessions):
               object in the previous gap_window_ns  (initial resting → motion)
   PICK_UP_CANDIDATE / PUT_DOWN_CANDIDATE inferred from MOVE with stationary
   pre/post window (no hand required — lower confidence)
+
+Fixture-workpiece candidates (role-aware, no hand required):
+  APPROACH             = workpiece track converging toward fixture over
+                         approach_convergence_frames frames
+  PLACE_ONTO_CANDIDATE = workpiece MOVE endpoint within placement_proximity_m
+                         of a fixture
+  INSERT_CANDIDATE     = workpiece MOVE endpoint within contact_threshold_m
+                         of a fixture (closer than PLACE_ONTO)
+  ALIGN_CANDIDATE      = workpiece reaches within align_tolerance_m of fixture
+                         without a full MOVE event (slow drift)
+  ATTACH_CANDIDATE     = CO_LOCATE between workpiece and fixture lasting
+                         >= attachment_min_frames, preceded by a MOVE
+
+Operation enable/disable
+------------------------
+Each operation type can be toggled via thresholds.yaml:
+  operation_events:
+    enabled_operations:
+      APPROACH: true
+      PLACE_ONTO_CANDIDATE: true
+      ...
 
 Output schema — operation_events.csv
 --------------------------------------
@@ -68,12 +99,46 @@ _DEFAULTS: Dict[str, Any] = {
     "tool_min_frames": 3,
     # Window (ns) before a MOVE to check for prior motion (TRANSFER detection).
     "transfer_stationary_window_ns": 3_000_000_000,
+    # Minimum frames of converging distance to emit APPROACH.
+    "approach_convergence_frames": 5,
+    # Max starting distance (m) to consider for APPROACH detection.
+    "approach_max_start_distance_m": 0.5,
+    # Workpiece-fixture distance threshold for PLACE_ONTO_CANDIDATE.
+    "placement_proximity_m": 0.15,
+    # Alignment tolerance (m) for ALIGN_CANDIDATE — tighter than placement.
+    "align_tolerance_m": 0.05,
+    # Minimum sustained CO_LOCATE frames to emit ATTACH_CANDIDATE.
+    "attachment_min_frames": 8,
+}
+
+# Default enable/disable state for each operation type.
+# Overridden via thresholds.yaml → operation_events → enabled_operations.
+_DEFAULT_ENABLED: Dict[str, bool] = {
+    "PICK_UP": True,
+    "PUT_DOWN": True,
+    "HOLD": True,
+    "USE_TOOL": True,
+    "CONTACT": True,
+    "TRANSFER": True,
+    "PICK_UP_CANDIDATE": True,
+    "PUT_DOWN_CANDIDATE": True,
+    "APPROACH": True,
+    "PLACE_ONTO_CANDIDATE": True,
+    "INSERT_CANDIDATE": True,
+    "ALIGN_CANDIDATE": True,
+    "ATTACH_CANDIDATE": True,
 }
 
 
 def _thr(thr: Dict, key: str) -> Any:
     ops = thr.get("operation_events", {})
     return ops.get(key, _DEFAULTS[key])
+
+
+def _is_enabled(thr: Dict, op_type: str) -> bool:
+    """Return True if the given operation type is enabled in config."""
+    enabled_map = thr.get("operation_events", {}).get("enabled_operations", {})
+    return bool(enabled_map.get(op_type, _DEFAULT_ENABLED.get(op_type, True)))
 
 
 # ── Public API ─────────────────────────────────────────────────────────────────
@@ -108,8 +173,17 @@ def detect_operation_events(
         counter[0] += 1
         return f"op_{counter[0]:04d}"
 
-    if tracks_df.empty or events_df.empty:
+    if tracks_df.empty:
         return _empty_df()
+
+    # Normalise events_df: ensure required columns exist even when empty.
+    # Track-only detectors (APPROACH) still run with an empty events_df.
+    _EVENT_COLS = [
+        "event_id", "event_type", "primary_track_ids",
+        "start_frame_idx", "end_frame_idx", "start_ts_ns", "end_ts_ns", "confidence",
+    ]
+    if events_df is None or events_df.empty:
+        events_df = pd.DataFrame(columns=_EVENT_COLS)
 
     # ── Role partition ─────────────────────────────────────────────────────────
     has_role_col = "object_role" in tracks_df.columns
@@ -178,6 +252,21 @@ def detect_operation_events(
         hand_tids, position_at, thr, oid,
     )
 
+    # ── Fixture-workpiece candidate operations ─────────────────────────────────
+    if fixture_tids:
+        ops += _detect_approach(
+            tracks_df, events_df, workpiece_tids, fixture_tids,
+            position_at, thr, oid,
+        )
+        ops += _detect_placement_candidates(
+            tracks_df, events_df, workpiece_tids, fixture_tids,
+            position_at, thr, oid,
+        )
+        ops += _detect_attach_candidates(
+            tracks_df, events_df, workpiece_tids, fixture_tids,
+            position_at, thr, oid,
+        )
+
     if not ops:
         return _empty_df()
 
@@ -239,12 +328,7 @@ def _detect_interactions(
 
         evidence = [str(ie["event_id"])] + linked_move_ids
 
-        if obj_moved:
-            # PICK_UP if move starts at/near interaction onset (lifting)
-            # PUT_DOWN if move ends at/near interaction offset (placing)
-            # Heuristic: if most of the move is AFTER the interaction end → PUT_DOWN,
-            #            if most of the move is BEFORE the interaction end → PICK_UP.
-            # When in doubt, emit both as candidates at lower confidence.
+        if obj_moved and _is_enabled(thr, "PICK_UP"):
             ops.append({
                 "operation_id":       oid(),
                 "operation_type":     "PICK_UP",
@@ -262,7 +346,7 @@ def _detect_interactions(
                     f"({duration_frames} frames) and workpiece moved."
                 ),
             })
-        elif duration_frames >= hold_min:
+        elif duration_frames >= hold_min and _is_enabled(thr, "HOLD"):
             ops.append({
                 "operation_id":       oid(),
                 "operation_type":     "HOLD",
@@ -311,6 +395,8 @@ def _detect_use_tool(
 
         duration_frames = int(ce["end_frame_idx"]) - int(ce["start_frame_idx"]) + 1
         if duration_frames < tool_min:
+            continue
+        if not _is_enabled(thr, "USE_TOOL"):
             continue
 
         ops.append({
@@ -376,6 +462,8 @@ def _detect_contact(
 
         dist = float(np.linalg.norm(pos_b - pos_a))
         if dist > contact_thr:
+            continue
+        if not _is_enabled(thr, "CONTACT"):
             continue
 
         ops.append({
@@ -487,7 +575,7 @@ def _detect_transfer_candidates(
 
         conf_base = float(me.get("confidence", 0.5))
 
-        if was_stationary and hand_tids:
+        if was_stationary and hand_tids and _is_enabled(thr, "PICK_UP_CANDIDATE"):
             # Object was at rest, then moved, no hand → PICK_UP_CANDIDATE
             ops.append({
                 "operation_id":       oid(),
@@ -506,7 +594,7 @@ def _detect_transfer_candidates(
                     "no hand detected. PICK_UP inferred."
                 ),
             })
-        elif is_stationary_after and hand_tids:
+        elif is_stationary_after and hand_tids and _is_enabled(thr, "PUT_DOWN_CANDIDATE"):
             # Object moved then came to rest, no hand → PUT_DOWN_CANDIDATE
             ops.append({
                 "operation_id":       oid(),
@@ -525,7 +613,7 @@ def _detect_transfer_candidates(
                     "no hand detected. PUT_DOWN inferred."
                 ),
             })
-        elif not hand_tids:
+        elif not hand_tids and _is_enabled(thr, "TRANSFER"):
             # No hand class in vocab at all → emit as TRANSFER (object moved, cause unknown)
             ops.append({
                 "operation_id":       oid(),
@@ -546,6 +634,301 @@ def _detect_transfer_candidates(
             })
 
     return ops
+
+
+# ── Fixture-workpiece candidate detectors ─────────────────────────────────────
+
+def _detect_approach(
+    tracks_df: pd.DataFrame,
+    events_df: pd.DataFrame,
+    workpiece_tids: Set[str],
+    fixture_tids: Set[str],
+    position_at: Dict[str, Dict[int, np.ndarray]],
+    thr: Dict,
+    oid,
+) -> List[Dict]:
+    """Detect APPROACH: workpiece track converging toward a fixture over time.
+
+    Scans all workpiece-fixture pairs. For each pair, looks for a window of
+    at least approach_convergence_frames consecutive frames where the distance
+    is monotonically (or near-monotonically) decreasing.
+    """
+    if not _is_enabled(thr, "APPROACH"):
+        return []
+
+    ops: List[Dict] = []
+    conv_frames = int(_thr(thr, "approach_convergence_frames"))
+    max_start_dist = float(_thr(thr, "approach_max_start_distance_m"))
+
+    for w_tid in workpiece_tids:
+        w_frames = sorted(position_at.get(w_tid, {}).keys())
+        if len(w_frames) < conv_frames:
+            continue
+
+        for f_tid in fixture_tids:
+            f_positions = position_at.get(f_tid, {})
+            if not f_positions:
+                continue
+
+            # Compute distance sequence for overlapping frames
+            shared = sorted(set(w_frames) & set(f_positions.keys()))
+            if len(shared) < conv_frames:
+                continue
+
+            dists = [
+                float(np.linalg.norm(position_at[w_tid][f] - f_positions[f]))
+                for f in shared
+            ]
+
+            # Slide a window of conv_frames looking for convergence
+            for wi in range(len(dists) - conv_frames + 1):
+                window_dists = dists[wi: wi + conv_frames]
+                window_frames = shared[wi: wi + conv_frames]
+
+                if window_dists[0] > max_start_dist:
+                    continue
+                # Convergence: each step should decrease or stay close
+                deltas = [window_dists[k + 1] - window_dists[k]
+                          for k in range(len(window_dists) - 1)]
+                n_decreasing = sum(1 for d in deltas if d < 0)
+                if n_decreasing < len(deltas) * 0.7:  # 70% of steps converging
+                    continue
+
+                total_reduction = window_dists[0] - window_dists[-1]
+                if total_reduction <= 0:
+                    continue
+
+                conf = round(min(0.65, total_reduction / max(window_dists[0], 1e-6) * 0.8), 3)
+                start_f = window_frames[0]
+                end_f   = window_frames[-1]
+
+                # Approximate timestamps from tracks
+                ts_rows = tracks_df[tracks_df["track_id"] == w_tid]
+                start_ts = _frame_to_ts(ts_rows, start_f)
+                end_ts   = _frame_to_ts(ts_rows, end_f)
+
+                ops.append({
+                    "operation_id":       oid(),
+                    "operation_type":     "APPROACH",
+                    "start_frame_idx":    start_f,
+                    "end_frame_idx":      end_f,
+                    "start_ts_ns":        start_ts,
+                    "end_ts_ns":          end_ts,
+                    "agent_track_id":     None,
+                    "object_track_id":    w_tid,
+                    "secondary_track_id": f_tid,
+                    "confidence":         conf,
+                    "evidence_event_ids": json.dumps([]),
+                    "notes": (
+                        f"Workpiece {w_tid} approached fixture {f_tid} over "
+                        f"{conv_frames} frames "
+                        f"(dist {window_dists[0]:.3f}→{window_dists[-1]:.3f}m)."
+                    ),
+                })
+                break  # one APPROACH per pair per pass
+
+    return ops
+
+
+def _detect_placement_candidates(
+    tracks_df: pd.DataFrame,
+    events_df: pd.DataFrame,
+    workpiece_tids: Set[str],
+    fixture_tids: Set[str],
+    position_at: Dict[str, Dict[int, np.ndarray]],
+    thr: Dict,
+    oid,
+) -> List[Dict]:
+    """Detect PLACE_ONTO_CANDIDATE and INSERT_CANDIDATE.
+
+    After a workpiece MOVE event, check the endpoint proximity to each
+    fixture track:
+      - PLACE_ONTO_CANDIDATE : endpoint within placement_proximity_m
+      - INSERT_CANDIDATE     : endpoint within contact_threshold_m (tighter)
+    """
+    ops: List[Dict] = []
+    placement_thr = float(_thr(thr, "placement_proximity_m"))
+    contact_thr   = float(_thr(thr, "contact_threshold_m"))
+    align_tol     = float(_thr(thr, "align_tolerance_m"))
+
+    move_events = events_df[events_df["event_type"] == "MOVE"]
+
+    for _, me in move_events.iterrows():
+        try:
+            tids = [str(t) for t in json.loads(me["primary_track_ids"])]
+        except Exception:
+            continue
+
+        w_tid = next((t for t in tids if t in workpiece_tids), None)
+        if w_tid is None:
+            continue
+
+        end_f = int(me["end_frame_idx"])
+        w_pos_end = position_at.get(w_tid, {}).get(end_f)
+        if w_pos_end is None:
+            # Try nearest frame
+            wf = sorted(position_at.get(w_tid, {}).keys())
+            if not wf:
+                continue
+            nearest = min(wf, key=lambda f: abs(f - end_f))
+            w_pos_end = position_at[w_tid][nearest]
+
+        for f_tid in fixture_tids:
+            f_frames = sorted(position_at.get(f_tid, {}).keys())
+            if not f_frames:
+                continue
+            nearest_f = min(f_frames, key=lambda f: abs(f - end_f))
+            f_pos = position_at[f_tid][nearest_f]
+
+            dist = float(np.linalg.norm(w_pos_end - f_pos))
+
+            # Threshold order: align_tol ≤ contact_thr ≤ placement_thr
+            # Check tightest first so each range maps to exactly one operation.
+            if dist <= align_tol and _is_enabled(thr, "ALIGN_CANDIDATE"):
+                ops.append({
+                    "operation_id":       oid(),
+                    "operation_type":     "ALIGN_CANDIDATE",
+                    "start_frame_idx":    int(me["start_frame_idx"]),
+                    "end_frame_idx":      end_f,
+                    "start_ts_ns":        int(me["start_ts_ns"]),
+                    "end_ts_ns":          int(me["end_ts_ns"]),
+                    "agent_track_id":     None,
+                    "object_track_id":    w_tid,
+                    "secondary_track_id": f_tid,
+                    "confidence":         round(0.60 * (1.0 - dist / align_tol), 3),
+                    "evidence_event_ids": json.dumps([str(me["event_id"])]),
+                    "notes": (
+                        f"Workpiece {w_tid} reached alignment tolerance of "
+                        f"fixture {f_tid} ({dist:.3f}m ≤ {align_tol}m)."
+                    ),
+                })
+            elif dist <= contact_thr and _is_enabled(thr, "INSERT_CANDIDATE"):
+                ops.append({
+                    "operation_id":       oid(),
+                    "operation_type":     "INSERT_CANDIDATE",
+                    "start_frame_idx":    int(me["start_frame_idx"]),
+                    "end_frame_idx":      end_f,
+                    "start_ts_ns":        int(me["start_ts_ns"]),
+                    "end_ts_ns":          int(me["end_ts_ns"]),
+                    "agent_track_id":     None,
+                    "object_track_id":    w_tid,
+                    "secondary_track_id": f_tid,
+                    "confidence":         round(0.55 * (1.0 - dist / contact_thr), 3),
+                    "evidence_event_ids": json.dumps([str(me["event_id"])]),
+                    "notes": (
+                        f"Workpiece {w_tid} moved to within {dist:.3f}m of "
+                        f"fixture {f_tid} (contact range {align_tol}–{contact_thr}m). "
+                        "INSERT inferred."
+                    ),
+                })
+            elif dist <= placement_thr and _is_enabled(thr, "PLACE_ONTO_CANDIDATE"):
+                ops.append({
+                    "operation_id":       oid(),
+                    "operation_type":     "PLACE_ONTO_CANDIDATE",
+                    "start_frame_idx":    int(me["start_frame_idx"]),
+                    "end_frame_idx":      end_f,
+                    "start_ts_ns":        int(me["start_ts_ns"]),
+                    "end_ts_ns":          int(me["end_ts_ns"]),
+                    "agent_track_id":     None,
+                    "object_track_id":    w_tid,
+                    "secondary_track_id": f_tid,
+                    "confidence":         round(0.45 * (1.0 - dist / placement_thr), 3),
+                    "evidence_event_ids": json.dumps([str(me["event_id"])]),
+                    "notes": (
+                        f"Workpiece {w_tid} moved to within {dist:.3f}m of "
+                        f"fixture {f_tid} (placement threshold {placement_thr}m). "
+                        "PLACE_ONTO inferred."
+                    ),
+                })
+
+    return ops
+
+
+def _detect_attach_candidates(
+    tracks_df: pd.DataFrame,
+    events_df: pd.DataFrame,
+    workpiece_tids: Set[str],
+    fixture_tids: Set[str],
+    position_at: Dict[str, Dict[int, np.ndarray]],
+    thr: Dict,
+    oid,
+) -> List[Dict]:
+    """Detect ATTACH_CANDIDATE: sustained CO_LOCATE between workpiece and fixture
+    that is preceded by a MOVE (indicating the workpiece was brought to the fixture).
+    """
+    if not _is_enabled(thr, "ATTACH_CANDIDATE"):
+        return []
+
+    ops: List[Dict] = []
+    attach_min = int(_thr(thr, "attachment_min_frames"))
+
+    coloc_events = events_df[events_df["event_type"] == "CO_LOCATE"]
+    move_events  = events_df[events_df["event_type"] == "MOVE"]
+
+    for _, ce in coloc_events.iterrows():
+        try:
+            tids = [str(t) for t in json.loads(ce["primary_track_ids"])]
+        except Exception:
+            continue
+
+        w_tid = next((t for t in tids if t in workpiece_tids), None)
+        f_tid = next((t for t in tids if t in fixture_tids), None)
+        if w_tid is None or f_tid is None:
+            continue
+
+        duration_frames = int(ce["end_frame_idx"]) - int(ce["start_frame_idx"]) + 1
+        if duration_frames < attach_min:
+            continue
+
+        # Was the workpiece in motion before this CO_LOCATE?
+        ce_start_ns = int(ce["start_ts_ns"])
+        prior_moves = move_events[
+            (move_events["end_ts_ns"] <= ce_start_ns)
+        ]
+        preceded_by_move = False
+        for _, me in prior_moves.iterrows():
+            try:
+                m_tids = [str(t) for t in json.loads(me["primary_track_ids"])]
+            except Exception:
+                continue
+            if w_tid in m_tids:
+                preceded_by_move = True
+                break
+
+        if not preceded_by_move:
+            continue
+
+        conf = round(min(0.70, 0.50 + duration_frames / 20.0 * 0.20), 3)
+        ops.append({
+            "operation_id":       oid(),
+            "operation_type":     "ATTACH_CANDIDATE",
+            "start_frame_idx":    int(ce["start_frame_idx"]),
+            "end_frame_idx":      int(ce["end_frame_idx"]),
+            "start_ts_ns":        int(ce["start_ts_ns"]),
+            "end_ts_ns":          int(ce["end_ts_ns"]),
+            "agent_track_id":     None,
+            "object_track_id":    w_tid,
+            "secondary_track_id": f_tid,
+            "confidence":         conf,
+            "evidence_event_ids": json.dumps([str(ce["event_id"])]),
+            "notes": (
+                f"Workpiece {w_tid} sustained proximity to fixture {f_tid} "
+                f"for {duration_frames} frames after prior movement. "
+                "ATTACH inferred."
+            ),
+        })
+
+    return ops
+
+
+# ── Timestamp helpers ──────────────────────────────────────────────────────────
+
+def _frame_to_ts(tracks_df: pd.DataFrame, frame_idx: int) -> int:
+    """Look up timestamp_ns for a frame index; fall back to frame * 100ms."""
+    row = tracks_df[tracks_df["frame_idx"] == frame_idx]
+    if not row.empty:
+        return int(row.iloc[0]["timestamp_ns"])
+    return frame_idx * 100_000_000
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

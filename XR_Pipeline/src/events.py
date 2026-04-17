@@ -239,7 +239,7 @@ def detect_event_windows(
                         "end_ts_ns": int(row_h["timestamp_ns"]),
                         "primary_track_ids": json.dumps([htid, oid]),
                         "room_id": room_id,
-                        "trigger_reason": f"hands near {o_class} for {frame - interact_start_frame} frames",
+                        "trigger_reason": f"hand-role object near {o_class} for {frame - interact_start_frame} frames",
                         "confidence": 0.8,
                     })
                     was_interacting = False
@@ -259,7 +259,7 @@ def detect_event_windows(
                     "end_ts_ns": int(last_row["timestamp_ns"]),
                     "primary_track_ids": json.dumps([htid, oid]),
                     "room_id": room_id,
-                    "trigger_reason": f"hands near {o_class} for {last_frame - interact_start_frame} frames (until track end)",
+                    "trigger_reason": f"hand-role object near {o_class} for {last_frame - interact_start_frame} frames (until track end)",
                     "confidence": 0.8,
                 })
 
@@ -282,7 +282,7 @@ _TEMPLATES: Dict[str, str] = {
     "MOVE": "{class_a} moved from ({x0:.2f},{y0:.2f},{z0:.2f}) to ({x1:.2f},{y1:.2f},{z1:.2f}) (dist {dist:.2f}m). {spatial_ctx}",
     "CO_LOCATE": "{class_a} and {class_b} came within {near_dist:.2f}m of each other ({relation}).",
     "SEPARATE": "{class_a} and {class_b} moved apart (now {near_dist:.2f}m, previously proximate).",
-    "INTERACTION": "User's hands interacted with {class_b} at ({x:.2f},{y:.2f},{z:.2f}): {class_b} was {relation} during contact.",
+    "INTERACTION": "Hand-role object interacted with {class_b} at ({x:.2f},{y:.2f},{z:.2f}): {class_b} was {relation} during contact.",
     "PLACE": "{class_a} was placed near ({x:.2f},{y:.2f},{z:.2f}).",
     "ALIGN_CANDIDATE": "{class_a} aligned with {class_b}.",
     "ATTACH_CANDIDATE": "{class_a} may have attached to {class_b}.",
