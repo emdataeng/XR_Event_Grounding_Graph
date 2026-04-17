@@ -215,3 +215,84 @@ def test_motion_debug_role_aware_threshold_recorded():
     assert all(row["move_threshold_m"] == pytest.approx(0.08) for _, row in wp_rows.iterrows())
     hand_rows = debug[debug["track_id"] == "trk_hand"]
     assert all(row["move_threshold_m"] == pytest.approx(0.15) for _, row in hand_rows.iterrows())
+
+
+# ── B3: 2D bbox motion columns ────────────────────────────────────────────────
+
+def _make_tracks_with_bbox(displacement_px=30.0):
+    """Tracks with bbox columns for 2D motion testing."""
+    rows = [
+        {"track_id": "trk_wp", "frame_idx": 1, "timestamp_ns": 0,
+         "observation_id": "obs_001",
+         "semantic_class": "red_lego", "object_role": "workpiece",
+         "x": 0.0, "y": 0.0, "z": 1.0,
+         "bbox_x1": 100.0, "bbox_y1": 100.0, "bbox_x2": 150.0, "bbox_y2": 150.0},
+        {"track_id": "trk_wp", "frame_idx": 2, "timestamp_ns": 100_000_000,
+         "observation_id": "obs_002",
+         "semantic_class": "red_lego", "object_role": "workpiece",
+         "x": 0.01, "y": 0.0, "z": 1.0,  # tiny 3D motion
+         "bbox_x1": 100.0 + displacement_px, "bbox_y1": 100.0,
+         "bbox_x2": 150.0 + displacement_px, "bbox_y2": 150.0},
+    ]
+    return pd.DataFrame(rows)
+
+
+def _make_obs_df_for_bbox():
+    """Minimal observations CSV with bbox columns."""
+    rows = [
+        {"observation_id": "obs_001", "frame_idx": 1,
+         "bbox_x1": 100.0, "bbox_y1": 100.0, "bbox_x2": 150.0, "bbox_y2": 150.0},
+        {"observation_id": "obs_002", "frame_idx": 2,
+         "bbox_x1": 130.0, "bbox_y1": 100.0, "bbox_x2": 180.0, "bbox_y2": 150.0},
+    ]
+    return pd.DataFrame(rows)
+
+
+def test_motion_debug_2d_columns_present_without_obs():
+    """2D columns always present in debug output (None without obs_df)."""
+    df = _make_tracks_with_roles()
+    debug = compute_track_motion_debug(df)
+    for col in ("bbox_cx", "bbox_cy", "bbox_area_px", "bbox_disp_2d_px", "bbox_area_change_pct"):
+        assert col in debug.columns
+
+
+def test_motion_debug_2d_disp_computed_from_obs():
+    """bbox_disp_2d_px is populated when obs_df provides bbox data via observation_id."""
+    df = _make_tracks_with_bbox(displacement_px=30.0)
+    obs = _make_obs_df_for_bbox()
+    debug = compute_track_motion_debug(df, obs_df=obs)
+    second_row = debug[(debug["track_id"] == "trk_wp") & (debug["frame_idx"] == 2)]
+    assert len(second_row) == 1
+    disp = second_row.iloc[0]["bbox_disp_2d_px"]
+    assert disp is not None
+    assert disp == pytest.approx(30.0, abs=1.0)
+
+
+def test_motion_debug_2d_none_when_no_obs():
+    """bbox_disp_2d_px is None when obs_df not provided."""
+    df = _make_tracks_with_bbox()
+    debug = compute_track_motion_debug(df)
+    second_row = debug[(debug["track_id"] == "trk_wp") & (debug["frame_idx"] == 2)]
+    assert second_row.iloc[0]["bbox_disp_2d_px"] is None
+
+
+def test_2d_fallback_move_fires_when_3d_below_threshold():
+    """2D fallback MOVE fires when bbox displacement >= min_2d_disp_px and 3D is below threshold."""
+    df = _make_tracks_with_bbox(displacement_px=30.0)
+    # 3D displacement is 0.01 m (tiny) — well below any reasonable threshold
+    events = detect_event_windows(
+        df,
+        min_move_distance_m=0.50,  # high threshold so 3D won't fire
+        min_2d_disp_px=20.0,
+    )
+    move_events = events[events["event_type"] == "MOVE"]
+    assert len(move_events) > 0
+    assert "2D" in move_events.iloc[0]["trigger_reason"]
+
+
+def test_2d_fallback_disabled_when_zero():
+    """2D fallback does not fire when min_2d_disp_px=0."""
+    df = _make_tracks_with_bbox(displacement_px=100.0)
+    events = detect_event_windows(df, min_move_distance_m=0.50, min_2d_disp_px=0.0)
+    move_events = events[events["event_type"] == "MOVE"]
+    assert len(move_events) == 0

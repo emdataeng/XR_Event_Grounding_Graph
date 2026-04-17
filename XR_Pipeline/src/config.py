@@ -73,6 +73,7 @@ class PipelinePaths:
         self.track_debug = self.objects_dir / "track_debug.json"
         self.event_windows = self.events_dir / "event_windows.csv"
         self.track_motion_debug = self.objects_dir / "track_motion_debug.csv"
+        self.support_state_transitions = self.objects_dir / "support_state_transitions.csv"
         self.events_csv = self.events_dir / "events.csv"
         self.event_object_roles = self.events_dir / "event_object_roles.csv"
         self.egg_graph = self.graphs_dir / "egg_graph.json"

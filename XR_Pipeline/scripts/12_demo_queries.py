@@ -17,6 +17,7 @@ from src.egg import load_egg
 from src.pruning import answer_query
 from src.scene_state_package import load_scene_state_package
 from src.workflow_queries import answer_workflow_query
+from src.domain_config import load_domain_config
 from src.run_metadata import build_run_metadata, save_run_metadata
 
 app = typer.Typer()
@@ -53,6 +54,19 @@ def main(
     cfg   = load_pipeline_config(Path(config) if config else None)
     thr   = load_thresholds()
     paths = PipelinePaths(session, cfg)
+
+    # D2: load domain config and build domain-aware query list
+    domain = load_domain_config(cfg=cfg)
+    workflow_queries = list(WORKFLOW_QUERIES)
+    if domain:
+        console.print(
+            f"[cyan]Domain '{domain.domain_name}' v{domain.domain_version}: "
+            f"adding {len(domain.workflow_phases)} phase queries[/cyan]"
+        )
+        for phase in domain.workflow_phases:
+            workflow_queries.append(f"Was the '{phase.label}' phase reached?")
+    else:
+        console.print("[dim]No domain config — using generic workflow queries[/dim]")
 
     if not paths.egg_graph.exists():
         console.print("[red]egg_graph.json not found. Run 09 first.[/red]")
@@ -120,7 +134,7 @@ def main(
 
     # ── Workflow queries ───────────────────────────────────────────────────────
     console.print("\n[bold cyan]── Workflow queries ──[/bold cyan]")
-    for q in WORKFLOW_QUERIES:
+    for qi, q in enumerate(workflow_queries):
         answer = answer_workflow_query(q, ops_df, ssp, graph, timeline=timeline)
         results.append({
             "query": q,
@@ -129,7 +143,7 @@ def main(
         })
         console.print(Panel(
             f"[dim]Q:[/dim] {q}\n[bold green]A:[/bold green] {answer}",
-            title=f"Workflow Query {WORKFLOW_QUERIES.index(q)+1}/{len(WORKFLOW_QUERIES)}",
+            title=f"Workflow Query {qi + 1}/{len(workflow_queries)}",
         ))
 
     # ── Operation events table ────────────────────────────────────────────────
@@ -161,9 +175,10 @@ def main(
         thresholds_cfg=thr,
         extra={
             "n_graph_queries":    len(GRAPH_QUERIES),
-            "n_workflow_queries": len(WORKFLOW_QUERIES),
+            "n_workflow_queries": len(workflow_queries),
             "n_results":          len(results),
             "timeline_loaded":    timeline is not None,
+            "domain_name":        domain.domain_name if domain else None,
         },
     )
     saved = save_run_metadata(paths.processed_root, meta)

@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pandas as pd
 import pytest
 
-from src.operation_events import detect_operation_events, _empty_df
+from src.operation_events import detect_operation_events, _empty_df, compute_support_state_transitions
 
 
 # ── Fixture helpers ───────────────────────────────────────────────────────────
@@ -301,3 +301,130 @@ def test_contact_detected_on_coloc_within_threshold():
     result = detect_operation_events(tracks, events, EMPTY_THR)
     contacts = result[result["operation_type"] == "CONTACT"]
     assert not contacts.empty
+
+
+# ── C2: compute_support_state_transitions ─────────────────────────────────────
+
+def _make_ops_for_track(
+    tid: str = "trk_0001",
+    ops=(),  # list of (op_id, op_type, start_f, end_f)
+) -> pd.DataFrame:
+    rows = []
+    for op_id, op_type, start_f, end_f in ops:
+        rows.append({
+            "operation_id":   op_id,
+            "operation_type": op_type,
+            "start_frame_idx": start_f,
+            "end_frame_idx":   end_f,
+            "object_track_id": tid,
+            "agent_track_id":  "trk_hand",
+            "confidence":      0.75,
+        })
+    return pd.DataFrame(rows) if rows else pd.DataFrame()
+
+
+SST_COLS = {"track_id", "semantic_class", "state", "start_frame_idx", "end_frame_idx",
+            "trigger_operation_id", "notes"}
+
+
+def test_sst_empty_tracks_returns_empty():
+    result = compute_support_state_transitions(pd.DataFrame(), pd.DataFrame())
+    assert result.empty
+    assert SST_COLS.issubset(set(result.columns))
+
+
+def test_sst_no_ops_resting_throughout():
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    result = compute_support_state_transitions(tracks, pd.DataFrame())
+    assert len(result) == 1
+    assert result.iloc[0]["state"] == "RESTING"
+    assert result.iloc[0]["track_id"] == "trk_0001"
+
+
+def test_sst_hold_produces_carried():
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    ops = _make_ops_for_track("trk_0001", [("op_01", "HOLD", 3, 7)])
+    result = compute_support_state_transitions(tracks, ops)
+    states = result["state"].tolist()
+    assert "CARRIED" in states
+
+
+def test_sst_pick_up_produces_carried():
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    ops = _make_ops_for_track("trk_0001", [("op_01", "PICK_UP", 4, 8)])
+    result = compute_support_state_transitions(tracks, ops)
+    assert "CARRIED" in result["state"].tolist()
+
+
+def test_sst_contact_produces_in_contact():
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    ops = _make_ops_for_track("trk_0001", [("op_01", "CONTACT", 3, 7)])
+    result = compute_support_state_transitions(tracks, ops)
+    assert "IN_CONTACT" in result["state"].tolist()
+
+
+def test_sst_place_onto_produces_in_contact():
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    ops = _make_ops_for_track("trk_0001", [("op_01", "PLACE_ONTO_CANDIDATE", 3, 7)])
+    result = compute_support_state_transitions(tracks, ops)
+    assert "IN_CONTACT" in result["state"].tolist()
+
+
+def test_sst_unknown_op_produces_active():
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    ops = _make_ops_for_track("trk_0001", [("op_01", "APPROACH", 3, 7)])
+    result = compute_support_state_transitions(tracks, ops)
+    assert "ACTIVE" in result["state"].tolist()
+
+
+def test_sst_resting_gap_before_op():
+    """Frames before the first operation are RESTING."""
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    ops = _make_ops_for_track("trk_0001", [("op_01", "HOLD", 6, 10)])
+    result = compute_support_state_transitions(tracks, ops)
+    resting = result[result["state"] == "RESTING"]
+    assert not resting.empty
+    # The resting window starts at frame 0
+    assert resting.iloc[0]["start_frame_idx"] == 0
+
+
+def test_sst_resting_gap_after_op():
+    """Frames after the last operation are RESTING."""
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    ops = _make_ops_for_track("trk_0001", [("op_01", "HOLD", 0, 4)])
+    result = compute_support_state_transitions(tracks, ops)
+    resting_after = result[(result["state"] == "RESTING") &
+                           (result["start_frame_idx"] >= 5)]
+    assert not resting_after.empty
+
+
+def test_sst_multiple_tracks_independent():
+    """Each track gets its own state windows."""
+    tracks = pd.concat([
+        _make_workpiece_tracks("trk_0001", frames=(0, 5, 10)),
+        _make_workpiece_tracks("trk_0002", frames=(0, 5, 10)),
+    ], ignore_index=True)
+    ops = pd.concat([
+        _make_ops_for_track("trk_0001", [("op_01", "HOLD", 3, 7)]),
+        _make_ops_for_track("trk_0002", [("op_02", "CONTACT", 3, 7)]),
+    ], ignore_index=True)
+    result = compute_support_state_transitions(tracks, ops)
+    trk1_states = result[result["track_id"] == "trk_0001"]["state"].tolist()
+    trk2_states = result[result["track_id"] == "trk_0002"]["state"].tolist()
+    assert "CARRIED" in trk1_states
+    assert "IN_CONTACT" in trk2_states
+    assert "CARRIED" not in trk2_states
+
+
+def test_sst_trigger_op_id_recorded():
+    tracks = _make_workpiece_tracks(frames=(0, 5, 10))
+    ops = _make_ops_for_track("trk_0001", [("op_hold_42", "HOLD", 3, 7)])
+    result = compute_support_state_transitions(tracks, ops)
+    carried = result[result["state"] == "CARRIED"]
+    assert carried.iloc[0]["trigger_operation_id"] == "op_hold_42"
+
+
+def test_sst_schema_columns_present():
+    tracks = _make_workpiece_tracks()
+    result = compute_support_state_transitions(tracks, pd.DataFrame())
+    assert SST_COLS.issubset(set(result.columns))

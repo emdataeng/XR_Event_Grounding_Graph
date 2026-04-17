@@ -994,6 +994,121 @@ def _detect_attach_candidates(
     return ops
 
 
+# ── C2: Support-state transitions ─────────────────────────────────────────────
+
+# Which operations place a track into each state
+_CARRIED_OPS   = frozenset({"HOLD", "PICK_UP", "PUT_DOWN"})
+_IN_CONTACT_OPS = frozenset({
+    "CONTACT", "ATTACH_CANDIDATE", "PLACE_ONTO_CANDIDATE", "INSERT_CANDIDATE", "ALIGN_CANDIDATE"
+})
+
+
+def compute_support_state_transitions(
+    tracks_df: pd.DataFrame,
+    ops_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Compute per-track support-state windows from operation events (C2).
+
+    Each workpiece (or fixture) track is assigned one of three explicit states
+    for each frame window:
+
+      RESTING     — object present but not being acted on
+      CARRIED     — hand is holding/moving the object (HOLD, PICK_UP, PUT_DOWN)
+      IN_CONTACT  — touching another object (CONTACT, ATTACH_CANDIDATE, …)
+
+    Returns a DataFrame with columns:
+      track_id, semantic_class, state, start_frame_idx, end_frame_idx,
+      trigger_operation_id, notes
+    """
+    _COLS = [
+        "track_id", "semantic_class", "state",
+        "start_frame_idx", "end_frame_idx",
+        "trigger_operation_id", "notes",
+    ]
+    if tracks_df is None or tracks_df.empty:
+        return pd.DataFrame(columns=_COLS)
+
+    rows: List[Dict[str, Any]] = []
+
+    for tid, grp in tracks_df.groupby("track_id"):
+        grp_s = grp.sort_values("frame_idx")
+        tid_str   = str(tid)
+        sem_class = str(grp_s["semantic_class"].iloc[0]) if "semantic_class" in grp_s.columns else "unknown"
+        first_f   = int(grp_s["frame_idx"].min())
+        last_f    = int(grp_s["frame_idx"].max())
+
+        # Find all operations that target this track as object
+        if ops_df is not None and not ops_df.empty:
+            track_ops = ops_df[
+                ops_df["object_track_id"].astype(str) == tid_str
+            ].sort_values("start_frame_idx")
+        else:
+            track_ops = pd.DataFrame()
+
+        if track_ops.empty:
+            rows.append({
+                "track_id":              tid_str,
+                "semantic_class":        sem_class,
+                "state":                 "RESTING",
+                "start_frame_idx":       first_f,
+                "end_frame_idx":         last_f,
+                "trigger_operation_id":  None,
+                "notes":                 "No operations detected — track resting throughout.",
+            })
+            continue
+
+        # Build state windows by interleaving RESTING gaps with active-op windows.
+        cursor = first_f
+        for _, op in track_ops.iterrows():
+            op_type  = str(op["operation_type"])
+            op_start = int(op["start_frame_idx"])
+            op_end   = int(op["end_frame_idx"])
+            op_id    = str(op["operation_id"])
+
+            if op_start > cursor:
+                rows.append({
+                    "track_id":              tid_str,
+                    "semantic_class":        sem_class,
+                    "state":                 "RESTING",
+                    "start_frame_idx":       cursor,
+                    "end_frame_idx":         op_start - 1,
+                    "trigger_operation_id":  None,
+                    "notes":                 f"No operation covering frames {cursor}–{op_start - 1}.",
+                })
+
+            if op_type in _CARRIED_OPS:
+                state = "CARRIED"
+            elif op_type in _IN_CONTACT_OPS:
+                state = "IN_CONTACT"
+            else:
+                state = "ACTIVE"
+
+            rows.append({
+                "track_id":              tid_str,
+                "semantic_class":        sem_class,
+                "state":                 state,
+                "start_frame_idx":       op_start,
+                "end_frame_idx":         op_end,
+                "trigger_operation_id":  op_id,
+                "notes":                 f"{op_type} ({op_id}).",
+            })
+            cursor = max(cursor, op_end + 1)
+
+        # Trailing RESTING window after last operation
+        if cursor <= last_f:
+            rows.append({
+                "track_id":              tid_str,
+                "semantic_class":        sem_class,
+                "state":                 "RESTING",
+                "start_frame_idx":       cursor,
+                "end_frame_idx":         last_f,
+                "trigger_operation_id":  None,
+                "notes":                 f"No operation after frame {cursor}.",
+            })
+
+    return pd.DataFrame(rows) if rows else pd.DataFrame(columns=_COLS)
+
+
 # ── Timestamp helpers ──────────────────────────────────────────────────────────
 
 def _frame_to_ts(tracks_df: pd.DataFrame, frame_idx: int) -> int:

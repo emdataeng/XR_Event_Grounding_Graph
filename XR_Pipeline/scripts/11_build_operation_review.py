@@ -32,6 +32,7 @@ from rich.table import Table
 
 from src.config import PipelinePaths, load_pipeline_config, load_thresholds
 from src.scene_state_package import load_scene_state_package
+from src.domain_config import load_domain_config
 from src.run_metadata import (
     build_run_metadata, save_run_metadata,
     check_staleness, emit_staleness_warnings,
@@ -55,6 +56,10 @@ def main(
     thr   = load_thresholds()
     paths = PipelinePaths(session, cfg)
     paths.ensure_dirs()
+
+    # D2: load domain config for review labeling
+    domain = load_domain_config(cfg=cfg)
+    domain_name = domain.domain_name if domain else None
 
     # ── Staleness guard ───────────────────────────────────────────────────────
     warnings = check_staleness(paths.processed_root, "10b_build_operation_events", cfg, thr)
@@ -133,6 +138,7 @@ def main(
         motion_debug_df=motion_debug_df,
         timeline=timeline,
         thr=thr,
+        domain_name=domain_name,
     )
 
     (out_dir / "session_review.json").write_text(
@@ -279,11 +285,13 @@ def _build_session_review(
     motion_debug_df: "pd.DataFrame | None" = None,
     timeline: "dict | None" = None,
     thr: "dict | None" = None,
+    domain_name: "str | None" = None,
 ) -> dict:
     """Build a session-level summary dict."""
     if ops_df.empty:
         return {
             "session_id":          session_id,
+            "domain_name":         domain_name,
             "n_operations":        0,
             "n_primitive_events":  len(events_df),
             "n_tracks":            int(tracks_df["track_id"].nunique()) if not tracks_df.empty else 0,
@@ -363,6 +371,7 @@ def _build_session_review(
 
     return {
         "session_id":          session_id,
+        "domain_name":         domain_name,
         "n_operations":        len(ops_df),
         "n_primitive_events":  len(events_df),
         "n_tracks":            int(tracks_df["track_id"].nunique()),
@@ -637,9 +646,12 @@ def _render_operation_md(bundle: dict) -> str:
 
 def _render_session_md(review: dict) -> str:
     sid = review["session_id"]
+    domain_name = review.get("domain_name")
+    domain_line = f"**Domain:** {domain_name}  " if domain_name else "**Domain:** generic (no domain config)  "
     lines = [
         f"# Session Review — {sid}",
         "",
+        domain_line,
         f"**Tracks:** {review['n_tracks']}  ",
         f"**Primitive events:** {review['n_primitive_events']}  ",
         f"**Operation events:** {review['n_operations']}  ",

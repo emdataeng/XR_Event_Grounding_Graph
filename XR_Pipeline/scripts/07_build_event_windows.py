@@ -62,9 +62,19 @@ def main(
     vocab = Vocabulary.from_config(cfg)
     hand_classes = vocab.classes_with_role("hand") if not vocab.is_empty else None
 
-    min_move_m = float(e_cfg.get("min_move_distance_m", 0.05))
+    min_move_m    = float(e_cfg.get("min_move_distance_m", 0.05))
     smooth_window = int(e_cfg.get("position_smooth_window", 1))
-    move_by_role = e_cfg.get("min_move_distance_by_role") or None
+    move_by_role  = e_cfg.get("min_move_distance_by_role") or None
+    min_2d_px     = float(e_cfg.get("min_2d_disp_px", 0.0))
+
+    # B3: optionally load observations for 2D motion debug (non-fatal if absent)
+    obs_df = None
+    if paths.object_observations.exists():
+        try:
+            obs_df = pd.read_csv(paths.object_observations)
+            console.print(f"[dim]Loaded observations for 2D motion metrics ({len(obs_df)} rows)[/dim]")
+        except Exception:
+            obs_df = None
 
     events_df = detect_event_windows(
         tracks_df,
@@ -76,6 +86,7 @@ def main(
         position_smooth_window=smooth_window,
         hand_classes=hand_classes if hand_classes else None,
         min_move_distance_by_role=move_by_role,
+        min_2d_disp_px=min_2d_px,
     )
 
     events_df.to_csv(paths.event_windows, index=False)
@@ -87,6 +98,7 @@ def main(
         min_move_distance_m=min_move_m,
         min_move_distance_by_role=move_by_role,
         position_smooth_window=smooth_window,
+        obs_df=obs_df,
     )
     motion_debug_path = paths.objects_dir / "track_motion_debug.csv"
     motion_debug_df.to_csv(motion_debug_path, index=False)

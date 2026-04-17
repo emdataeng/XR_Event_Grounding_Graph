@@ -34,7 +34,7 @@ from rich.console import Console
 from rich.table import Table
 
 from src.config import PipelinePaths, load_pipeline_config, load_thresholds
-from src.operation_events import detect_operation_events, _DEFAULT_ENABLED
+from src.operation_events import detect_operation_events, compute_support_state_transitions, _DEFAULT_ENABLED
 from src.domain_config import load_domain_config, validate_domain_config
 from src.run_metadata import (
     build_run_metadata, save_run_metadata,
@@ -113,6 +113,14 @@ def main(
     ops_path = paths.objects_dir / "operation_events.csv"
     ops_df.to_csv(ops_path, index=False)
     console.print(f"[green]✓ Wrote {len(ops_df)} operation events → {ops_path}[/green]")
+
+    # ── C2: Support-state transitions ─────────────────────────────────────────
+    support_df = compute_support_state_transitions(tracks_df, ops_df)
+    support_df.to_csv(paths.support_state_transitions, index=False)
+    console.print(
+        f"[green]✓ Wrote {len(support_df)} support-state windows → "
+        f"{paths.support_state_transitions}[/green]"
+    )
 
     # ── Summary table ─────────────────────────────────────────────────────────
     if not ops_df.empty:

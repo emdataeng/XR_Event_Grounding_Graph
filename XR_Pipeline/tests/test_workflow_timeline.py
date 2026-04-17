@@ -290,3 +290,72 @@ def test_no_transition_on_single_phase():
     answer = answer_workflow_query("What phase transition just happened?",
                                    ops, None, timeline=tl)
     assert "no phase transition" in answer.lower() or "one phase" in answer.lower()
+
+
+# ── D2: domain_config parameter ───────────────────────────────────────────────
+
+from dataclasses import dataclass, field
+from typing import List as _List
+
+
+@dataclass
+class _FakePhase:
+    label: str
+    description: str = ""
+
+
+@dataclass
+class _FakeDomainConfig:
+    domain_name: str
+    domain_version: str = "1.0"
+    description: str = ""
+    object_classes: list = field(default_factory=list)
+    workflow_phases: list = field(default_factory=list)
+    role_pairings: list = field(default_factory=list)
+
+    def phase_labels(self) -> _List[str]:
+        return [p.label for p in self.workflow_phases]
+
+
+def _make_domain(name="lego_assembly", phases=("manipulation", "placement")):
+    return _FakeDomainConfig(
+        domain_name=name,
+        workflow_phases=[_FakePhase(label=l) for l in phases],
+    )
+
+
+def test_domain_name_in_summary():
+    domain = _make_domain("test_domain")
+    ops = _make_ops_df([_make_op("op_0001", "HOLD", 0, 10)])
+    tl = build_workflow_timeline(ops, domain_config=domain)
+    assert tl["summary"]["domain_name"] == "test_domain"
+
+
+def test_domain_name_none_without_config():
+    ops = _make_ops_df([_make_op("op_0001", "HOLD", 0, 10)])
+    tl = build_workflow_timeline(ops)
+    assert tl["summary"].get("domain_name") is None
+
+
+def test_domain_name_in_empty_timeline():
+    """Empty ops with domain_config still records domain_name in summary."""
+    domain = _make_domain("lego_v2")
+    tl = build_workflow_timeline(pd.DataFrame(), domain_config=domain)
+    assert tl["summary"]["domain_name"] == "lego_v2"
+
+
+def test_domain_phase_labels_dont_change_generic_label():
+    """Label computed from ops is kept even if domain lists different phases."""
+    domain = _make_domain("test_domain", phases=("manipulation", "transfer"))
+    ops = _make_ops_df([_make_op("op_0001", "HOLD", 0, 10)])
+    tl = build_workflow_timeline(ops, domain_config=domain)
+    # HOLD → "hold" label (not in domain phases), should still be "hold"
+    assert tl["phases"][0]["label"] == "hold"
+
+
+def test_domain_session_id_preserved_with_config():
+    domain = _make_domain()
+    ops = _make_ops_df([_make_op("op_0001", "PICK_UP", 0, 5)])
+    tl = build_workflow_timeline(ops, session_id="sess_xyz", domain_config=domain)
+    assert tl["session_id"] == "sess_xyz"
+    assert tl["summary"]["domain_name"] == "lego_assembly"

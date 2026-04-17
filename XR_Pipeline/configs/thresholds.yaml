@@ -16,6 +16,7 @@ events:
   min_event_duration_ns: 500000000  # ignore very short events (<0.5s)
   disappear_frames: 3           # frames without observation before DISAPPEAR
   position_smooth_window: 7     # rolling-mean window for track positions before MOVE detection (suppresses depth/bbox noise; ~0.7s at 10fps)
+  min_2d_disp_px: 20            # B3: fallback 2D bbox center displacement (px) for MOVE when 3D signal is below threshold (0 = disabled)
 
   # Per-role MOVE thresholds (override min_move_distance_m when object_role column is present).
   # Smaller objects (workpiece) use a tighter threshold; fixtures rarely/never move.

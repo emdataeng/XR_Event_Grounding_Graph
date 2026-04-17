@@ -67,6 +67,7 @@ def build_workflow_timeline(
     ops_df: pd.DataFrame,
     thr: Optional[Dict[str, Any]] = None,
     session_id: str = "unknown",
+    domain_config=None,  # Optional[DomainConfig] — shapes phase labels and adds domain_name to summary
 ) -> Dict[str, Any]:
     """Build a structured workflow timeline from operation events.
 
@@ -85,8 +86,19 @@ def build_workflow_timeline(
         thr.get("operation_events", {}).get("phase_gap_ns", _PHASE_GAP_NS_DEFAULT)
     )
 
+    # D2: extract domain metadata for labeling and summary
+    domain_name: Optional[str] = None
+    domain_phase_labels: Optional[set] = None
+    if domain_config is not None:
+        domain_name = domain_config.domain_name
+        _labels = domain_config.phase_labels()
+        if _labels:
+            domain_phase_labels = set(_labels)
+
     if ops_df is None or ops_df.empty:
-        return _empty_timeline(session_id)
+        tl = _empty_timeline(session_id)
+        tl["summary"]["domain_name"] = domain_name
+        return tl
 
     ops_sorted = ops_df.sort_values("start_ts_ns").reset_index(drop=True)
 
@@ -113,7 +125,7 @@ def build_workflow_timeline(
 
     for cluster in clusters:
         phase_counter += 1
-        label, confidence, dominant_op = _label_cluster(cluster)
+        label, confidence, dominant_op = _label_cluster(cluster, domain_phase_labels=domain_phase_labels)
 
         start_f = min(op["start_frame_idx"] for op in cluster)
         end_f   = max(op["end_frame_idx"]   for op in cluster)
@@ -193,6 +205,7 @@ def build_workflow_timeline(
         "unresolved_candidates": candidate_count,
         "has_manipulation":      any(p["label"] == "manipulation" for p in phases),
         "has_placement":         any(p["label"] == "placement"    for p in phases),
+        "domain_name":           domain_name,
     }
 
     return {
@@ -232,7 +245,7 @@ def timeline_to_df(timeline: Dict[str, Any]) -> pd.DataFrame:
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-def _label_cluster(cluster: List[Dict]) -> Tuple[str, float, str]:
+def _label_cluster(cluster: List[Dict], domain_phase_labels: Optional[set] = None) -> Tuple[str, float, str]:
     """Determine the phase label, confidence, and dominant op for a cluster."""
     if not cluster:
         return "idle", 0.0, ""
@@ -261,6 +274,14 @@ def _label_cluster(cluster: List[Dict]) -> Tuple[str, float, str]:
     # Confidence = mean confidence of operations in this cluster
     total_conf = sum(float(op.get("confidence", 0.5)) for op in cluster)
     confidence = min(1.0, total_conf / len(cluster))
+
+    # D2: if domain defines phase labels and the computed label isn't in them,
+    # keep the generic label (domain may not yet list all phases).
+    # The presence of domain_name in summary lets downstream tools know the domain context.
+    if domain_phase_labels and best_label not in domain_phase_labels:
+        # Fall through with generic label — domain.workflow_phases should be extended
+        # to include this label for full alignment.
+        pass
 
     return best_label, confidence, best_op
 

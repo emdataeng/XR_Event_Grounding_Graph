@@ -20,6 +20,7 @@ from rich.console import Console
 
 from src.config import PipelinePaths, load_pipeline_config, load_thresholds
 from src.workflow_timeline import build_workflow_timeline, timeline_to_df
+from src.domain_config import load_domain_config
 from src.run_metadata import (
     build_run_metadata, save_run_metadata, check_staleness, emit_staleness_warnings,
 )
@@ -55,8 +56,15 @@ def main(
     ops_df = pd.read_csv(op_events_path)
     console.print(f"Loaded {len(ops_df)} operation events from {op_events_path}")
 
+    # ── Domain config (D2) ────────────────────────────────────────────────────
+    domain = load_domain_config(cfg=cfg)
+    if domain:
+        console.print(f"[cyan]Domain '{domain.domain_name}' v{domain.domain_version} loaded[/cyan]")
+    else:
+        console.print("[dim]No domain config — using generic phase labels[/dim]")
+
     # ── Build timeline ────────────────────────────────────────────────────────
-    timeline = build_workflow_timeline(ops_df, thr=thr, session_id=session)
+    timeline = build_workflow_timeline(ops_df, thr=thr, session_id=session, domain_config=domain)
 
     phases = timeline.get("phases", [])
     summary = timeline.get("summary", {})

@@ -1,6 +1,6 @@
 """Event window detection and summary generation."""
 from __future__ import annotations
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Optional, Tuple
 import json
 import uuid
 import numpy as np
@@ -27,6 +27,7 @@ def detect_event_windows(
     position_smooth_window: int = 1,
     hand_classes: Optional[List[str]] = None,
     min_move_distance_by_role: Optional[Dict[str, float]] = None,
+    min_2d_disp_px: float = 0.0,
 ) -> pd.DataFrame:
     """Detect coarse event windows from object track data.
 
@@ -115,6 +116,11 @@ def detect_event_windows(
             else min_move_distance_m
         )
 
+        # Pre-check whether tracks_df has 2D bbox columns for fallback (B3)
+        _has_2d_cols = min_2d_disp_px > 0 and all(
+            c in grp_s.columns for c in ("bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2")
+        )
+
         # MOVE events between consecutive observations
         for i in range(1, len(grp_s)):
             prev = grp_s.iloc[i - 1]
@@ -137,6 +143,33 @@ def detect_event_windows(
                     "trigger_reason": f"displacement {dist:.3f}m > {_move_thr}m (role={_role or 'unknown'})",
                     "confidence": min(1.0, 0.5 + dist),
                 })
+            elif _has_2d_cols:
+                # B3: 3D below threshold — check 2D bbox center displacement as fallback.
+                # Fires a supplementary MOVE at lower confidence when 2D signal is strong.
+                try:
+                    cx0 = (float(prev["bbox_x1"]) + float(prev["bbox_x2"])) / 2
+                    cy0 = (float(prev["bbox_y1"]) + float(prev["bbox_y2"])) / 2
+                    cx1 = (float(curr["bbox_x1"]) + float(curr["bbox_x2"])) / 2
+                    cy1 = (float(curr["bbox_y1"]) + float(curr["bbox_y2"])) / 2
+                    disp_2d = float(np.sqrt((cx1 - cx0) ** 2 + (cy1 - cy0) ** 2))
+                except (TypeError, ValueError):
+                    disp_2d = 0.0
+                if disp_2d >= min_2d_disp_px:
+                    events.append({
+                        "event_id": eid(),
+                        "event_type": "MOVE",
+                        "start_frame_idx": int(prev["frame_idx"]),
+                        "end_frame_idx": int(curr["frame_idx"]),
+                        "start_ts_ns": int(prev["timestamp_ns"]),
+                        "end_ts_ns": int(curr["timestamp_ns"]),
+                        "primary_track_ids": json.dumps([tid]),
+                        "room_id": room_id,
+                        "trigger_reason": (
+                            f"2D bbox displacement {disp_2d:.1f}px ≥ {min_2d_disp_px}px "
+                            f"(3D {dist:.3f}m < threshold {_move_thr}m; role={_role or 'unknown'})"
+                        ),
+                        "confidence": min(0.55, 0.3 + disp_2d / 100.0),
+                    })
 
     # ---- Pairwise events (CO_LOCATE, SEPARATE) ----
     track_ids = tracks_df["track_id"].unique().tolist()
@@ -292,6 +325,7 @@ def compute_track_motion_debug(
     min_move_distance_m: float = 0.05,
     min_move_distance_by_role: Optional[Dict[str, float]] = None,
     position_smooth_window: int = 1,
+    obs_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Compute per-frame displacement statistics for each track.
 
@@ -301,6 +335,7 @@ def compute_track_motion_debug(
       - frame-to-frame displacement (smoothed)
       - the threshold that would apply given the track's role
       - whether that step would trigger a MOVE event
+      - 2D bbox center and displacement (when obs_df with bbox columns is provided)
 
     Parameters
     ----------
@@ -308,14 +343,47 @@ def compute_track_motion_debug(
     min_move_distance_m :       Global fallback threshold (same as detect_event_windows).
     min_move_distance_by_role : Per-role overrides (same dict as detect_event_windows).
     position_smooth_window :    Smoothing window (same as detect_event_windows).
+    obs_df :                    object_observations.csv (optional).  When provided and
+                                tracks_df has an ``observation_id`` column, bbox_x1/y1/x2/y2
+                                are joined in and 2D motion columns are populated.
     """
     _EMPTY_COLS = [
         "track_id", "semantic_class", "object_role", "frame_idx", "timestamp_ns",
         "x_raw", "y_raw", "z_raw", "x_smooth", "y_smooth", "z_smooth",
         "displacement_m", "move_threshold_m", "would_fire_move", "below_threshold_by_m",
+        # B3: 2D bbox motion columns (None when obs_df not available)
+        "bbox_cx", "bbox_cy", "bbox_area_px", "bbox_disp_2d_px", "bbox_area_change_pct",
     ]
     if tracks_df is None or tracks_df.empty:
         return pd.DataFrame(columns=_EMPTY_COLS)
+
+    # B3: Build (track_id, frame_idx) → (cx, cy, area_px) lookup from observations.
+    # Requires tracks_df to have observation_id and obs_df to have bbox_x1/y1/x2/y2.
+    _bbox_map: Dict[Tuple[str, int], Tuple] = {}
+    _bbox_cols = {"bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2"}
+    if (
+        obs_df is not None
+        and not obs_df.empty
+        and _bbox_cols.issubset(obs_df.columns)
+        and "observation_id" in tracks_df.columns
+        and "observation_id" in obs_df.columns
+    ):
+        _obs_bbox = obs_df[["observation_id", "bbox_x1", "bbox_y1", "bbox_x2", "bbox_y2"]]
+        _link = tracks_df[["track_id", "frame_idx", "observation_id"]].drop_duplicates()
+        _merged = _link.merge(_obs_bbox, on="observation_id", how="left")
+        for _, _r in _merged.iterrows():
+            x1, y1 = _r.get("bbox_x1"), _r.get("bbox_y1")
+            x2, y2 = _r.get("bbox_x2"), _r.get("bbox_y2")
+            try:
+                cx = float(x1 + x2) / 2 if x1 is not None and x2 is not None else None
+                cy = float(y1 + y2) / 2 if y1 is not None and y2 is not None else None
+                area = float((x2 - x1) * (y2 - y1)) if x1 is not None else None
+                if cx is not None and np.isnan(cx): cx = None
+                if cy is not None and np.isnan(cy): cy = None
+                if area is not None and np.isnan(area): area = None
+            except (TypeError, ValueError):
+                cx = cy = area = None
+            _bbox_map[(str(_r["track_id"]), int(_r["frame_idx"]))] = (cx, cy, area)
 
     rows = []
     for tid, grp in tracks_df.groupby("track_id"):
@@ -353,11 +421,25 @@ def compute_track_motion_debug(
                     below_by = move_thr - disp  # positive = still below threshold
 
             row = grp_s.iloc[i]
+            frame = int(row["frame_idx"])
+            tid_str = str(tid)
+
+            # B3: 2D bbox metrics from lookup
+            cx, cy, area = _bbox_map.get((tid_str, frame), (None, None, None))
+            disp_2d = None
+            area_chg = None
+            if i > 0:
+                cx_prev, cy_prev, area_prev = _bbox_map.get((tid_str, int(grp_s.iloc[i - 1]["frame_idx"])), (None, None, None))
+                if cx is not None and cx_prev is not None and cy is not None and cy_prev is not None:
+                    disp_2d = round(float(np.sqrt((cx - cx_prev) ** 2 + (cy - cy_prev) ** 2)), 2)
+                if area is not None and area_prev is not None and area_prev > 0:
+                    area_chg = round(float((area - area_prev) / area_prev * 100), 2)
+
             rows.append({
-                "track_id":         tid,
+                "track_id":         tid_str,
                 "semantic_class":   sem_class,
                 "object_role":      role or "unknown",
-                "frame_idx":        int(row["frame_idx"]),
+                "frame_idx":        frame,
                 "timestamp_ns":     int(row["timestamp_ns"]),
                 "x_raw":            float(xs_raw[i]) if not np.isnan(xs_raw[i]) else None,
                 "y_raw":            float(ys_raw[i]) if not np.isnan(ys_raw[i]) else None,
@@ -369,6 +451,12 @@ def compute_track_motion_debug(
                 "move_threshold_m": move_thr,
                 "would_fire_move":  disp is not None and disp >= move_thr,
                 "below_threshold_by_m": round(below_by, 4) if below_by is not None and below_by > 0 else None,
+                # B3: 2D columns
+                "bbox_cx":               round(cx,      2) if cx      is not None else None,
+                "bbox_cy":               round(cy,      2) if cy      is not None else None,
+                "bbox_area_px":          round(area,    1) if area    is not None else None,
+                "bbox_disp_2d_px":       disp_2d,
+                "bbox_area_change_pct":  area_chg,
             })
 
     return pd.DataFrame(rows) if rows else pd.DataFrame(columns=_EMPTY_COLS)
