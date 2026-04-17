@@ -48,6 +48,8 @@ class DetectionGroup:
     enabled: bool = True
     prompt_override: Optional[str] = None  # if set, use this prompt directly
     pass_id: str = "pass_00"     # set externally when building from config
+    box_threshold: Optional[float] = None   # None → use global detector threshold
+    text_threshold: Optional[float] = None  # None → use global detector threshold
 
 
 @dataclass
@@ -56,6 +58,8 @@ class GroupPass:
     group: DetectionGroup
     vocab: Vocabulary            # sub-vocabulary for this group
     prompt: str                  # resolved detection prompt
+    box_threshold: Optional[float] = None   # None → use global
+    text_threshold: Optional[float] = None  # None → use global
 
 
 # ── Config parsing ────────────────────────────────────────────────────────────
@@ -93,6 +97,8 @@ def parse_detection_groups(
             continue  # skip empty groups
 
         prompt_override: Optional[str] = spec.get("prompt_override")
+        raw_box_thr = spec.get("box_threshold")
+        raw_text_thr = spec.get("text_threshold")
 
         group = DetectionGroup(
             name=group_name,
@@ -100,12 +106,20 @@ def parse_detection_groups(
             enabled=True,
             prompt_override=prompt_override,
             pass_id=f"pass_{pass_idx:02d}",
+            box_threshold=float(raw_box_thr) if raw_box_thr is not None else None,
+            text_threshold=float(raw_text_thr) if raw_text_thr is not None else None,
         )
 
         sub_vocab = _build_sub_vocab(group, base_vocab)
         prompt = prompt_override or _build_group_prompt(sub_vocab)
 
-        passes.append(GroupPass(group=group, vocab=sub_vocab, prompt=prompt))
+        passes.append(GroupPass(
+            group=group,
+            vocab=sub_vocab,
+            prompt=prompt,
+            box_threshold=group.box_threshold,
+            text_threshold=group.text_threshold,
+        ))
 
     return passes
 

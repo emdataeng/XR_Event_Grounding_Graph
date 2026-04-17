@@ -97,31 +97,42 @@ object_vocabulary:
   #   object_role: fixture
   #   ignore_for_object_tracks: true
 
-# ── Multi-pass detection groups (Phase 1) ──────────────────────────────────
-# When detection_groups is defined, stage 05 runs one detector pass per
-# enabled group instead of a single combined pass.  This eliminates token
-# competition between classes of different roles (e.g. hands vs workpieces).
+# ── Multi-pass detection groups ────────────────────────────────────────────
+# Each enabled group runs as a separate detector pass with its own prompt
+# (and optionally its own box/text thresholds).  This eliminates token
+# competition between classes of different roles.
 #
-# Each group must list class names that exist in object_vocabulary above.
-# prompt_override: if set, use this literal prompt for the group instead of
-#                  building one from the listed classes' vocabulary prompts.
-#
-# To use multi-pass for this session, uncomment the block below:
-#
-# detection_groups:
-#   hands:
-#     enabled: true
-#     classes: ["hand"]
-#     # Isolated hand prompt delivers ~85% recall vs ~26% when mixed with lego prompts
-#   workpieces:
-#     enabled: true
-#     classes: ["red_lego", "blue_lego"]
-#   tools:
-#     enabled: false
-#     classes: []
-#   fixtures:
-#     enabled: false
-#     classes: []
+# Per-group box_threshold / text_threshold override the global values in
+# thresholds.yaml for that pass only.  Omit to use global defaults.
+detection_groups:
+  hands:
+    enabled: true
+    classes: ["hand"]
+    box_threshold: 0.20      # lower than default; hand is a complex deformable object
+    text_threshold: 0.20
+    # Isolated prompt → ~85% recall vs ~26% when mixed with lego vocabulary
+  workpieces:
+    enabled: true
+    classes: ["red_lego", "blue_lego"]
+    box_threshold: 0.25      # tuned via sweep (session_003)
+    text_threshold: 0.25
+  tools:
+    enabled: false
+    classes: []
+  fixtures:
+    enabled: false
+    classes: []
+
+# ── Domain configuration ───────────────────────────────────────────────────
+# Optional domain-specific knowledge: roles, enabled operations, role pairings.
+# When set, domain config overrides thresholds.yaml enabled_operations at runtime.
+domain_config: configs/domain_lego.yaml
+
+# ── Offline model loading ──────────────────────────────────────────────────
+# Set to true to force local_files_only on HuggingFace model loading.
+# Use this after the model has been cached to avoid network access on every run.
+# Requires the model to already be in the HF hub cache (~/.cache/huggingface/).
+offline_mode: false
 
 # Event summaries source
 # "rules" = deterministic templates

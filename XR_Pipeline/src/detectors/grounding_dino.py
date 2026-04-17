@@ -30,11 +30,13 @@ class GroundingDINODetector(BaseDetector):
         prompt: str = "object.",
         box_threshold: float = 0.30,
         text_threshold: float = 0.25,
+        local_files_only: bool = False,
     ):
         self._model_id = model_id
         self.prompt = prompt
         self.box_threshold = box_threshold
         self.text_threshold = text_threshold
+        self._local_files_only = local_files_only
         self._model = None
         self._processor = None
         self._device = None
@@ -52,8 +54,12 @@ class GroundingDINODetector(BaseDetector):
             ) from e
 
         import torch
-        self._processor = AutoProcessor.from_pretrained(self._model_id)
-        self._model = AutoModelForZeroShotObjectDetection.from_pretrained(self._model_id)
+        self._processor = AutoProcessor.from_pretrained(
+            self._model_id, local_files_only=self._local_files_only,
+        )
+        self._model = AutoModelForZeroShotObjectDetection.from_pretrained(
+            self._model_id, local_files_only=self._local_files_only,
+        )
         self._device = "cuda" if torch.cuda.is_available() else "cpu"
         self._model = self._model.to(self._device)
         self._model.eval()

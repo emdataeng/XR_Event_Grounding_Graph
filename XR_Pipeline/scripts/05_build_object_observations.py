@@ -199,12 +199,18 @@ def main(
 
             if group_passes:
                 # ── Multi-pass: one detector call per group ───────────────────
-                # The detector model is loaded once; we swap the prompt
-                # attribute between passes (safe in single-threaded context).
+                # The detector model is loaded once; we swap the prompt (and
+                # optionally box/text thresholds) between passes.
                 _original_prompt = detector.prompt
+                _original_box_thr = getattr(detector, "box_threshold", None)
+                _original_text_thr = getattr(detector, "text_threshold", None)
                 frame_obs_all = []
                 for gp in group_passes:
                     detector.prompt = gp.prompt
+                    if gp.box_threshold is not None and hasattr(detector, "box_threshold"):
+                        detector.box_threshold = gp.box_threshold
+                    if gp.text_threshold is not None and hasattr(detector, "text_threshold"):
+                        detector.text_threshold = gp.text_threshold
                     raw_g: list[DetectionResult] = detector.detect(
                         rgb=rgb, depth=depth, frame_context=frame_context,
                     )
@@ -231,6 +237,10 @@ def main(
                         if obs is not None:
                             frame_obs_all.append(obs)
                 detector.prompt = _original_prompt
+                if _original_box_thr is not None and hasattr(detector, "box_threshold"):
+                    detector.box_threshold = _original_box_thr
+                if _original_text_thr is not None and hasattr(detector, "text_threshold"):
+                    detector.text_threshold = _original_text_thr
                 # Cross-pass NMS: remove duplicates from overlapping groups
                 frame_obs = cross_pass_nms(frame_obs_all, iou_threshold=nms_iou_thr)
 

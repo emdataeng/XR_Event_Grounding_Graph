@@ -109,6 +109,8 @@ def load_detector(
                     cfg["detection_prompt"].  Callers should resolve this from
                     Vocabulary.build_prompt() when object_vocabulary is configured.
     """
+    offline = bool(cfg.get("offline_mode", False))
+
     if obs_source == "grounding_dino":
         from .grounding_dino import GroundingDINODetector
         dino_cfg = thr.get("grounding_dino", {})
@@ -118,6 +120,7 @@ def load_detector(
             prompt=resolved_prompt,
             box_threshold=float(dino_cfg.get("box_threshold", 0.30)),
             text_threshold=float(dino_cfg.get("text_threshold", 0.25)),
+            local_files_only=offline,
         )
 
     elif obs_source == "mm_grounding_dino":
@@ -132,6 +135,7 @@ def load_detector(
             prompt=resolved_prompt,
             box_threshold=float(mm_cfg.get("box_threshold", 0.30)),
             text_threshold=float(mm_cfg.get("text_threshold", 0.25)),
+            local_files_only=offline,
         )
 
     elif obs_source == "yolo":

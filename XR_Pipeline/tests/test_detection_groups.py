@@ -222,3 +222,56 @@ def test_get_bbox_valid():
 
 def test_get_bbox_missing_returns_none():
     assert _get_bbox({"bbox_x1": 1.0}) is None
+
+
+# ── Per-group thresholds ──────────────────────────────────────────────────────
+
+def test_per_group_box_threshold_parsed():
+    vocab = _make_vocab()
+    cfg = {"detection_groups": {
+        "hands": {"enabled": True, "classes": ["hand"],
+                  "box_threshold": 0.15, "text_threshold": 0.18},
+    }}
+    passes = parse_detection_groups(cfg, vocab)
+    assert len(passes) == 1
+    gp = passes[0]
+    assert gp.box_threshold == pytest.approx(0.15)
+    assert gp.text_threshold == pytest.approx(0.18)
+    assert gp.group.box_threshold == pytest.approx(0.15)
+    assert gp.group.text_threshold == pytest.approx(0.18)
+
+
+def test_per_group_threshold_absent_is_none():
+    vocab = _make_vocab()
+    cfg = {"detection_groups": {
+        "workpieces": {"enabled": True, "classes": ["red_lego", "blue_lego"]},
+    }}
+    passes = parse_detection_groups(cfg, vocab)
+    assert passes[0].box_threshold is None
+    assert passes[0].text_threshold is None
+
+
+def test_per_group_only_box_threshold():
+    vocab = _make_vocab()
+    cfg = {"detection_groups": {
+        "hands": {"enabled": True, "classes": ["hand"], "box_threshold": 0.20},
+    }}
+    passes = parse_detection_groups(cfg, vocab)
+    assert passes[0].box_threshold == pytest.approx(0.20)
+    assert passes[0].text_threshold is None
+
+
+def test_per_group_thresholds_independent_across_groups():
+    vocab = _make_vocab()
+    cfg = {"detection_groups": {
+        "hands":      {"enabled": True, "classes": ["hand"],
+                       "box_threshold": 0.20, "text_threshold": 0.20},
+        "workpieces": {"enabled": True, "classes": ["red_lego", "blue_lego"],
+                       "box_threshold": 0.25, "text_threshold": 0.25},
+    }}
+    passes = parse_detection_groups(cfg, vocab)
+    assert len(passes) == 2
+    hand_pass = next(p for p in passes if p.group.name == "hands")
+    wp_pass   = next(p for p in passes if p.group.name == "workpieces")
+    assert hand_pass.box_threshold == pytest.approx(0.20)
+    assert wp_pass.box_threshold   == pytest.approx(0.25)

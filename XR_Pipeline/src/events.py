@@ -26,6 +26,7 @@ def detect_event_windows(
     room_id: str = "workstation_A",
     position_smooth_window: int = 1,
     hand_classes: Optional[List[str]] = None,
+    min_move_distance_by_role: Optional[Dict[str, float]] = None,
 ) -> pd.DataFrame:
     """Detect coarse event windows from object track data.
 
@@ -104,6 +105,16 @@ def detect_event_windows(
                 "confidence": 0.7,
             })
 
+        # Per-role MOVE threshold (falls back to global if role absent or unlisted)
+        _role = None
+        if "object_role" in grp_s.columns:
+            _role = str(grp_s["object_role"].iloc[0])
+        _move_thr = (
+            min_move_distance_by_role.get(_role, min_move_distance_m)
+            if min_move_distance_by_role and _role
+            else min_move_distance_m
+        )
+
         # MOVE events between consecutive observations
         for i in range(1, len(grp_s)):
             prev = grp_s.iloc[i - 1]
@@ -113,7 +124,7 @@ def detect_event_windows(
             if np.any(np.isnan(p0)) or np.any(np.isnan(p1)):
                 continue
             dist = np.linalg.norm(p1 - p0)
-            if dist >= min_move_distance_m:
+            if dist >= _move_thr:
                 events.append({
                     "event_id": eid(),
                     "event_type": "MOVE",
@@ -123,7 +134,7 @@ def detect_event_windows(
                     "end_ts_ns": int(curr["timestamp_ns"]),
                     "primary_track_ids": json.dumps([tid]),
                     "room_id": room_id,
-                    "trigger_reason": f"displacement {dist:.3f}m > {min_move_distance_m}m",
+                    "trigger_reason": f"displacement {dist:.3f}m > {_move_thr}m (role={_role or 'unknown'})",
                     "confidence": min(1.0, 0.5 + dist),
                 })
 
@@ -272,6 +283,95 @@ def detect_event_windows(
 
     df = pd.DataFrame(events).sort_values("start_ts_ns").reset_index(drop=True)
     return df
+
+
+# ── Motion diagnostics ────────────────────────────────────────────────────────
+
+def compute_track_motion_debug(
+    tracks_df: pd.DataFrame,
+    min_move_distance_m: float = 0.05,
+    min_move_distance_by_role: Optional[Dict[str, float]] = None,
+    position_smooth_window: int = 1,
+) -> pd.DataFrame:
+    """Compute per-frame displacement statistics for each track.
+
+    Returns a DataFrame useful for debugging why MOVE events did or did not
+    fire.  Each row covers one observation (frame) of one track and includes:
+      - raw and smoothed 3D positions
+      - frame-to-frame displacement (smoothed)
+      - the threshold that would apply given the track's role
+      - whether that step would trigger a MOVE event
+
+    Parameters
+    ----------
+    tracks_df :                 object_tracks.csv as a DataFrame.
+    min_move_distance_m :       Global fallback threshold (same as detect_event_windows).
+    min_move_distance_by_role : Per-role overrides (same dict as detect_event_windows).
+    position_smooth_window :    Smoothing window (same as detect_event_windows).
+    """
+    _EMPTY_COLS = [
+        "track_id", "semantic_class", "object_role", "frame_idx", "timestamp_ns",
+        "x_raw", "y_raw", "z_raw", "x_smooth", "y_smooth", "z_smooth",
+        "displacement_m", "move_threshold_m", "would_fire_move", "below_threshold_by_m",
+    ]
+    if tracks_df is None or tracks_df.empty:
+        return pd.DataFrame(columns=_EMPTY_COLS)
+
+    rows = []
+    for tid, grp in tracks_df.groupby("track_id"):
+        grp_s = grp.sort_values("timestamp_ns").reset_index(drop=True)
+        sem_class = str(grp_s["semantic_class"].iloc[0]) if "semantic_class" in grp_s.columns else "unknown"
+        role = str(grp_s["object_role"].iloc[0]) if "object_role" in grp_s.columns else None
+
+        # Raw positions
+        xs_raw = grp_s["x"].values.astype(float)
+        ys_raw = grp_s["y"].values.astype(float)
+        zs_raw = grp_s["z"].values.astype(float)
+
+        # Smoothed positions
+        if position_smooth_window > 1:
+            xs_sm = grp_s["x"].rolling(window=position_smooth_window, center=True, min_periods=1).mean().values.astype(float)
+            ys_sm = grp_s["y"].rolling(window=position_smooth_window, center=True, min_periods=1).mean().values.astype(float)
+            zs_sm = grp_s["z"].rolling(window=position_smooth_window, center=True, min_periods=1).mean().values.astype(float)
+        else:
+            xs_sm, ys_sm, zs_sm = xs_raw.copy(), ys_raw.copy(), zs_raw.copy()
+
+        move_thr = (
+            min_move_distance_by_role.get(role, min_move_distance_m)
+            if min_move_distance_by_role and role
+            else min_move_distance_m
+        )
+
+        for i in range(len(grp_s)):
+            disp = None
+            below_by = None
+            if i > 0:
+                p0 = np.array([xs_sm[i - 1], ys_sm[i - 1], zs_sm[i - 1]])
+                p1 = np.array([xs_sm[i], ys_sm[i], zs_sm[i]])
+                if not (np.any(np.isnan(p0)) or np.any(np.isnan(p1))):
+                    disp = float(np.linalg.norm(p1 - p0))
+                    below_by = move_thr - disp  # positive = still below threshold
+
+            row = grp_s.iloc[i]
+            rows.append({
+                "track_id":         tid,
+                "semantic_class":   sem_class,
+                "object_role":      role or "unknown",
+                "frame_idx":        int(row["frame_idx"]),
+                "timestamp_ns":     int(row["timestamp_ns"]),
+                "x_raw":            float(xs_raw[i]) if not np.isnan(xs_raw[i]) else None,
+                "y_raw":            float(ys_raw[i]) if not np.isnan(ys_raw[i]) else None,
+                "z_raw":            float(zs_raw[i]) if not np.isnan(zs_raw[i]) else None,
+                "x_smooth":         float(xs_sm[i])  if not np.isnan(xs_sm[i])  else None,
+                "y_smooth":         float(ys_sm[i])  if not np.isnan(ys_sm[i])  else None,
+                "z_smooth":         float(zs_sm[i])  if not np.isnan(zs_sm[i])  else None,
+                "displacement_m":   round(disp, 4) if disp is not None else None,
+                "move_threshold_m": move_thr,
+                "would_fire_move":  disp is not None and disp >= move_thr,
+                "below_threshold_by_m": round(below_by, 4) if below_by is not None and below_by > 0 else None,
+            })
+
+    return pd.DataFrame(rows) if rows else pd.DataFrame(columns=_EMPTY_COLS)
 
 
 # ---------- Templates for rule-based summaries ----------
