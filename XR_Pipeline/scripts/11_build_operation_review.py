@@ -82,6 +82,17 @@ def main(
     if paths.scene_state_package.exists():
         ssp = load_scene_state_package(paths.scene_state_package)
 
+    # Optional: motion diagnostics (from stage 07)
+    motion_debug_df: "pd.DataFrame | None" = None
+    if paths.track_motion_debug.exists():
+        motion_debug_df = pd.read_csv(paths.track_motion_debug)
+
+    # Optional: workflow timeline (from stage 10c)
+    timeline: "dict | None" = None
+    if paths.workflow_timeline.exists():
+        with open(paths.workflow_timeline) as _f:
+            timeline = json.load(_f)
+
     console.print(
         f"[bold]Building operation review[/bold] | "
         f"{len(ops_df)} operations, "
@@ -119,6 +130,9 @@ def main(
         tracks_df=tracks_df,
         events_df=events_df,
         ssp=ssp,
+        motion_debug_df=motion_debug_df,
+        timeline=timeline,
+        thr=thr,
     )
 
     (out_dir / "session_review.json").write_text(
@@ -262,19 +276,28 @@ def _build_session_review(
     tracks_df: pd.DataFrame,
     events_df: pd.DataFrame,
     ssp: "dict | None",
+    motion_debug_df: "pd.DataFrame | None" = None,
+    timeline: "dict | None" = None,
+    thr: "dict | None" = None,
 ) -> dict:
     """Build a session-level summary dict."""
     if ops_df.empty:
         return {
-            "session_id": session_id,
-            "n_operations": 0,
-            "n_primitive_events": len(events_df),
-            "n_tracks": int(tracks_df["track_id"].nunique()) if not tracks_df.empty else 0,
-            "operation_counts": {},
+            "session_id":          session_id,
+            "n_operations":        0,
+            "n_primitive_events":  len(events_df),
+            "n_tracks":            int(tracks_df["track_id"].nunique()) if not tracks_df.empty else 0,
+            "operation_counts":    {},
+            "primitive_event_counts": {},
             "manipulated_objects": [],
-            "workflow_phase": None,
+            "workflow_phase":      None,
             "unresolved_candidates": [],
-            "phase_explanation": "No operations detected.",
+            "phase_explanation":   "No operations detected.",
+            "state_changes":       _build_state_changes(motion_debug_df, events_df),
+            "workflow_timeline":   _build_timeline_summary(timeline),
+            "detection_gaps":      _build_detection_gaps(
+                events_df, ops_df, tracks_df, motion_debug_df, thr
+            ),
         }
 
     op_counts = ops_df["operation_type"].value_counts().to_dict()
@@ -329,6 +352,15 @@ def _build_session_review(
     # Primitive vs operation timeline summary
     prim_type_counts = events_df["event_type"].value_counts().to_dict() if not events_df.empty else {}
 
+    # E1: State-change summary from motion debug
+    state_changes = _build_state_changes(motion_debug_df, events_df)
+
+    # E2: Workflow timeline summary
+    timeline_summary = _build_timeline_summary(timeline)
+
+    # E3: Detection gap analysis — explain why PICK_UP / MOVE didn't fire
+    detection_gaps = _build_detection_gaps(events_df, ops_df, tracks_df, motion_debug_df, thr)
+
     return {
         "session_id":          session_id,
         "n_operations":        len(ops_df),
@@ -340,6 +372,9 @@ def _build_session_review(
         "workflow_phase":      wf_phase,
         "unresolved_candidates": unresolved,
         "phase_explanation":   phase_explanation,
+        "state_changes":       state_changes,
+        "workflow_timeline":   timeline_summary,
+        "detection_gaps":      detection_gaps,
     }
 
 
@@ -364,6 +399,195 @@ def _explain_phase(wf_phase: dict, ops_df: pd.DataFrame) -> str:
         f"conf={best['confidence']:.2f}). "
         f"Notes: {best['notes']}"
     )
+
+
+# ── E1: State-change summary ──────────────────────────────────────────────────
+
+def _build_state_changes(
+    motion_debug_df: "pd.DataFrame | None",
+    events_df: pd.DataFrame,
+) -> dict:
+    """Summarise motion per track from track_motion_debug.csv (E1)."""
+    move_events = events_df[events_df["event_type"] == "MOVE"] if not events_df.empty else pd.DataFrame()
+
+    per_track: list = []
+    if motion_debug_df is not None and not motion_debug_df.empty:
+        for tid, grp in motion_debug_df.groupby("track_id"):
+            disps = grp["displacement_m"].dropna()
+            max_disp = float(disps.max()) if len(disps) else 0.0
+            thr_val  = float(grp["move_threshold_m"].iloc[0]) if "move_threshold_m" in grp.columns else None
+            n_fired  = int(grp["would_fire_move"].sum()) if "would_fire_move" in grp.columns else 0
+            per_track.append({
+                "track_id":           str(tid),
+                "semantic_class":     str(grp["semantic_class"].iloc[0]) if "semantic_class" in grp.columns else "unknown",
+                "object_role":        str(grp["object_role"].iloc[0]) if "object_role" in grp.columns else "unknown",
+                "max_displacement_m": round(max_disp, 4),
+                "move_threshold_m":   round(thr_val, 4) if thr_val is not None else None,
+                "steps_above_threshold": n_fired,
+                "below_threshold_by_m": round(thr_val - max_disp, 4) if thr_val and max_disp < thr_val else None,
+            })
+
+    # Tracks that actually produced MOVE primitive events
+    move_tids: list = []
+    for _, me in move_events.iterrows():
+        try:
+            import json as _json
+            tids_in = [str(t) for t in _json.loads(me["primary_track_ids"])]
+            move_tids.extend(tids_in)
+        except Exception:
+            pass
+
+    return {
+        "per_track_motion":       per_track,
+        "tracks_with_move_events": list(set(move_tids)),
+        "n_move_primitive_events": len(move_events),
+    }
+
+
+# ── E2: Workflow timeline summary ─────────────────────────────────────────────
+
+def _build_timeline_summary(timeline: "dict | None") -> dict:
+    """Build a compact workflow timeline summary for the session_review (E2)."""
+    if not timeline:
+        return {"available": False}
+
+    summary = timeline.get("summary", {})
+    phases  = timeline.get("phases", [])
+    trans   = timeline.get("phase_transitions", [])
+
+    phase_summaries = [
+        {
+            "phase_id":   p["phase_id"],
+            "label":      p["label"],
+            "frames":     [p["start_frame_idx"], p["end_frame_idx"]],
+            "confidence": p["confidence"],
+            "n_ops":      len(p.get("supporting_operations", [])),
+            "objects":    p.get("object_tracks", []),
+        }
+        for p in phases
+    ]
+
+    transition_summaries = [
+        {
+            "from": t["from_label"],
+            "to":   t["to_label"],
+            "gap_s": round(t["gap_ns"] / 1e9, 2),
+            "is_new_activity": t["is_new_activity"],
+        }
+        for t in trans
+    ]
+
+    return {
+        "available":           True,
+        "total_phases":        summary.get("total_phases", 0),
+        "dominant_phase":      summary.get("dominant_phase", "idle"),
+        "phase_sequence":      summary.get("phase_sequence", []),
+        "has_manipulation":    summary.get("has_manipulation", False),
+        "has_placement":       summary.get("has_placement", False),
+        "phases":              phase_summaries,
+        "transitions":         transition_summaries,
+    }
+
+
+# ── E3: Detection gap analysis ────────────────────────────────────────────────
+
+def _build_detection_gaps(
+    events_df: pd.DataFrame,
+    ops_df: pd.DataFrame,
+    tracks_df: pd.DataFrame,
+    motion_debug_df: "pd.DataFrame | None",
+    thr: "dict | None",
+) -> dict:
+    """Explain why expected operations (PICK_UP, MOVE) may be missing (E3)."""
+    thr = thr or {}
+    e_cfg  = thr.get("events", {})
+    op_cfg = thr.get("operation_events", {})
+    pickup_gap = int(op_cfg.get("pickup_link_frame_gap", 10))
+
+    gaps: list[str] = []
+
+    # Did any MOVE primitive events fire?
+    move_events = events_df[events_df["event_type"] == "MOVE"] if not events_df.empty else pd.DataFrame()
+    interact_events = events_df[events_df["event_type"] == "INTERACTION"] if not events_df.empty else pd.DataFrame()
+    n_moves = len(move_events)
+    n_interactions = len(interact_events)
+
+    move_missing = n_moves == 0
+    if move_missing:
+        gaps.append("No MOVE primitive events detected.")
+
+    # Per-track near-threshold evidence from motion debug
+    near_threshold_tracks: list = []
+    if motion_debug_df is not None and not motion_debug_df.empty:
+        for tid, grp in motion_debug_df.groupby("track_id"):
+            disps = grp["displacement_m"].dropna()
+            if disps.empty:
+                continue
+            max_disp  = float(disps.max())
+            thr_val   = float(grp["move_threshold_m"].iloc[0]) if "move_threshold_m" in grp.columns else None
+            sem_class = str(grp["semantic_class"].iloc[0]) if "semantic_class" in grp.columns else "unknown"
+            role      = str(grp["object_role"].iloc[0])     if "object_role"    in grp.columns else "unknown"
+
+            if thr_val is not None and max_disp < thr_val:
+                near_threshold_tracks.append({
+                    "track_id":           str(tid),
+                    "semantic_class":     sem_class,
+                    "object_role":        role,
+                    "max_displacement_m": round(max_disp, 4),
+                    "threshold_m":        round(thr_val, 4),
+                    "below_by_m":         round(thr_val - max_disp, 4),
+                })
+                gaps.append(
+                    f"Track {tid} ({sem_class}/{role}): max displacement "
+                    f"{max_disp:.3f}m < threshold {thr_val:.3f}m "
+                    f"(below by {thr_val - max_disp:.3f}m). "
+                    "Consider lowering threshold or check depth quality."
+                )
+
+    # Were there INTERACTION events? If so, did any get linked to MOVE events?
+    if n_interactions == 0 and not tracks_df.empty:
+        has_hand = (
+            "object_role" in tracks_df.columns and
+            (tracks_df["object_role"] == "hand").any()
+        )
+        if has_hand:
+            gaps.append(
+                "No INTERACTION events despite hand tracks being present. "
+                "Hand may not have come within near_threshold_m of any workpiece."
+            )
+        else:
+            gaps.append("No hand-role tracks detected — PICK_UP/HOLD require hand tracks.")
+
+    elif n_interactions > 0 and move_missing:
+        gaps.append(
+            f"{n_interactions} INTERACTION event(s) found but no MOVE events — "
+            "all will produce HOLD (not PICK_UP). "
+            f"PICK_UP requires a MOVE within {pickup_gap} frames of interaction onset."
+        )
+
+    # Did we get PICK_UP operations?
+    n_pickup = int((ops_df["operation_type"] == "PICK_UP").sum()) if not ops_df.empty else 0
+    n_hold   = int((ops_df["operation_type"] == "HOLD").sum())    if not ops_df.empty else 0
+    n_total  = len(ops_df)
+
+    if n_total == 0:
+        gaps.append("No operations detected at all.")
+    elif n_hold > 0 and n_pickup == 0:
+        gaps.append(
+            f"Only HOLD detected ({n_hold} event(s)). "
+            "This typically means the hand was near the workpiece "
+            "but no movement was detected within the PICK_UP linking window."
+        )
+
+    return {
+        "n_move_primitive_events":         n_moves,
+        "n_interaction_primitive_events":  n_interactions,
+        "n_pickup_operations":             n_pickup,
+        "n_hold_operations":               n_hold,
+        "move_events_missing":             move_missing,
+        "near_threshold_tracks":           near_threshold_tracks,
+        "summary":                         gaps,
+    }
 
 
 # ── Markdown renderers ────────────────────────────────────────────────────────
@@ -477,6 +701,76 @@ def _render_session_md(review: dict) -> str:
             )
     else:
         lines.append("_No unresolved candidates._")
+
+    # E3: Detection gap analysis
+    gaps_info = review.get("detection_gaps", {})
+    gap_msgs  = gaps_info.get("summary", [])
+    lines += [
+        "",
+        "## Detection Gap Analysis",
+        "",
+        f"**MOVE events:** {gaps_info.get('n_move_primitive_events', '?')}  ",
+        f"**INTERACTION events:** {gaps_info.get('n_interaction_primitive_events', '?')}  ",
+        f"**PICK_UP detected:** {gaps_info.get('n_pickup_operations', '?')}  ",
+        f"**HOLD detected:** {gaps_info.get('n_hold_operations', '?')}  ",
+        "",
+    ]
+    if gap_msgs:
+        for msg in gap_msgs:
+            lines.append(f"- {msg}")
+    else:
+        lines.append("_No detection gaps identified._")
+
+    near_thr = gaps_info.get("near_threshold_tracks", [])
+    if near_thr:
+        lines += ["", "### Tracks near MOVE threshold", ""]
+        for t in near_thr:
+            lines.append(
+                f"- `{t['track_id']}` ({t['semantic_class']}/{t['object_role']}): "
+                f"max {t['max_displacement_m']:.3f}m vs threshold {t['threshold_m']:.3f}m "
+                f"(below by {t['below_by_m']:.3f}m)"
+            )
+
+    # E1: State changes
+    sc = review.get("state_changes", {})
+    per_track = sc.get("per_track_motion", [])
+    lines += [
+        "",
+        "## Motion / State Changes",
+        "",
+        f"**Tracks with MOVE events:** {len(sc.get('tracks_with_move_events', []))}  ",
+        f"**Total MOVE primitive events:** {sc.get('n_move_primitive_events', 0)}  ",
+        "",
+    ]
+    if per_track:
+        lines.append("| Track | Class | Role | MaxDisp(m) | Threshold(m) | FireCount |")
+        lines.append("|-------|-------|------|------------|--------------|-----------|")
+        for t in per_track:
+            thr_str   = f"{t['move_threshold_m']:.3f}" if t["move_threshold_m"] is not None else "—"
+            lines.append(
+                f"| `{t['track_id']}` | {t['semantic_class']} | {t['object_role']} "
+                f"| {t['max_displacement_m']:.3f} | {thr_str} | {t['steps_above_threshold']} |"
+            )
+
+    # E2: Workflow timeline
+    wt = review.get("workflow_timeline", {})
+    if wt.get("available"):
+        lines += [
+            "",
+            "## Workflow Timeline",
+            "",
+            f"**Phases:** {wt['total_phases']}  ",
+            f"**Dominant:** {wt['dominant_phase']}  ",
+            f"**Sequence:** {' → '.join(wt.get('phase_sequence', []))}  ",
+            f"**Has manipulation:** {wt['has_manipulation']}  ",
+            f"**Has placement:** {wt['has_placement']}  ",
+        ]
+        transitions = wt.get("transitions", [])
+        if transitions:
+            lines += ["", "### Phase Transitions", ""]
+            for tr in transitions:
+                new_act = " *(new activity)*" if tr["is_new_activity"] else ""
+                lines.append(f"- **{tr['from']}** → **{tr['to']}** (gap {tr['gap_s']}s){new_act}")
 
     return "\n".join(lines)
 

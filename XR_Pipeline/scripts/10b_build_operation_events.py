@@ -107,7 +107,7 @@ def main(
         console.print("[dim]No domain config — using thresholds.yaml operation toggles[/dim]")
 
     # ── Detect ────────────────────────────────────────────────────────────────
-    ops_df = detect_operation_events(tracks_df, events_df, thr)
+    ops_df = detect_operation_events(tracks_df, events_df, thr, domain_config=domain)
 
     # ── Save ──────────────────────────────────────────────────────────────────
     ops_path = paths.objects_dir / "operation_events.csv"

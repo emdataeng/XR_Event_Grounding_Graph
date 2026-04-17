@@ -99,6 +99,10 @@ _DEFAULTS: Dict[str, Any] = {
     "tool_min_frames": 3,
     # Window (ns) before a MOVE to check for prior motion (TRANSFER detection).
     "transfer_stationary_window_ns": 3_000_000_000,
+    # Max frames between MOVE end and INTERACTION end to classify as PUT_DOWN.
+    # If the move ends before the interaction finishes (within this gap), the
+    # object was placed while the hand was still near → PUT_DOWN.
+    "putdown_link_frame_gap": 8,
     # Minimum frames of converging distance to emit APPROACH.
     "approach_convergence_frames": 5,
     # Max starting distance (m) to consider for APPROACH detection.
@@ -147,6 +151,7 @@ def detect_operation_events(
     tracks_df: pd.DataFrame,
     events_df: pd.DataFrame,
     thr: Dict[str, Any],
+    domain_config=None,  # Optional[DomainConfig] — passed for role-pairing validation
 ) -> pd.DataFrame:
     """Derive operation-level events from primitive events and tracks.
 
@@ -233,13 +238,13 @@ def detect_operation_events(
     if hand_tids:
         ops += _detect_interactions(
             tracks_df, events_df, hand_tids, workpiece_tids,
-            position_at, thr, oid,
+            position_at, thr, oid, domain_config=domain_config,
         )
 
     if tool_tids:
         ops += _detect_use_tool(
             tracks_df, events_df, tool_tids, workpiece_tids | fixture_tids,
-            position_at, thr, oid,
+            position_at, thr, oid, domain_config=domain_config,
         )
 
     # ── Without-hand operations (inferred from workpiece movement alone) ───────
@@ -274,6 +279,23 @@ def detect_operation_events(
     return df
 
 
+# ── Role-pairing guard (C4) ───────────────────────────────────────────────────
+
+def _pairing_allows_op(domain_config, agent_role: str, patient_role: str, op_type: str) -> bool:
+    """Return True if the domain config permits op_type for this role pair.
+
+    When domain_config is None, or the role pairing is not listed, this is
+    permissive (returns True).  Only returns False when the domain explicitly
+    lists the pairing but op_type is not in that pairing's valid_operations.
+    """
+    if domain_config is None:
+        return True
+    valid = domain_config.valid_operations_for_pairing(agent_role, patient_role)
+    if not valid:  # pairing not listed in domain → permissive
+        return True
+    return op_type in valid
+
+
 # ── Operation detectors ───────────────────────────────────────────────────────
 
 def _detect_interactions(
@@ -284,12 +306,21 @@ def _detect_interactions(
     position_at: Dict[str, Dict[int, np.ndarray]],
     thr: Dict,
     oid,
+    domain_config=None,
 ) -> List[Dict]:
-    """Derive PICK_UP, PUT_DOWN, HOLD from INTERACTION primitive events."""
+    """Derive PICK_UP, PUT_DOWN, HOLD from INTERACTION primitive events.
+
+    Timing-based PICK_UP vs PUT_DOWN discrimination (C1):
+      PICK_UP:  workpiece MOVE starts within pickup_link_frame_gap of
+                INTERACTION onset (grabbed and lifted).
+      PUT_DOWN: workpiece MOVE ends before INTERACTION end (within
+                putdown_link_frame_gap) — object placed while hand still near.
+      HOLD:     no workpiece movement for >= hold_min_frames.
+    """
     ops: List[Dict] = []
-    move_threshold = _thr(thr, "move_threshold_m")
-    pickup_gap     = _thr(thr, "pickup_link_frame_gap")
-    hold_min       = _thr(thr, "hold_min_frames")
+    pickup_gap  = int(_thr(thr, "pickup_link_frame_gap"))
+    putdown_gap = int(_thr(thr, "putdown_link_frame_gap"))
+    hold_min    = int(_thr(thr, "hold_min_frames"))
 
     interact_events = events_df[events_df["event_type"] == "INTERACTION"]
     move_events     = events_df[events_df["event_type"] == "MOVE"]
@@ -305,13 +336,16 @@ def _detect_interactions(
         if h_tid is None or o_tid is None:
             continue
 
+        # Role pairing check (C4): if domain has pairings, validate hand→workpiece
+        if not _pairing_allows_op(domain_config, "hand", "workpiece", "PICK_UP"):
+            continue
+
         i_start = int(ie["start_frame_idx"])
         i_end   = int(ie["end_frame_idx"])
         duration_frames = i_end - i_start + 1
 
-        # Did the workpiece move significantly during / just after this window?
-        obj_moved = False
-        linked_move_ids: List[str] = []
+        # Collect linked MOVE events and classify by timing
+        linked_move_info: List[Dict[str, Any]] = []
         for _, me in move_events.iterrows():
             try:
                 m_tids = [str(t) for t in json.loads(me["primary_track_ids"])]
@@ -323,15 +357,51 @@ def _detect_interactions(
             m_end   = int(me["end_frame_idx"])
             # Move overlaps or closely follows the interaction window
             if m_start <= i_end + pickup_gap and m_end >= i_start:
-                obj_moved = True
-                linked_move_ids.append(str(me["event_id"]))
+                linked_move_info.append({
+                    "event_id": str(me["event_id"]),
+                    "m_start":  m_start,
+                    "m_end":    m_end,
+                })
 
-        evidence = [str(ie["event_id"])] + linked_move_ids
+        evidence = [str(ie["event_id"])] + [m["event_id"] for m in linked_move_info]
+        obj_moved = bool(linked_move_info)
 
-        if obj_moved and _is_enabled(thr, "PICK_UP"):
+        if obj_moved:
+            # Timing discrimination: PUT_DOWN if move ends before/at interaction end
+            # (object placed while hand still near); PICK_UP if move starts early.
+            is_putdown = any(
+                m["m_end"] <= i_end + putdown_gap and m["m_end"] >= i_start
+                for m in linked_move_info
+            )
+            is_pickup = any(m["m_start"] <= i_start + pickup_gap for m in linked_move_info)
+
+            if is_putdown and not is_pickup:
+                op_type = "PUT_DOWN"
+            else:
+                op_type = "PICK_UP"  # default: lift action
+
+            if not _is_enabled(thr, op_type):
+                # Try the other direction if disabled
+                fallback = "PUT_DOWN" if op_type == "PICK_UP" else "PICK_UP"
+                if not _is_enabled(thr, fallback):
+                    continue
+                op_type = fallback
+
+            if op_type == "PUT_DOWN":
+                notes = (
+                    f"Hand {h_tid} placed workpiece {o_tid} "
+                    f"({duration_frames} frames); workpiece came to rest "
+                    "while hand was still nearby."
+                )
+            else:
+                notes = (
+                    f"Hand {h_tid} picked up workpiece {o_tid} "
+                    f"({duration_frames} frames); workpiece moved at interaction onset."
+                )
+
             ops.append({
                 "operation_id":       oid(),
-                "operation_type":     "PICK_UP",
+                "operation_type":     op_type,
                 "start_frame_idx":    i_start,
                 "end_frame_idx":      i_end,
                 "start_ts_ns":        int(ie["start_ts_ns"]),
@@ -341,12 +411,12 @@ def _detect_interactions(
                 "secondary_track_id": None,
                 "confidence":         round(min(0.85, float(ie.get("confidence", 0.7))), 3),
                 "evidence_event_ids": json.dumps(evidence),
-                "notes":              (
-                    f"Hand {h_tid} interacted with workpiece {o_tid} "
-                    f"({duration_frames} frames) and workpiece moved."
-                ),
+                "notes":              notes,
             })
+
         elif duration_frames >= hold_min and _is_enabled(thr, "HOLD"):
+            if not _pairing_allows_op(domain_config, "hand", "workpiece", "HOLD"):
+                continue
             ops.append({
                 "operation_id":       oid(),
                 "operation_type":     "HOLD",
@@ -358,7 +428,7 @@ def _detect_interactions(
                 "object_track_id":    o_tid,
                 "secondary_track_id": None,
                 "confidence":         round(min(0.80, float(ie.get("confidence", 0.6))), 3),
-                "evidence_event_ids": json.dumps(evidence),
+                "evidence_event_ids": json.dumps([str(ie["event_id"])]),
                 "notes":              (
                     f"Hand {h_tid} held workpiece {o_tid} "
                     f"for {duration_frames} frames without significant movement."
@@ -376,6 +446,7 @@ def _detect_use_tool(
     position_at: Dict[str, Dict[int, np.ndarray]],
     thr: Dict,
     oid,
+    domain_config=None,
 ) -> List[Dict]:
     """Detect USE_TOOL from sustained tool–workpiece proximity."""
     ops: List[Dict] = []
@@ -397,6 +468,8 @@ def _detect_use_tool(
         if duration_frames < tool_min:
             continue
         if not _is_enabled(thr, "USE_TOOL"):
+            continue
+        if not _pairing_allows_op(domain_config, "tool", "workpiece", "USE_TOOL"):
             continue
 
         ops.append({

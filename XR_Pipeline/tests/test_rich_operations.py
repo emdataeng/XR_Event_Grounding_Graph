@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import pytest
 
-from src.operation_events import detect_operation_events, _is_enabled, _empty_df
+from src.operation_events import detect_operation_events, _is_enabled, _empty_df, _pairing_allows_op
 
 
 # ── Shared fixture helpers ────────────────────────────────────────────────────
@@ -281,3 +281,120 @@ def test_contact_disabled():
     thr = {"operation_events": {"enabled_operations": {"CONTACT": False}}}
     result = detect_operation_events(tracks, events, thr)
     assert "CONTACT" not in result["operation_type"].tolist()
+
+
+# ── C1: PUT_DOWN timing discrimination ───────────────────────────────────────
+
+def _make_interaction_move_scenario(
+    i_start=0, i_end=10, m_start=1, m_end=4,
+):
+    """Hand near workpiece (INTERACTION) while workpiece MOVE occurs."""
+    frames = list(range(0, 12))
+    wp_pos  = [(0.0, 0.0, 1.0)] * 12
+    hand_pos = [(0.05, 0.0, 1.0)] * 12
+    tracks = pd.concat([
+        _make_track("trk_wp",   "workpiece", frames, wp_pos),
+        _make_track("trk_hand", "hand",      frames, hand_pos),
+    ])
+    events = pd.DataFrame([
+        _make_event("evt_int",  "INTERACTION", ["trk_hand", "trk_wp"], i_start, i_end),
+        _make_event("evt_move", "MOVE",        ["trk_wp"],             m_start, m_end),
+    ])
+    return tracks, events
+
+
+def test_pickup_when_move_starts_early():
+    """MOVE starts near interaction onset → PICK_UP."""
+    # i_start=0, m_start=1 (within pickup_link_frame_gap=10 of i_start=0)
+    # m_end=4 (before i_end=10, but m_start is close to i_start → PICK_UP)
+    tracks, events = _make_interaction_move_scenario(i_start=0, i_end=10, m_start=1, m_end=4)
+    result = detect_operation_events(tracks, events, _thr_defaults())
+    types = result["operation_type"].tolist()
+    assert "PICK_UP" in types
+
+
+def test_putdown_when_move_ends_before_interaction_ends():
+    """MOVE ends well before interaction end, but after interaction start → PUT_DOWN.
+
+    PICK_UP condition: m_start <= i_start + pickup_gap(10) → 15 > 10 → NOT PICK_UP
+    PUT_DOWN condition: m_end <= i_end + putdown_gap(8) AND m_end >= i_start → 18 <= 28 ✓
+    """
+    # i_start=5, i_end=20, m_start=15, m_end=18
+    # m_start=15, i_start=5: 15 > 5+10=15 → is_pickup=True (borderline)
+    # Use m_start=16 to be strictly outside pickup window
+    tracks, events = _make_interaction_move_scenario(i_start=5, i_end=20, m_start=16, m_end=18)
+    result = detect_operation_events(tracks, events, _thr_defaults())
+    types = result["operation_type"].tolist()
+    assert "PUT_DOWN" in types
+
+
+def test_putdown_not_emitted_when_disabled():
+    """PUT_DOWN can be disabled."""
+    tracks, events = _make_interaction_move_scenario(i_start=5, i_end=20, m_start=16, m_end=18)
+    thr = {"operation_events": {"enabled_operations": {"PUT_DOWN": False}}}
+    result = detect_operation_events(tracks, events, thr)
+    assert "PUT_DOWN" not in result["operation_type"].tolist()
+
+
+def test_pickup_not_putdown_when_move_precedes_interaction():
+    """If MOVE starts before interaction onset, it's still PICK_UP (move and grab)."""
+    # m_start=0, i_start=3: 0 <= 3+10=13 → is_pickup=True
+    tracks, events = _make_interaction_move_scenario(i_start=3, i_end=10, m_start=0, m_end=5)
+    result = detect_operation_events(tracks, events, _thr_defaults())
+    types = result["operation_type"].tolist()
+    assert "PICK_UP" in types
+    assert "PUT_DOWN" not in types
+
+
+# ── C4: Role pairing validation ───────────────────────────────────────────────
+
+class _MockDomainConfig:
+    """Minimal stand-in for DomainConfig for testing."""
+    def __init__(self, pairings):
+        self._pairings = pairings  # list of (agent_role, patient_role, valid_ops)
+
+    def valid_operations_for_pairing(self, agent_role, patient_role):
+        for a, p, ops in self._pairings:
+            if a == agent_role and p == patient_role:
+                return list(ops)
+        return []
+
+
+def test_pairing_allows_when_no_domain():
+    assert _pairing_allows_op(None, "hand", "workpiece", "PICK_UP") is True
+
+
+def test_pairing_allows_listed_op():
+    dc = _MockDomainConfig([("hand", "workpiece", ["PICK_UP", "HOLD"])])
+    assert _pairing_allows_op(dc, "hand", "workpiece", "PICK_UP") is True
+
+
+def test_pairing_blocks_unlisted_op():
+    dc = _MockDomainConfig([("hand", "workpiece", ["HOLD"])])
+    # PICK_UP not in valid_operations for this pairing
+    assert _pairing_allows_op(dc, "hand", "workpiece", "PICK_UP") is False
+
+
+def test_pairing_permissive_when_pair_not_listed():
+    """If the pairing isn't listed at all, permissive."""
+    dc = _MockDomainConfig([("tool", "workpiece", ["USE_TOOL"])])
+    assert _pairing_allows_op(dc, "hand", "workpiece", "PICK_UP") is True
+
+
+def test_domain_config_blocks_pickup_emits_hold():
+    """If PICK_UP is blocked by domain pairing, the same INTERACTION + MOVE should yield nothing
+    (HOLD requires no move; here move exists so neither PICK_UP nor HOLD emits)."""
+    tracks, events = _make_interaction_move_scenario(i_start=0, i_end=10, m_start=1, m_end=4)
+    # Domain allows only HOLD for hand→workpiece, not PICK_UP
+    dc = _MockDomainConfig([("hand", "workpiece", ["HOLD"])])
+    result = detect_operation_events(tracks, events, _thr_defaults(), domain_config=dc)
+    types = result["operation_type"].tolist()
+    assert "PICK_UP" not in types
+
+
+def test_domain_config_none_allows_all():
+    """No domain config → PICK_UP emitted normally."""
+    tracks, events = _make_interaction_move_scenario(i_start=0, i_end=10, m_start=1, m_end=4)
+    result = detect_operation_events(tracks, events, _thr_defaults(), domain_config=None)
+    types = result["operation_type"].tolist()
+    assert "PICK_UP" in types
