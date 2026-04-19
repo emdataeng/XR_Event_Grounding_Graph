@@ -99,3 +99,110 @@ role_pairings:
   - agent_role: workpiece
     patient_role: container
     valid_operations: [PLACE_ONTO_CANDIDATE]
+
+# Assembly reasoning extensions
+assembly_predicates:
+  - name: present
+    description: Object is tracked in the scene
+  - name: near
+    description: Two objects within near_threshold
+  - name: holding
+    description: Hand is holding a component
+  - name: in_contact
+    description: Two components are touching
+  - name: aligned_with_candidate
+    description: Component is aligned to target (pre-insertion)
+  - name: inserted_into_candidate
+    description: Component inserted into target fixture
+  - name: placed_on_candidate
+    description: Component placed onto target surface
+  - name: attached_to_candidate
+    description: Component attached to target
+  - name: used_tool_on
+    description: Tool applied to workpiece
+  - name: resting
+    description: Object resting with no active operation
+  - name: carried
+    description: Object being carried by hand
+
+subtask_templates:
+  - name: pick_up_part
+    trigger_operations: [PICK_UP, HOLD]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Operator picks up or holds a component
+  - name: place_part
+    trigger_operations: [PUT_DOWN, PUT_DOWN_CANDIDATE]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Operator places a component down
+  - name: align_part
+    trigger_operations: [ALIGN_CANDIDATE]
+    trigger_predicates: [near]
+    agent_role: workpiece
+    patient_role: fixture
+    description: Component aligned to fixture or target
+  - name: insert_part
+    trigger_operations: [INSERT_CANDIDATE]
+    trigger_predicates: [aligned_with_candidate]
+    agent_role: workpiece
+    patient_role: fixture
+    description: Component inserted into target
+  - name: attach_part
+    trigger_operations: [ATTACH_CANDIDATE]
+    trigger_predicates: [near]
+    agent_role: workpiece
+    patient_role: fixture
+    description: Component attached to target
+  - name: use_tool
+    trigger_operations: [USE_TOOL]
+    trigger_predicates: []
+    agent_role: tool
+    patient_role: workpiece
+    description: Tool applied to a component
+  - name: contact_parts
+    trigger_operations: [CONTACT]
+    trigger_predicates: [near]
+    agent_role: workpiece
+    patient_role: workpiece
+    description: Two components come into contact
+
+subgoal_templates:
+  - name: part_is_held
+    achieved_by: pick_up_part
+    predicate: holding
+    description: Component is held by operator
+  - name: part_is_aligned
+    achieved_by: align_part
+    predicate: aligned_with_candidate
+    description: Component aligned to insertion target
+  - name: part_is_inserted
+    achieved_by: insert_part
+    predicate: inserted_into_candidate
+    description: Component inserted into target
+  - name: part_is_attached
+    achieved_by: attach_part
+    predicate: attached_to_candidate
+    description: Component attached to target
+  - name: tool_applied
+    achieved_by: use_tool
+    predicate: used_tool_on
+    description: Tool has been applied
+
+dependency_rules:
+  - subtask: insert_part
+    requires: align_part
+    description: Component must be aligned before insertion
+  - subtask: attach_part
+    requires: align_part
+    description: Component must be aligned before attachment
+
+phase_hints:
+  approach:    [pick_up_part]
+  manipulation: [pick_up_part, place_part]
+  placement:   [align_part, insert_part, attach_part]
+  tool_use:    [use_tool]
+  contact:     [contact_parts]
+  hold:        [pick_up_part]

@@ -54,3 +54,61 @@ role_pairings:
   - agent_role: workpiece
     patient_role: workpiece
     valid_operations: [CONTACT, TRANSFER]
+
+# Assembly reasoning extensions
+assembly_predicates:
+  - name: present
+    description: Object is tracked in the scene
+  - name: near
+    description: Two objects are within near_threshold
+  - name: holding
+    description: Hand is holding a workpiece
+  - name: in_contact
+    description: Two workpieces are touching
+  - name: placed_on_candidate
+    description: Workpiece placed on surface candidate
+  - name: resting
+    description: Object resting with no active operation
+  - name: carried
+    description: Object being carried by hand
+
+subtask_templates:
+  - name: pick_up_part
+    trigger_operations: [PICK_UP, HOLD]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Hand picks up or holds a Lego brick
+  - name: place_part
+    trigger_operations: [PUT_DOWN, PUT_DOWN_CANDIDATE]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Hand places a Lego brick down
+  - name: contact_parts
+    trigger_operations: [CONTACT]
+    trigger_predicates: [near]
+    agent_role: workpiece
+    patient_role: workpiece
+    description: Two bricks come into contact (stacking)
+
+subgoal_templates:
+  - name: part_is_held
+    achieved_by: pick_up_part
+    predicate: holding
+    description: A Lego brick is being held
+  - name: part_is_placed
+    achieved_by: place_part
+    predicate: resting
+    description: A Lego brick has been placed down
+  - name: parts_contacted
+    achieved_by: contact_parts
+    predicate: in_contact
+    description: Two Lego bricks are in contact
+
+dependency_rules: []
+
+phase_hints:
+  manipulation: [pick_up_part, place_part]
+  contact: [contact_parts]
+  hold: [pick_up_part]

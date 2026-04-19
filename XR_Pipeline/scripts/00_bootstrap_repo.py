@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import typer
 from rich.console import Console
-from rich.panel import Panel
+from rich.panel import Panel 
 
 app = typer.Typer(help="Bootstrap XR_Pipeline repo structure.")
 console = Console()

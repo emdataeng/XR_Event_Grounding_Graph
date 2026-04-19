@@ -83,12 +83,24 @@ class PipelinePaths:
         self.pruned_subgraph = self.queries_dir / "pruned_subgraph.json"
         self.query_answer = self.queries_dir / "query_answer.json"
 
+        # Assembly reasoning layer (Phases 1–7)
+        self.state_facts_json       = self.graphs_dir  / "state_facts.json"
+        self.state_facts_csv        = self.graphs_dir  / "state_facts.csv"
+        self.subtask_events         = self.objects_dir / "subtask_events.csv"
+        self.subtask_sequence       = self.graphs_dir  / "subtask_sequence.json"
+        self.assembly_graph         = self.graphs_dir  / "assembly_graph.json"
+        self.assembly_state_package = self.graphs_dir  / "assembly_state_package.json"
+        self.assembly_reasoning     = self.queries_dir / "assembly_reasoning.json"
+        self.assembly_reviews_dir   = processed_root   / "reviews" / "assembly"
+        self.assembly_review_json   = self.assembly_reviews_dir / "assembly_review.json"
+        self.assembly_review_md     = self.assembly_reviews_dir / "assembly_review.md"
+
     def ensure_dirs(self):
         for d in [
             self.manifests_dir, self.sample_vis_dir, self.objects_dir,
             self.events_dir, self.graphs_dir, self.queries_dir,
             self.neo4j_dir, self.debug_pc_dir, self.debug_box_dir,
-            self.reviews_dir,
+            self.reviews_dir, self.assembly_reviews_dir,
         ]:
             d.mkdir(parents=True, exist_ok=True)
 

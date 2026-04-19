@@ -91,6 +91,43 @@ class RolePairing:
     valid_operations: List[str] = field(default_factory=list)
 
 
+# ── Assembly reasoning schema (Phase 2) ──────────────────────────────────────
+
+@dataclass
+class AssemblyPredicate:
+    """A relation predicate that is meaningful for assembly state tracking."""
+    name: str
+    description: str = ""
+
+
+@dataclass
+class SubtaskTemplate:
+    """Template for inferring a step from operation evidence."""
+    name: str
+    trigger_operations: List[str] = field(default_factory=list)
+    trigger_predicates: List[str] = field(default_factory=list)
+    agent_role: str = ""
+    patient_role: str = ""
+    description: str = ""
+
+
+@dataclass
+class SubgoalTemplate:
+    """A goal state that becomes true when a subtask is achieved."""
+    name: str
+    achieved_by: str       # subtask template name
+    predicate: str         # state-fact predicate that confirms it
+    description: str = ""
+
+
+@dataclass
+class DependencyRule:
+    """Ordering constraint between two subtask templates."""
+    subtask: str           # subtask that has the dependency
+    requires: str          # subtask that must be achieved first
+    description: str = ""
+
+
 @dataclass
 class DomainConfig:
     domain_name: str
@@ -100,6 +137,13 @@ class DomainConfig:
     workflow_phases: List[DomainPhase]
     enabled_operations: List[str]
     role_pairings: List[RolePairing]
+
+    # Assembly reasoning extensions
+    assembly_predicates: List[AssemblyPredicate] = field(default_factory=list)
+    subtask_templates:   List[SubtaskTemplate]   = field(default_factory=list)
+    subgoal_templates:   List[SubgoalTemplate]   = field(default_factory=list)
+    dependency_rules:    List[DependencyRule]     = field(default_factory=list)
+    phase_hints:         Dict[str, List[str]]     = field(default_factory=dict)
 
     # Derived lookups (populated by validate_domain_config)
     _classes_by_role: Dict[str, List[str]] = field(default_factory=dict, repr=False)
@@ -123,6 +167,25 @@ class DomainConfig:
 
     def phase_labels(self) -> List[str]:
         return [p.label for p in self.workflow_phases]
+
+    def subtask_template(self, name: str) -> Optional["SubtaskTemplate"]:
+        for t in self.subtask_templates:
+            if t.name == name:
+                return t
+        return None
+
+    def subgoal_for_subtask(self, subtask_name: str) -> Optional["SubgoalTemplate"]:
+        for sg in self.subgoal_templates:
+            if sg.achieved_by == subtask_name:
+                return sg
+        return None
+
+    def required_before(self, subtask_name: str) -> List[str]:
+        """Return list of subtask names that must be achieved before subtask_name."""
+        return [r.requires for r in self.dependency_rules if r.subtask == subtask_name]
+
+    def assembly_predicate_names(self) -> List[str]:
+        return [p.name for p in self.assembly_predicates]
 
 
 # ── Loader ────────────────────────────────────────────────────────────────────
@@ -262,6 +325,73 @@ def _parse_and_validate(raw: Dict[str, Any], source: Any = None) -> DomainConfig
             valid_operations=ops,
         ))
 
+    # ── Assembly predicates ───────────────────────────────────────────────────
+    assembly_predicates: List[AssemblyPredicate] = []
+    for entry in raw.get("assembly_predicates") or []:
+        if isinstance(entry, str):
+            assembly_predicates.append(AssemblyPredicate(name=entry))
+        elif isinstance(entry, dict):
+            name = str(entry.get("name", ""))
+            if name:
+                assembly_predicates.append(AssemblyPredicate(
+                    name=name,
+                    description=str(entry.get("description", "")),
+                ))
+
+    # ── Subtask templates ─────────────────────────────────────────────────────
+    subtask_templates: List[SubtaskTemplate] = []
+    for entry in raw.get("subtask_templates") or []:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name", ""))
+        if not name:
+            continue
+        trigger_ops   = [str(o).upper() for o in entry.get("trigger_operations") or []]
+        trigger_preds = [str(p) for p in entry.get("trigger_predicates") or []]
+        subtask_templates.append(SubtaskTemplate(
+            name=name,
+            trigger_operations=trigger_ops,
+            trigger_predicates=trigger_preds,
+            agent_role=str(entry.get("agent_role", "")).lower(),
+            patient_role=str(entry.get("patient_role", "")).lower(),
+            description=str(entry.get("description", "")),
+        ))
+
+    # ── Subgoal templates ─────────────────────────────────────────────────────
+    subgoal_templates: List[SubgoalTemplate] = []
+    for entry in raw.get("subgoal_templates") or []:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name", ""))
+        if not name:
+            continue
+        subgoal_templates.append(SubgoalTemplate(
+            name=name,
+            achieved_by=str(entry.get("achieved_by", "")),
+            predicate=str(entry.get("predicate", "")),
+            description=str(entry.get("description", "")),
+        ))
+
+    # ── Dependency rules ──────────────────────────────────────────────────────
+    dependency_rules: List[DependencyRule] = []
+    for entry in raw.get("dependency_rules") or []:
+        if not isinstance(entry, dict):
+            continue
+        subtask  = str(entry.get("subtask", ""))
+        requires = str(entry.get("requires", ""))
+        if subtask and requires:
+            dependency_rules.append(DependencyRule(
+                subtask=subtask,
+                requires=requires,
+                description=str(entry.get("description", "")),
+            ))
+
+    # ── Phase hints ───────────────────────────────────────────────────────────
+    phase_hints: Dict[str, List[str]] = {}
+    for phase_label, hint_list in (raw.get("phase_hints") or {}).items():
+        if isinstance(hint_list, list):
+            phase_hints[str(phase_label)] = [str(h) for h in hint_list]
+
     # ── Build derived lookup ──────────────────────────────────────────────────
     classes_by_role: Dict[str, List[str]] = {}
     for cls in object_classes:
@@ -275,6 +405,11 @@ def _parse_and_validate(raw: Dict[str, Any], source: Any = None) -> DomainConfig
         workflow_phases=workflow_phases,
         enabled_operations=enabled_operations,
         role_pairings=role_pairings,
+        assembly_predicates=assembly_predicates,
+        subtask_templates=subtask_templates,
+        subgoal_templates=subgoal_templates,
+        dependency_rules=dependency_rules,
+        phase_hints=phase_hints,
     )
     dc._classes_by_role = classes_by_role
     return dc
