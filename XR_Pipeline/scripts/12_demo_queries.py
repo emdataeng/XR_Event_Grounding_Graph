@@ -18,6 +18,7 @@ from src.pruning import answer_query
 from src.scene_state_package import load_scene_state_package
 from src.workflow_queries import answer_workflow_query
 from src.domain_config import load_domain_config
+from src.assembly_reasoner import reason, answer_assembly_query
 from src.run_metadata import build_run_metadata, save_run_metadata
 
 app = typer.Typer()
@@ -28,6 +29,16 @@ GRAPH_QUERIES = [
     "What moved?",
     "What objects appeared?",
     "Which events happened in workstation_A?",
+]
+
+# ── Assembly reasoning queries (answered by assembly_reasoner) ───────────────
+ASSEMBLY_QUERIES = [
+    "What step is happening now?",
+    "What has been assembled so far?",
+    "What is blocked?",
+    "What is the likely next step?",
+    "What evidence supports the current step?",
+    "What changed recently?",
 ]
 
 # ── Workflow queries (answered against operation_events.csv + SSP + timeline) ──
@@ -146,6 +157,47 @@ def main(
             title=f"Workflow Query {qi + 1}/{len(workflow_queries)}",
         ))
 
+    # ── Assembly reasoning queries ─────────────────────────────────────────────
+    assembly_pkg: dict | None = None
+    assembly_graph: dict | None = None
+    if paths.assembly_state_package.exists():
+        with open(paths.assembly_state_package) as f:
+            assembly_pkg = json.load(f)
+    if paths.assembly_graph.exists():
+        with open(paths.assembly_graph) as f:
+            assembly_graph = json.load(f)
+
+    if assembly_pkg is not None:
+        console.print("\n[bold cyan]── Assembly reasoning queries ──[/bold cyan]")
+        for qi, q in enumerate(ASSEMBLY_QUERIES):
+            answer = answer_assembly_query(q, assembly_pkg, assembly_graph)
+            results.append({
+                "query":  q,
+                "layer":  "assembly",
+                "answer": answer,
+            })
+            console.print(Panel(
+                f"[dim]Q:[/dim] {q}\n[bold green]A:[/bold green] {answer}",
+                title=f"Assembly Query {qi + 1}/{len(ASSEMBLY_QUERIES)}",
+            ))
+
+        # Full structured report
+        full = reason(assembly_pkg, assembly_graph, query="full_report")
+        results.append({
+            "query":  "full_assembly_report",
+            "layer":  "assembly",
+            "answer": full,
+        })
+        console.print(
+            f"[dim]Full assembly report: phase={full.get('current_phase')}, "
+            f"trace_steps={len(full.get('reasoning_trace', []))}[/dim]"
+        )
+    else:
+        console.print(
+            "\n[dim]assembly_state_package.json not found — "
+            "run 09d for assembly reasoning queries.[/dim]"
+        )
+
     # ── Operation events table ────────────────────────────────────────────────
     if ops_df is not None and not ops_df.empty:
         table = Table(title="All Detected Operations")
@@ -176,8 +228,10 @@ def main(
         extra={
             "n_graph_queries":    len(GRAPH_QUERIES),
             "n_workflow_queries": len(workflow_queries),
+            "n_assembly_queries": len(ASSEMBLY_QUERIES) if assembly_pkg is not None else 0,
             "n_results":          len(results),
             "timeline_loaded":    timeline is not None,
+            "assembly_pkg_loaded": assembly_pkg is not None,
             "domain_name":        domain.domain_name if domain else None,
         },
     )
