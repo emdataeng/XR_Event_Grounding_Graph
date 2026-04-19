@@ -98,6 +98,8 @@ def build_assembly_state_package(
                 if node["status"] == "achieved":
                     achieved_subgoals.append({
                         "name":              node["name"],
+                        "instance_name":     node.get("instance_name", node["name"]),
+                        "patient_class":     node.get("patient_class", ""),
                         "predicate":         node.get("predicate", ""),
                         "achieved_by_subtask": node.get("achieved_by_subtask"),
                     })
@@ -106,8 +108,10 @@ def build_assembly_state_package(
         for sg in domain_config.subgoal_templates:
             if sg.achieved_by in achieved_subtask_templates:
                 achieved_subgoals.append({
-                    "name":      sg.name,
-                    "predicate": sg.predicate,
+                    "name":          sg.name,
+                    "instance_name": sg.name,
+                    "patient_class": "",
+                    "predicate":     sg.predicate,
                     "achieved_by_subtask": None,
                 })
 
@@ -139,10 +143,12 @@ def build_assembly_state_package(
             # Check prerequisites
             prereqs = domain_config.required_before(tmpl.name)
             if all(p in achieved_subtask_templates for p in prereqs):
+                why_next = f"prerequisites met: {prereqs}" if prereqs else "no prerequisites required"
                 likely_next.append({
-                    "template_name": tmpl.name,
-                    "description":   tmpl.description,
+                    "template_name":     tmpl.name,
+                    "description":       tmpl.description,
                     "prerequisites_met": prereqs,
+                    "why_likely":        why_next,
                 })
 
     # ── Current assembly phase ────────────────────────────────────────────────
@@ -193,6 +199,21 @@ def build_assembly_state_package(
                 "subtask_id": sid,
             })
 
+    # ── Why no active step explanation ───────────────────────────────────────
+    why_no_active_step: Optional[str] = None
+    if not active_subtasks:
+        if achieved_subgoals:
+            names = ", ".join(
+                g.get("instance_name", g["name"]) for g in achieved_subgoals
+            )
+            why_no_active_step = (
+                f"All detected subtasks are completed. "
+                f"Achieved: {names}. "
+                f"Likely next: {[n['template_name'] for n in likely_next[:3]] or 'none identified'}."
+            )
+        else:
+            why_no_active_step = "No subtask activity detected in this session."
+
     # ── Evidence summary ──────────────────────────────────────────────────────
     evidence_summary = {
         "total_active_facts":     len(active_facts),
@@ -210,6 +231,7 @@ def build_assembly_state_package(
         "blocked_subgoals":        blocked_subgoals,
         "likely_next_subtasks":    likely_next,
         "current_assembly_phase":  current_phase,
+        "why_no_active_step":      why_no_active_step,
         "constraint_satisfaction": constraint_sat,
         "unresolved_ambiguities":  ambiguities,
         "assembly_graph_ref":      "graphs/assembly_graph.json",

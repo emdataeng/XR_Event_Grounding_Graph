@@ -58,7 +58,7 @@ _CANDIDATE_OPS = frozenset({
 
 # Output column schema
 _SUBTASK_COLS = [
-    "subtask_id", "template_name", "status",
+    "subtask_id", "template_name", "instance_label", "status",
     "agent_track_id", "patient_track_id", "target_track_id",
     "required_facts", "supporting_facts", "supporting_operations",
     "confidence", "start_frame_idx", "end_frame_idx", "why_this_subtask",
@@ -72,6 +72,7 @@ def infer_subtask_events(
     facts_df: pd.DataFrame,
     ops_df: pd.DataFrame,
     domain_config=None,  # Optional[DomainConfig]
+    tracks_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Infer subtask candidates from state facts + operations + domain config.
 
@@ -90,6 +91,12 @@ def infer_subtask_events(
 
     ops_df     = ops_df     if ops_df     is not None else pd.DataFrame()
     facts_df   = facts_df   if facts_df   is not None else pd.DataFrame()
+
+    # Build track class lookup from tracks_df (track_id → semantic_class)
+    track_classes: Dict[str, str] = {}
+    if tracks_df is not None and not tracks_df.empty and "semantic_class" in tracks_df.columns:
+        for tid, grp in tracks_df.groupby("track_id"):
+            track_classes[str(tid)] = str(grp["semantic_class"].iloc[0])
 
     # Build a fact lookup: predicate → list of fact rows
     fact_lookup: Dict[str, List[Dict]] = {}
@@ -185,13 +192,26 @@ def infer_subtask_events(
             if base_status == "achieved":
                 achieved_templates.add(tmpl_name)
 
-            why = f"{otype} {op_id}"
+            # Build instance label using object semantic classes
+            patient_class = track_classes.get(object_str, "") if object_str else ""
+            agent_class   = track_classes.get(agent_str,  "") if agent_str  else ""
+            if patient_class and patient_class not in ("hand", ""):
+                instance_label = f"{tmpl_name}({patient_class})"
+            else:
+                instance_label = tmpl_name
+
+            # Build descriptive why string
+            duration = end_f - start_f + 1
+            patient_desc = f" {patient_class}" if patient_class else ""
+            agent_desc   = f" {agent_class}"   if agent_class   else ""
+            why = f"{otype} {op_id}:{agent_desc} acted on{patient_desc} ({start_f}→{end_f}, {duration} frames)"
             if req_facts:
-                why += f" with {', '.join(req_facts[:3])}"
+                why += f" with {', '.join(req_facts[:2])}"
 
             rows.append({
                 "subtask_id":            _next_id(),
                 "template_name":         tmpl_name,
+                "instance_label":        instance_label,
                 "status":                base_status,
                 "agent_track_id":        agent_str,
                 "patient_track_id":      object_str,
@@ -217,13 +237,14 @@ def subtask_sequence_json(subtasks_df: pd.DataFrame, session_id: str = "unknown"
     for _, row in subtasks_df.iterrows():
         tmpl = str(row["template_name"])
         phases.setdefault(tmpl, []).append({
-            "subtask_id":   row["subtask_id"],
-            "status":       row["status"],
-            "confidence":   row["confidence"],
-            "start_frame":  row["start_frame_idx"],
-            "end_frame":    row["end_frame_idx"],
-            "agent":        row["agent_track_id"],
-            "patient":      row["patient_track_id"],
+            "subtask_id":    row["subtask_id"],
+            "instance_label": row.get("instance_label", tmpl),
+            "status":        row["status"],
+            "confidence":    row["confidence"],
+            "start_frame":   row["start_frame_idx"],
+            "end_frame":     row["end_frame_idx"],
+            "agent":         row["agent_track_id"],
+            "patient":       row["patient_track_id"],
         })
 
     ordered = subtasks_df.sort_values("start_frame_idx").to_dict(orient="records")

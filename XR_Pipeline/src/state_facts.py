@@ -89,6 +89,9 @@ _BINARY_OPS = frozenset({
 # High-confidence threshold: facts above this are 'active', below are 'candidate'
 _ACTIVE_CONFIDENCE = 0.55
 
+# Predicates that are semantically uncertain by definition (regardless of confidence)
+_CANDIDATE_PREDICATES = frozenset({"touching_candidate", "near"})
+
 # ── Column schema ─────────────────────────────────────────────────────────────
 
 _FACT_COLS = [
@@ -135,7 +138,9 @@ def compute_state_facts(
         counter[0] += 1
         return f"fact_{counter[0]:04d}"
 
-    def _status(conf: float) -> str:
+    def _status(conf: float, predicate: str = "") -> str:
+        if predicate in _CANDIDATE_PREDICATES:
+            return "candidate"
         return "active" if conf >= _ACTIVE_CONFIDENCE else "candidate"
 
     def _relevant(pred: str) -> bool:
@@ -157,7 +162,7 @@ def compute_state_facts(
             "predicate":        predicate,
             "subject_id":       subject_id,
             "object_id":        object_id,
-            "status":           status_override or _status(confidence),
+            "status":           status_override or _status(confidence, predicate),
             "confidence":       round(confidence, 3),
             "start_frame_idx":  int(start_frame),
             "end_frame_idx":    int(end_frame),

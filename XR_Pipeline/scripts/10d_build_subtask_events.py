@@ -39,6 +39,12 @@ def main(
     paths = PipelinePaths(session, cfg)
     paths.ensure_dirs()
 
+    # ── Load object tracks (for instance labels) ──────────────────────────────
+    tracks_df = pd.DataFrame()
+    if paths.object_tracks.exists():
+        tracks_df = pd.read_csv(paths.object_tracks)
+        console.print(f"[dim]Tracks: {len(tracks_df)} rows[/dim]")
+
     # ── Load state facts ──────────────────────────────────────────────────────
     facts_df = pd.DataFrame()
     if paths.state_facts_csv.exists():
@@ -72,6 +78,7 @@ def main(
         facts_df=facts_df,
         ops_df=ops_df,
         domain_config=domain,
+        tracks_df=tracks_df,
     )
     console.print(f"\n[bold]Subtask events:[/bold] {len(subtasks_df)} total")
 

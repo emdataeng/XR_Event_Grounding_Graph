@@ -82,6 +82,7 @@ def reason(
         result["current_step_evidence"] = _why_current_step(pkg, subtask_nodes, edge_index, trace)
         result["current_phase"]     = pkg.get("current_assembly_phase", "idle")
         result["constraint_status"] = _constraint_status(pkg, trace)
+        result["why_no_active_step"] = pkg.get("why_no_active_step")
     else:
         result.update(_run(query))
 
@@ -107,16 +108,26 @@ def answer_assembly_query(query: str, pkg: Dict, graph: Optional[Dict] = None) -
         step = result.get("step")
         if step:
             conf = step.get("confidence", 0)
-            tmpl = step.get("template_name", "unknown")
-            return f"Current step: {tmpl} (confidence {conf:.0%}, status={step.get('status')})"
+            instance = step.get("instance_label") or step.get("template_name", "unknown")
+            return f"Current step: {instance} (confidence {conf:.0%}, status={step.get('status')})"
+        # Provide richer context when no active step
+        why = pkg.get("why_no_active_step") if pkg else None
+        if why:
+            return f"No active assembly step. {why}"
         return "No active assembly step detected."
 
     elif any(k in q for k in ("achieved", "assembled", "done", "completed")):
         result = reason(pkg, graph, query="what_is_achieved")
         goals = result.get("achieved_subgoals", [])
         if goals:
-            names = ", ".join(g["name"] for g in goals)
-            return f"Achieved: {names}"
+            def _display(g: Dict) -> str:
+                return g.get("instance_name") or g.get("name", "?")
+            seen: list = []
+            for g in goals:
+                dn = _display(g)
+                if dn not in seen:
+                    seen.append(dn)
+            return f"Achieved: {', '.join(seen)}"
         return "No subgoals achieved yet."
 
     elif any(k in q for k in ("blocked", "blocking", "stuck")):
@@ -174,10 +185,21 @@ def _what_is_achieved(
     """Return all achieved subgoals."""
     achieved = pkg.get("achieved_subgoals", [])
     trace.append(f"what_is_achieved: {len(achieved)} subgoal(s) achieved")
+
+    def _display(g: Dict) -> str:
+        return g.get("instance_name") or g.get("name", "?")
+
+    # Deduplicate for the answer string (show unique instance names)
+    seen: list = []
+    for g in achieved:
+        dn = _display(g)
+        if dn not in seen:
+            seen.append(dn)
+
     return {
         "achieved_subgoals": achieved,
         "answer": (
-            f"Achieved: {', '.join(g['name'] for g in achieved)}"
+            f"Achieved: {', '.join(seen)}"
             if achieved else "Nothing achieved yet."
         ),
     }

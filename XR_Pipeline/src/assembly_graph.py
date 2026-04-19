@@ -63,6 +63,12 @@ def build_assembly_graph(
     node_ids: set = set()
     edge_counter = [0]
 
+    # Build track→class lookup for instance-aware naming
+    track_classes: Dict[str, str] = {}
+    if tracks_df is not None and not tracks_df.empty and "semantic_class" in tracks_df.columns:
+        for tid, grp in tracks_df.groupby("track_id"):
+            track_classes[str(tid)] = str(grp["semantic_class"].iloc[0])
+
     def _add_node(node: Dict) -> None:
         nid = node["node_id"]
         if nid not in node_ids:
@@ -102,6 +108,8 @@ def build_assembly_graph(
     # ── 3. Subtask nodes + edges ──────────────────────────────────────────────
     subgoal_counter = [0]
     achieved_subtask_ids: Dict[str, str] = {}  # template_name → subtask_id (last achieved)
+    # Track instance_name dedup: base_name → count of times seen
+    subgoal_instance_counts: Dict[str, int] = {}
 
     if subtasks_df is not None and not subtasks_df.empty:
         subtasks_sorted = subtasks_df.sort_values("start_frame_idx").reset_index(drop=True)
@@ -110,18 +118,23 @@ def build_assembly_graph(
             sid = str(sub["subtask_id"])
             tmpl = str(sub["template_name"])
             status = str(sub["status"])
+            patient_str = _or_none(sub.get("patient_track_id"))
+            patient_class = track_classes.get(patient_str, "") if patient_str else ""
+            instance_label = str(sub.get("instance_label", tmpl)) if "instance_label" in sub.index else tmpl
 
             _add_node({
-                "node_id":       sid,
-                "node_type":     "subtask",
-                "template_name": tmpl,
-                "status":        status,
-                "confidence":    float(sub["confidence"]),
-                "start_frame":   int(sub["start_frame_idx"]),
-                "end_frame":     int(sub["end_frame_idx"]),
-                "agent":         _or_none(sub.get("agent_track_id")),
-                "patient":       _or_none(sub.get("patient_track_id")),
-                "why":           str(sub.get("why_this_subtask", "")),
+                "node_id":        sid,
+                "node_type":      "subtask",
+                "template_name":  tmpl,
+                "instance_label": instance_label,
+                "status":         status,
+                "confidence":     float(sub["confidence"]),
+                "start_frame":    int(sub["start_frame_idx"]),
+                "end_frame":      int(sub["end_frame_idx"]),
+                "agent":          _or_none(sub.get("agent_track_id")),
+                "patient":        patient_str,
+                "patient_class":  patient_class,
+                "why":            str(sub.get("why_this_subtask", "")),
             })
 
             # involves edges: subtask → objects
@@ -156,12 +169,23 @@ def build_assembly_graph(
                 if sg_tmpl is not None:
                     subgoal_counter[0] += 1
                     sg_id = f"sgoal_{subgoal_counter[0]:04d}"
+                    # Build instance_name using patient object class
+                    if patient_class and patient_class not in ("hand", ""):
+                        base_instance = f"{sg_tmpl.name}({patient_class})"
+                    else:
+                        base_instance = sg_tmpl.name
+                    # Deduplicate: append _2, _3, … for repeated instances
+                    cnt = subgoal_instance_counts.get(base_instance, 0) + 1
+                    subgoal_instance_counts[base_instance] = cnt
+                    instance_name = base_instance if cnt == 1 else f"{base_instance}_{cnt}"
                     _add_node({
-                        "node_id":   sg_id,
-                        "node_type": "subgoal",
-                        "name":      sg_tmpl.name,
-                        "predicate": sg_tmpl.predicate,
-                        "status":    "achieved",
+                        "node_id":            sg_id,
+                        "node_type":          "subgoal",
+                        "name":               sg_tmpl.name,
+                        "instance_name":      instance_name,
+                        "predicate":          sg_tmpl.predicate,
+                        "patient_class":      patient_class,
+                        "status":             "achieved",
                         "achieved_by_subtask": sid,
                     })
                     _add_edge(sid, sg_id, "achieves")
@@ -221,7 +245,10 @@ def build_assembly_graph(
                     _add_edge(str(sub["subtask_id"]), con_id, "requires")
 
     # ── Summary ───────────────────────────────────────────────────────────────
-    achieved_subgoals = [n["name"] for n in nodes if n["node_type"] == "subgoal" and n["status"] == "achieved"]
+    achieved_subgoals = [
+        n.get("instance_name", n["name"])
+        for n in nodes if n["node_type"] == "subgoal" and n["status"] == "achieved"
+    ]
     active_subtasks   = [n["node_id"] for n in nodes if n["node_type"] == "subtask" and n["status"] in ("in_progress", "candidate")]
     blocked_subtasks  = [n["node_id"] for n in nodes if n["node_type"] == "subtask" and n["status"] == "blocked"]
 

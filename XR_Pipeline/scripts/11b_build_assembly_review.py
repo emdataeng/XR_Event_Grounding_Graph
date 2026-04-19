@@ -80,6 +80,15 @@ def main(
     console.print(f"  Blocked subtasks:  {review['blocked_count']}")
     if review["likely_next"]:
         console.print(f"  Likely next:       {[n['template_name'] for n in review['likely_next']]}")
+    if review.get("why_no_active_step"):
+        from rich.markup import escape as _esc
+        console.print(f"  [dim]{_esc(review['why_no_active_step'])}[/dim]")
+
+    diag = review.get("diagnostics", {})
+    if diag.get("weak_areas"):
+        console.print("\n[yellow]Output quality warnings:[/yellow]")
+        for w in diag["weak_areas"]:
+            console.print(f"  [yellow]⚠ {w}[/yellow]")
 
     _print_subtask_table(review["subtask_timeline"])
     _print_constraint_table(review["constraint_status"])
@@ -144,6 +153,9 @@ def _build_review(
 
     constraint_status = report.get("constraint_status", {})
 
+    # ── Diagnostics ───────────────────────────────────────────────────────────
+    diagnostics = _build_diagnostics(pkg, subtask_timeline)
+
     return {
         "schema_version":        "1.0",
         "session_id":            session_id,
@@ -155,16 +167,61 @@ def _build_review(
         "achieved_subgoals":     pkg.get("achieved_subgoals", []),
         "blocked_subgoals":      pkg.get("blocked_subgoals", []),
         "likely_next":           pkg.get("likely_next_subtasks", []),
+        "why_no_active_step":    pkg.get("why_no_active_step"),
         "subtask_timeline":      subtask_timeline,
         "graph_node_distribution": graph_delta,
         "constraint_status":     constraint_status,
         "reasoning_trace":       report.get("reasoning_trace", []),
         "unresolved_ambiguities": pkg.get("unresolved_ambiguities", []),
+        "diagnostics":           diagnostics,
     }
 
 
 def _all_subtask_nodes(graph: Dict) -> List[Dict]:
     return [n for n in graph.get("nodes", []) if n.get("node_type") == "subtask"]
+
+
+def _build_diagnostics(pkg: Dict, subtask_timeline: List[Dict]) -> Dict[str, Any]:
+    """Build diagnostic flags that highlight output quality issues."""
+    diag: Dict[str, Any] = {}
+
+    # Check for hold-heavy output (all subtasks same template)
+    template_names = [s["template_name"] for s in subtask_timeline]
+    unique_templates = list(dict.fromkeys(template_names))
+    diag["hold_heavy"] = (
+        len(template_names) > 1 and len(unique_templates) == 1 and unique_templates[0] == "hold_part"
+    )
+    diag["dominant_template"] = unique_templates[0] if len(unique_templates) == 1 else None
+
+    # Check for generic/repetitive subgoals
+    achieved = pkg.get("achieved_subgoals", [])
+    subgoal_names = [g.get("instance_name", g.get("name", "")) for g in achieved]
+    unique_subgoals = list(dict.fromkeys(subgoal_names))
+    diag["generic_subgoals"] = len(subgoal_names) > len(unique_subgoals)
+    diag["subgoal_variety"] = len(unique_subgoals)
+    diag["subgoal_names"] = subgoal_names
+
+    # Check for missing expected state changes
+    active_facts = pkg.get("active_facts", [])
+    predicates_seen = {f["predicate"] for f in active_facts}
+    diag["has_holding_facts"]     = "holding" in predicates_seen
+    diag["has_placement_facts"]   = any(p in predicates_seen for p in ("released", "resting", "placed_on_candidate"))
+    diag["has_contact_facts"]     = any(p in predicates_seen for p in ("in_contact", "touching_candidate"))
+    diag["has_candidate_facts"]   = any(f["predicate"] in ("touching_candidate", "near") for f in active_facts)
+
+    # Identify weak areas
+    weak_areas: List[str] = []
+    if diag["hold_heavy"]:
+        weak_areas.append("All subtasks are hold_part — no PICK_UP/INSERT/ATTACH operations detected.")
+    if diag["generic_subgoals"]:
+        weak_areas.append(f"Repeated subgoal instances: {subgoal_names}")
+    if not diag["has_placement_facts"]:
+        weak_areas.append("No placement facts (released/resting after manipulation) — PUT_DOWN not detected.")
+    if not diag["has_contact_facts"]:
+        weak_areas.append("No contact facts — CONTACT/INTERACT operations not detected.")
+    diag["weak_areas"] = weak_areas
+
+    return diag
 
 
 # ── Rich console helpers ───────────────────────────────────────────────────────
@@ -224,10 +281,15 @@ def _render_markdown(review: Dict) -> str:
         "",
     ]
 
+    if review.get("why_no_active_step"):
+        lines += ["## Current Step", f"> {review['why_no_active_step']}", ""]
+
     if review["achieved_subgoals"]:
         lines.append("## Achieved Subgoals")
         for sg in review["achieved_subgoals"]:
-            lines.append(f"- {sg['name']} (predicate: `{sg.get('predicate', '')}`)")
+            instance = sg.get("instance_name") or sg["name"]
+            patient = f" ({sg['patient_class']})" if sg.get("patient_class") else ""
+            lines.append(f"- **{instance}**{patient} — predicate: `{sg.get('predicate', '')}`")
         lines.append("")
 
     if review["blocked_subgoals"]:
@@ -285,6 +347,25 @@ def _render_markdown(review: Dict) -> str:
             lines.append(f"- [{amb['type']}] {amb.get('predicate') or amb.get('subtask_id', '')} "
                          f"(conf={amb.get('confidence', 'N/A')})")
         lines.append("")
+
+    diag = review.get("diagnostics", {})
+    if diag:
+        lines.append("## Output Quality Diagnostics")
+        weak = diag.get("weak_areas", [])
+        if weak:
+            lines.append("### Weak Areas")
+            for w in weak:
+                lines.append(f"- ⚠ {w}")
+            lines.append("")
+        lines += [
+            "### Signal Coverage",
+            f"- Holding facts: {'✓' if diag.get('has_holding_facts') else '✗'}",
+            f"- Placement facts: {'✓' if diag.get('has_placement_facts') else '✗'}",
+            f"- Contact facts: {'✓' if diag.get('has_contact_facts') else '✗'}",
+            f"- Candidate/proximity facts: {'✓' if diag.get('has_candidate_facts') else '✗'}",
+            f"- Subgoal variety: {diag.get('subgoal_variety', 0)} unique instance(s)",
+            "",
+        ]
 
     if review["reasoning_trace"]:
         lines += ["## Reasoning Trace", ""]
