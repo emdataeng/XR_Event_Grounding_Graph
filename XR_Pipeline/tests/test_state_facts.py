@@ -329,6 +329,69 @@ class TestFactIds:
 
 # ── Utility functions ──────────────────────────────────────────────────────────
 
+# ── Support-state transition facts (Milestone 10) ─────────────────────────────
+
+def _make_support(rows):
+    """rows: list of (track_id, state, start_frame, end_frame, trigger_op_id)"""
+    records = []
+    for r in rows:
+        tid, state, start_f, end_f, trig = r
+        records.append(dict(
+            track_id=tid, state=state,
+            start_frame_idx=start_f, end_frame_idx=end_f,
+            trigger_operation_id=trig,
+        ))
+    return pd.DataFrame(records)
+
+
+class TestSupportTransitionFacts:
+    def test_carried_resting_emits_released_fact(self):
+        support = _make_support([
+            ("trk_a", "CARRIED", 5, 10, "op_001"),
+            ("trk_a", "RESTING", 11, 20, None),
+        ])
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), support_df=support)
+        released = df[df["predicate"] == "released"]
+        assert len(released) > 0
+        assert released.iloc[0]["subject_id"] == "trk_a"
+        assert released.iloc[0]["status"] == "achieved"
+
+    def test_carried_resting_emits_support_changed_fact(self):
+        support = _make_support([
+            ("trk_a", "CARRIED", 5, 10, "op_001"),
+            ("trk_a", "RESTING", 11, 20, None),
+        ])
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), support_df=support)
+        changed = df[df["predicate"] == "support_changed"]
+        assert len(changed) > 0
+
+    def test_resting_carried_does_not_emit_released(self):
+        support = _make_support([
+            ("trk_a", "RESTING", 0, 5, None),
+            ("trk_a", "CARRIED", 6, 15, "op_001"),
+        ])
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), support_df=support)
+        released = df[df["predicate"] == "released"]
+        # RESTING→CARRIED should not produce a 'released' fact
+        assert len(released) == 0
+
+    def test_multiple_tracks_get_independent_transitions(self):
+        support = _make_support([
+            ("trk_a", "CARRIED", 5, 10, "op_001"),
+            ("trk_a", "RESTING", 11, 20, None),
+            ("trk_b", "CARRIED", 3, 8, "op_002"),
+            ("trk_b", "RESTING", 9, 18, None),
+        ])
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), support_df=support)
+        released = df[df["predicate"] == "released"]
+        assert set(released["subject_id"]) == {"trk_a", "trk_b"}
+
+    def test_no_support_df_produces_no_transition_facts(self):
+        df = compute_state_facts(_make_tracks(), pd.DataFrame(), pd.DataFrame())
+        assert len(df[df["predicate"] == "released"]) == 0
+        assert len(df[df["predicate"] == "support_changed"]) == 0
+
+
 class TestUtilityFunctions:
     def test_active_facts_filters_active_status(self):
         df = compute_state_facts(_make_tracks(), pd.DataFrame(), pd.DataFrame())

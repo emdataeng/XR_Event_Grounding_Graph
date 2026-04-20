@@ -364,3 +364,83 @@ class TestSummary:
         g = build_assembly_graph(_tracks(), _facts(), _subtasks())
         ids = [n["node_id"] for n in g["nodes"]]
         assert len(ids) == len(set(ids))
+
+
+# ── Supersedes + Invalidates edges (Milestone 10) ─────────────────────────────
+
+class TestStateChangeEdges:
+    def _released_facts(self):
+        return pd.DataFrame({
+            "fact_id":        ["fact_c1", "fact_c2"],
+            "predicate":      ["carried", "released"],
+            "subject_id":     ["trk_a", "trk_a"],
+            "object_id":      [None, None],
+            "status":         ["active", "achieved"],
+            "confidence":     [0.8, 0.8],
+            "start_frame_idx": [5, 20],
+            "end_frame_idx":   [19, 20],
+            "source_stage":   ["support_state", "support_state"],
+        })
+
+    def _release_subtask(self):
+        return pd.DataFrame({
+            "subtask_id":        ["sub_0001"],
+            "template_name":     ["hold_part"],
+            "instance_label":    ["hold_part(workpiece)"],
+            "status":            ["achieved"],
+            "agent_track_id":    ["trk_hand"],
+            "patient_track_id":  ["trk_a"],
+            "target_track_id":   [None],
+            "confidence":        [0.8],
+            "start_frame_idx":   [5],
+            "end_frame_idx":     [18],
+            "why_this_subtask":  ["HOLD"],
+            "supporting_facts":  ["[]"],
+            "supporting_operations": ["[\"op_001\"]"],
+        })
+
+    def test_supersedes_edges_created_for_consecutive_support_facts(self):
+        facts = self._released_facts()
+        g = build_assembly_graph(_tracks(), facts, pd.DataFrame())
+        edge_types = {e["edge_type"] for e in g["edges"]}
+        assert "supersedes" in edge_types
+
+    def test_supersedes_links_consecutive_support_facts(self):
+        facts = self._released_facts()
+        g = build_assembly_graph(_tracks(), facts, pd.DataFrame())
+        sup_edges = [e for e in g["edges"] if e["edge_type"] == "supersedes"]
+        assert len(sup_edges) >= 1
+        # Earlier fact (start_frame=5) should supersede the later (start_frame=20)
+        sources = {e["source"] for e in sup_edges}
+        assert "fact_c1" in sources
+
+    def test_invalidates_edge_emitted_when_released_after_subgoal(self):
+        facts = self._released_facts()
+        domain = _FakeDomain(subgoal_templates=[
+            _FakeSubgoalTemplate("part_is_held", "hold_part", "holding"),
+        ])
+        subtasks = self._release_subtask()
+        g = build_assembly_graph(_tracks(), facts, subtasks, domain_config=domain)
+        edge_types = {e["edge_type"] for e in g["edges"]}
+        assert "invalidates" in edge_types
+
+    def test_subgoal_status_becomes_achieved_then_released(self):
+        facts = self._released_facts()
+        domain = _FakeDomain(subgoal_templates=[
+            _FakeSubgoalTemplate("part_is_held", "hold_part", "holding"),
+        ])
+        subtasks = self._release_subtask()
+        g = build_assembly_graph(_tracks(), facts, subtasks, domain_config=domain)
+        subgoal_nodes = [n for n in g["nodes"] if n["node_type"] == "subgoal"]
+        assert len(subgoal_nodes) > 0
+        statuses = {n["status"] for n in subgoal_nodes}
+        assert "achieved_then_released" in statuses
+
+    def test_invalidated_subgoals_in_summary(self):
+        facts = self._released_facts()
+        domain = _FakeDomain(subgoal_templates=[
+            _FakeSubgoalTemplate("part_is_held", "hold_part", "holding"),
+        ])
+        subtasks = self._release_subtask()
+        g = build_assembly_graph(_tracks(), facts, subtasks, domain_config=domain)
+        assert "invalidated_subgoals" in g["summary"]

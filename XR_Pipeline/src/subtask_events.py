@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import pandas as pd
 
@@ -48,6 +48,12 @@ _GENERIC_OP_TO_TEMPLATE: Dict[str, str] = {
     "USE_TOOL":              "use_tool",
     "TRANSFER":              "transfer_part",
     "APPROACH":              "approach_target",
+}
+
+# Support-state transitions that imply a subtask (independent of explicit ops)
+_SUPPORT_TRANSITION_TO_TEMPLATE: Dict[Tuple[str, str], str] = {
+    ("CARRIED", "RESTING"):     "release_part",
+    ("CARRIED", "IN_CONTACT"):  "place_part",
 }
 
 # Candidate operation types → weaker status
@@ -73,6 +79,7 @@ def infer_subtask_events(
     ops_df: pd.DataFrame,
     domain_config=None,  # Optional[DomainConfig]
     tracks_df: Optional[pd.DataFrame] = None,
+    support_df: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Infer subtask candidates from state facts + operations + domain config.
 
@@ -86,7 +93,11 @@ def infer_subtask_events(
     -------
     DataFrame with subtask event rows (columns: subtask_id, template_name, …)
     """
-    if (ops_df is None or ops_df.empty) and (facts_df is None or facts_df.empty):
+    if (
+        (ops_df is None or ops_df.empty)
+        and (facts_df is None or facts_df.empty)
+        and (support_df is None or support_df.empty)
+    ):
         return pd.DataFrame(columns=_SUBTASK_COLS)
 
     ops_df     = ops_df     if ops_df     is not None else pd.DataFrame()
@@ -224,6 +235,93 @@ def infer_subtask_events(
                 "end_frame_idx":         end_f,
                 "why_this_subtask":      why,
             })
+
+    # ── Derive subtasks from support-state transitions ─────────────────────────
+    if support_df is not None and not support_df.empty:
+        # Frame windows already covered by explicit PUT_DOWN/PUT_DOWN_CANDIDATE ops
+        covered_frames: Set[int] = set()
+        if not ops_df.empty:
+            for _, op in ops_df.iterrows():
+                if str(op.get("operation_type", "")) in ("PUT_DOWN", "PUT_DOWN_CANDIDATE"):
+                    ef = int(op.get("end_frame_idx", 0))
+                    covered_frames.update(range(ef - 3, ef + 4))
+
+        # Build HOLD/PICK_UP lookup: object_track_id → list of ops (for finding agent)
+        hold_by_patient: Dict[str, List[Dict]] = {}
+        if not ops_df.empty:
+            for _, op in ops_df.iterrows():
+                if str(op.get("operation_type", "")) in ("HOLD", "PICK_UP"):
+                    obj = _valid_str(op.get("object_track_id"))
+                    if obj:
+                        hold_by_patient.setdefault(obj, []).append(op.to_dict())
+
+        # Known domain template names (for subgoal lookup compatibility)
+        domain_tmpl_names: Set[str] = set()
+        if domain_config is not None and hasattr(domain_config, "subtask_templates"):
+            domain_tmpl_names = {t.name for t in domain_config.subtask_templates}
+
+        for tid, grp in support_df.groupby("track_id"):
+            grp_s = grp.sort_values("start_frame_idx").reset_index(drop=True)
+            for i in range(len(grp_s) - 1):
+                prev_state = str(grp_s.iloc[i].get("state", ""))
+                next_state  = str(grp_s.iloc[i + 1].get("state", ""))
+                t_frame     = int(grp_s.iloc[i + 1].get("start_frame_idx", 0))
+
+                tmpl_name = _SUPPORT_TRANSITION_TO_TEMPLATE.get((prev_state, next_state))
+                if tmpl_name is None or t_frame in covered_frames:
+                    continue
+
+                tid_str      = str(tid)
+                patient_class = track_classes.get(tid_str, "")
+
+                # Find the most recent preceding HOLD/PICK_UP agent for this object
+                agent_str = None
+                preceding = [
+                    h for h in hold_by_patient.get(tid_str, [])
+                    if int(h.get("end_frame_idx", 0)) <= t_frame
+                ]
+                if preceding:
+                    agent_str = _valid_str(preceding[-1].get("agent_track_id"))
+                agent_class = track_classes.get(agent_str, "") if agent_str else ""
+
+                # Instance label
+                if patient_class and patient_class not in ("hand", ""):
+                    inst_label = f"{tmpl_name}({patient_class})"
+                else:
+                    inst_label = tmpl_name
+
+                # Why string
+                agent_desc   = f" {agent_class}"   if agent_class   else ""
+                patient_desc = f" {patient_class}" if patient_class else ""
+                why = (
+                    f"{prev_state}→{next_state} transition at frame {t_frame}:"
+                    f"{agent_desc} released{patient_desc}"
+                )
+
+                start_f = int(grp_s.iloc[i].get("end_frame_idx", t_frame))
+
+                base_status = "achieved"
+                if base_status in ("in_progress", "achieved") and not _prereqs_met(tmpl_name):
+                    base_status = "blocked"
+                if base_status == "achieved":
+                    achieved_templates.add(tmpl_name)
+
+                rows.append({
+                    "subtask_id":            _next_id(),
+                    "template_name":         tmpl_name,
+                    "instance_label":        inst_label,
+                    "status":                base_status,
+                    "agent_track_id":        agent_str,
+                    "patient_track_id":      tid_str,
+                    "target_track_id":       None,
+                    "required_facts":        json.dumps([]),
+                    "supporting_facts":      json.dumps([]),
+                    "supporting_operations": json.dumps([]),
+                    "confidence":            0.75,
+                    "start_frame_idx":       start_f,
+                    "end_frame_idx":         t_frame,
+                    "why_this_subtask":      why,
+                })
 
     if not rows:
         return pd.DataFrame(columns=_SUBTASK_COLS)

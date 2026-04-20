@@ -12,6 +12,7 @@ Supported queries
   what_changed        — facts/subtasks with start_frame in recent N frames
   likely_next         — pending subtasks with all prerequisites met
   why_current_step    — evidence chain for the active subtask
+  state_transitions   — released/support_changed facts (state-change timeline)
   full_report         — all of the above in one dict
 """
 from __future__ import annotations
@@ -69,6 +70,8 @@ def reason(
             return _likely_next(pkg, trace)
         elif q == "why_current_step":
             return _why_current_step(pkg, subtask_nodes, edge_index, trace)
+        elif q == "state_transitions":
+            return _state_transitions(pkg, trace)
         else:
             trace.append(f"Unknown query '{q}' — running full_report")
             return {}
@@ -80,9 +83,10 @@ def reason(
         result["recent_changes"]    = _what_changed(pkg, recent_frame_window, trace)
         result["likely_next"]       = _likely_next(pkg, trace)
         result["current_step_evidence"] = _why_current_step(pkg, subtask_nodes, edge_index, trace)
-        result["current_phase"]     = pkg.get("current_assembly_phase", "idle")
-        result["constraint_status"] = _constraint_status(pkg, trace)
+        result["current_phase"]      = pkg.get("current_assembly_phase", "idle")
+        result["constraint_status"]  = _constraint_status(pkg, trace)
         result["why_no_active_step"] = pkg.get("why_no_active_step")
+        result["state_transitions"]  = _state_transitions(pkg, trace)
     else:
         result.update(_run(query))
 
@@ -250,12 +254,18 @@ def _what_is_blocked(
 def _what_changed(
     pkg: Dict, window: int, trace: List[str]
 ) -> Dict[str, Any]:
-    """Return facts and subtasks with recent start frames."""
-    changes: List[Dict] = []
+    """Return facts and subtasks with recent start frames.
 
-    # Find max frame across active facts
+    State-change facts (released, support_changed) are always included
+    regardless of the frame window, since they represent discrete transitions.
+    """
+    changes: List[Dict] = []
+    _ALWAYS_INCLUDE = {"released", "support_changed"}
+
+    # Find max frame across active facts and state transitions
     all_frames = [f["frames"][0] for f in pkg.get("active_facts", []) if f.get("frames")]
     all_frames += [s["frames"][0] for s in pkg.get("active_subtasks", []) if s.get("frames")]
+    all_frames += [t["frame"] for t in pkg.get("state_transitions", []) if t.get("frame")]
     if not all_frames:
         trace.append("what_changed: no frame data available")
         return {"recent_changes": [], "answer": "No frame data available."}
@@ -265,13 +275,22 @@ def _what_changed(
 
     for fact in pkg.get("active_facts", []):
         fs = fact.get("frames", [0, 0])[0]
-        if fs >= cutoff:
+        if fs >= cutoff or fact.get("predicate") in _ALWAYS_INCLUDE:
             changes.append({
                 "type":        "fact",
                 "description": f"{fact['predicate']}({fact['subject_id']},{fact.get('object_id', '')})",
                 "frame":       fs,
                 "confidence":  fact.get("confidence", 0),
             })
+
+    # State-transition facts (released/support_changed) — always surface
+    for trans in pkg.get("state_transitions", []):
+        changes.append({
+            "type":        "state_transition",
+            "description": f"{trans['predicate']}({trans['subject_id']}) at frame {trans['frame']}",
+            "frame":       trans["frame"],
+            "confidence":  trans.get("confidence", 0),
+        })
 
     for sub in pkg.get("active_subtasks", []):
         fs = sub.get("frames", [0, 0])[0]
@@ -283,15 +302,58 @@ def _what_changed(
                 "confidence":  sub.get("confidence", 0),
             })
 
-    changes.sort(key=lambda c: c["frame"], reverse=True)
-    trace.append(f"what_changed: {len(changes)} change(s) in last {window} frames")
+    # Deduplicate by description
+    seen_desc: set = set()
+    unique_changes: List[Dict] = []
+    for c in changes:
+        if c["description"] not in seen_desc:
+            seen_desc.add(c["description"])
+            unique_changes.append(c)
+
+    unique_changes.sort(key=lambda c: c["frame"], reverse=True)
+    trace.append(f"what_changed: {len(unique_changes)} change(s) in last {window} frames")
 
     return {
-        "recent_changes": changes,
+        "recent_changes": unique_changes,
         "answer": (
-            f"{len(changes)} change(s) in last {window} frames"
-            if changes else "No recent changes."
+            f"{len(unique_changes)} change(s) in last {window} frames"
+            if unique_changes else "No recent changes."
         ),
+    }
+
+
+def _state_transitions(pkg: Dict, trace: List[str]) -> Dict[str, Any]:
+    """Return state-change transition events (released, support_changed)."""
+    transitions = pkg.get("state_transitions", [])
+    releases = [t for t in transitions if t["predicate"] == "released"]
+    support_changes = [t for t in transitions if t["predicate"] == "support_changed"]
+
+    trace.append(f"state_transitions: {len(releases)} release(s), {len(support_changes)} support change(s)")
+
+    if releases:
+        rel_desc = "; ".join(
+            f"{t['subject_id']} at frame {t['frame']}" for t in releases
+        )
+        answer = f"{len(releases)} release event(s): {rel_desc}"
+    elif support_changes:
+        answer = f"{len(support_changes)} support-state change(s) detected, no explicit releases."
+    else:
+        answer = "No state-transition events detected."
+
+    # Check if any subgoals were invalidated
+    invalidated = [
+        g for g in pkg.get("achieved_subgoals", [])
+        if g.get("status") == "achieved_then_released"
+    ]
+    if invalidated:
+        inv_names = ", ".join(g.get("instance_name", g["name"]) for g in invalidated)
+        answer += f" Invalidated subgoals: {inv_names}."
+
+    return {
+        "transitions":  transitions,
+        "releases":     releases,
+        "invalidated_subgoals": invalidated,
+        "answer":       answer,
     }
 
 

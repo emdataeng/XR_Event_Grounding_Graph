@@ -395,3 +395,65 @@ class TestAnswerAssemblyQuery:
         pkg = _pkg(current_assembly_phase="contact")
         answer = answer_assembly_query("tell me everything", pkg)
         assert "contact" in answer.lower() or "phase" in answer.lower()
+
+
+# ── State transitions (Milestone 10) ──────────────────────────────────────────
+
+def _transition(pred="released", subject="trk_a", frame=20, conf=0.8, source="support_state"):
+    return {"predicate": pred, "subject_id": subject, "frame": frame,
+            "confidence": conf, "source": source}
+
+
+class TestStateTransitions:
+    def test_state_transitions_query_returns_dict(self):
+        pkg = _pkg(state_transitions=[_transition()])
+        result = reason(pkg, query="state_transitions")
+        assert "transitions" in result
+        assert "releases" in result
+
+    def test_state_transitions_counts_releases(self):
+        pkg = _pkg(state_transitions=[
+            _transition("released", "trk_a", 20),
+            _transition("released", "trk_b", 30),
+            _transition("support_changed", "trk_a", 21),
+        ])
+        result = reason(pkg, query="state_transitions")
+        assert len(result["releases"]) == 2
+
+    def test_state_transitions_answer_mentions_release(self):
+        pkg = _pkg(state_transitions=[_transition("released", "trk_a", 15)])
+        result = reason(pkg, query="state_transitions")
+        assert "release" in result["answer"].lower()
+
+    def test_state_transitions_empty_gives_no_events_answer(self):
+        pkg = _pkg(state_transitions=[])
+        result = reason(pkg, query="state_transitions")
+        assert "no" in result["answer"].lower()
+
+    def test_full_report_includes_state_transitions(self):
+        pkg = _pkg(state_transitions=[_transition()])
+        result = reason(pkg, query="full_report")
+        assert "state_transitions" in result
+
+    def test_what_changed_includes_state_transition_facts(self):
+        pkg = _pkg(
+            active_facts=[_fact(frames=[50, 60])],
+            state_transitions=[_transition("released", "trk_a", 10)],
+        )
+        result = reason(pkg, query="what_changed")
+        descs = [c["description"] for c in result["recent_changes"]]
+        assert any("released" in d for d in descs)
+
+    def test_invalidated_subgoals_reported_in_transitions(self):
+        invalidated_subgoal = {
+            "name": "part_is_held", "instance_name": "part_is_held(workpiece)",
+            "patient_class": "workpiece", "predicate": "holding",
+            "status": "achieved_then_released", "invalidated_at": 20,
+            "achieved_by_subtask": "sub_0001",
+        }
+        pkg = _pkg(
+            achieved_subgoals=[invalidated_subgoal],
+            state_transitions=[_transition("released", "trk_a", 20)],
+        )
+        result = reason(pkg, query="state_transitions")
+        assert len(result["invalidated_subgoals"]) == 1

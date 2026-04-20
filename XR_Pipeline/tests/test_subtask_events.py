@@ -290,6 +290,83 @@ class TestWhyString:
         assert "PICK_UP" in row["why_this_subtask"] or "pick_up" in row["why_this_subtask"].lower()
 
 
+# ── Support-state → release_part subtask (Milestone 10) ──────────────────────
+
+def _make_support_df(rows):
+    """rows: list of (track_id, state, start_frame, end_frame)"""
+    records = []
+    for r in rows:
+        tid, state, start_f, end_f = r
+        records.append(dict(
+            track_id=tid, state=state,
+            start_frame_idx=start_f, end_frame_idx=end_f,
+            trigger_operation_id=None,
+        ))
+    return pd.DataFrame(records)
+
+
+class TestSupportTransitionSubtasks:
+    def test_carried_resting_produces_release_part(self):
+        ops = pd.DataFrame()
+        support = _make_support_df([
+            ("trk_part", "CARRIED", 5, 15),
+            ("trk_part", "RESTING", 16, 25),
+        ])
+        df = infer_subtask_events(pd.DataFrame(), ops, support_df=support)
+        assert "release_part" in df["template_name"].values
+
+    def test_release_part_not_duplicated_when_put_down_present(self):
+        """CARRIED→RESTING that overlaps a PUT_DOWN op should not produce release_part."""
+        ops = _make_ops(("op_001", "PUT_DOWN", "trk_hand", "trk_part", 10, 15, 0.8))
+        support = _make_support_df([
+            ("trk_part", "CARRIED", 5, 15),
+            ("trk_part", "RESTING", 15, 25),
+        ])
+        df = infer_subtask_events(pd.DataFrame(), ops, support_df=support)
+        release_rows = df[df["template_name"] == "release_part"]
+        # The transition at frame 15 is covered by the PUT_DOWN end_frame window → no duplicate
+        assert len(release_rows) == 0
+
+    def test_release_part_has_patient_track_id(self):
+        support = _make_support_df([
+            ("trk_wp", "CARRIED", 0, 10),
+            ("trk_wp", "RESTING", 11, 20),
+        ])
+        df = infer_subtask_events(pd.DataFrame(), pd.DataFrame(), support_df=support)
+        row = df[df["template_name"] == "release_part"].iloc[0]
+        assert row["patient_track_id"] == "trk_wp"
+
+    def test_release_part_instance_label_uses_patient_class(self):
+        support = _make_support_df([
+            ("trk_wp", "CARRIED", 0, 10),
+            ("trk_wp", "RESTING", 11, 20),
+        ])
+        tracks = pd.DataFrame({
+            "track_id": ["trk_wp"],
+            "frame_idx": [0],
+            "semantic_class": ["blue_lego"],
+        })
+        df = infer_subtask_events(pd.DataFrame(), pd.DataFrame(), tracks_df=tracks, support_df=support)
+        row = df[df["template_name"] == "release_part"].iloc[0]
+        assert "blue_lego" in row["instance_label"]
+
+    def test_no_release_part_without_carried_resting(self):
+        support = _make_support_df([
+            ("trk_wp", "RESTING", 0, 10),
+            ("trk_wp", "CARRIED", 11, 20),
+        ])
+        df = infer_subtask_events(pd.DataFrame(), pd.DataFrame(), support_df=support)
+        assert "release_part" not in df["template_name"].values
+
+    def test_carried_in_contact_produces_place_part(self):
+        support = _make_support_df([
+            ("trk_wp", "CARRIED", 0, 10),
+            ("trk_wp", "IN_CONTACT", 11, 20),
+        ])
+        df = infer_subtask_events(pd.DataFrame(), pd.DataFrame(), support_df=support)
+        assert "place_part" in df["template_name"].values
+
+
 # ── subtask_sequence_json ──────────────────────────────────────────────────────
 
 class TestSubtaskSequenceJson:

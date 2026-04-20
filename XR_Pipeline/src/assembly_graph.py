@@ -244,13 +244,56 @@ def build_assembly_graph(
                 for _, sub in subtasks_df[subtasks_df["template_name"] == rule.subtask].iterrows():
                     _add_edge(str(sub["subtask_id"]), con_id, "requires")
 
+    # ── 6. Supersedes edges between consecutive support-state facts ───────────
+    support_preds = {"resting", "carried", "released", "surface_contact", "support_changed"}
+    support_facts_by_subject: Dict[str, List[Dict]] = {}
+    for n in nodes:
+        if n.get("node_type") == "relation_fact" and n.get("predicate") in support_preds:
+            subj = str(n.get("subject_id", ""))
+            if subj:
+                support_facts_by_subject.setdefault(subj, []).append(n)
+    for subj, sfacts in support_facts_by_subject.items():
+        sfacts.sort(key=lambda n: n.get("start_frame", 0))
+        for i in range(len(sfacts) - 1):
+            _add_edge(sfacts[i]["node_id"], sfacts[i + 1]["node_id"], "supersedes")
+
+    # ── 7. Invalidates edges: released fact → subgoal nodes ──────────────────
+    released_facts = [
+        n for n in nodes
+        if n.get("node_type") == "relation_fact" and n.get("predicate") == "released"
+    ]
+    for rel_fact in released_facts:
+        rel_subject = str(rel_fact.get("subject_id", ""))
+        rel_frame   = int(rel_fact.get("start_frame", 0))
+        for sg_node in [n for n in nodes if n.get("node_type") == "subgoal"]:
+            sg_subtask_id = sg_node.get("achieved_by_subtask")
+            if not sg_subtask_id:
+                continue
+            # Find the subtask node to get its patient_track_id
+            sg_sub = next(
+                (n for n in nodes if n.get("node_id") == sg_subtask_id), None
+            )
+            if sg_sub is None:
+                continue
+            patient = str(sg_sub.get("patient") or "")
+            if patient != rel_subject:
+                continue
+            # Subgoal achievement frame (use subtask end_frame)
+            achieved_frame = int(sg_sub.get("end_frame", 0))
+            if rel_frame > achieved_frame:
+                _add_edge(rel_fact["node_id"], sg_node["node_id"], "invalidates")
+                sg_node["status"] = "achieved_then_released"
+                sg_node["invalidated_at"] = rel_frame
+
     # ── Summary ───────────────────────────────────────────────────────────────
     achieved_subgoals = [
         n.get("instance_name", n["name"])
-        for n in nodes if n["node_type"] == "subgoal" and n["status"] == "achieved"
+        for n in nodes
+        if n["node_type"] == "subgoal" and n["status"] in ("achieved", "achieved_then_released")
     ]
     active_subtasks   = [n["node_id"] for n in nodes if n["node_type"] == "subtask" and n["status"] in ("in_progress", "candidate")]
     blocked_subtasks  = [n["node_id"] for n in nodes if n["node_type"] == "subtask" and n["status"] == "blocked"]
+    invalidated_subgoals = [n.get("instance_name", n["name"]) for n in nodes if n["node_type"] == "subgoal" and n["status"] == "achieved_then_released"]
 
     return {
         "schema_version":  "1.0",
@@ -258,13 +301,14 @@ def build_assembly_graph(
         "nodes":           nodes,
         "edges":           edges,
         "summary": {
-            "total_nodes":       len(nodes),
-            "total_edges":       len(edges),
-            "achieved_subgoals": achieved_subgoals,
-            "active_subtasks":   active_subtasks,
-            "blocked_subtasks":  blocked_subtasks,
-            "node_type_counts":  _count_by(nodes, "node_type"),
-            "edge_type_counts":  _count_by(edges, "edge_type"),
+            "total_nodes":           len(nodes),
+            "total_edges":           len(edges),
+            "achieved_subgoals":     achieved_subgoals,
+            "invalidated_subgoals":  invalidated_subgoals,
+            "active_subtasks":       active_subtasks,
+            "blocked_subtasks":      blocked_subtasks,
+            "node_type_counts":      _count_by(nodes, "node_type"),
+            "edge_type_counts":      _count_by(edges, "edge_type"),
         },
     }
 

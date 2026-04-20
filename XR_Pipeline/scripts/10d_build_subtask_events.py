@@ -62,6 +62,13 @@ def main(
     else:
         console.print("[yellow]operation_events.csv not found — subtask inference will be limited[/yellow]")
 
+    # ── Load support-state transitions (for release_part inference) ───────────
+    support_df = pd.DataFrame()
+    support_path = paths.objects_dir / "support_state_transitions.csv"
+    if support_path.exists():
+        support_df = pd.read_csv(support_path)
+        console.print(f"[dim]Support transitions: {len(support_df)} rows[/dim]")
+
     # ── Domain config ─────────────────────────────────────────────────────────
     domain = load_domain_config(cfg=cfg)
     if domain:
@@ -79,6 +86,7 @@ def main(
         ops_df=ops_df,
         domain_config=domain,
         tracks_df=tracks_df,
+        support_df=support_df if not support_df.empty else None,
     )
     console.print(f"\n[bold]Subtask events:[/bold] {len(subtasks_df)} total")
 

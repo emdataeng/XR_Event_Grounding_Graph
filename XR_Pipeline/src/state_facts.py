@@ -270,6 +270,34 @@ def compute_state_facts(
             conf = 0.80 if state == "CARRIED" else 0.70
             rows.append(_row(predicate, tid, None, conf, start_f, end_f, refs, "support_state"))
 
+        # ── 4b. Support-state transition facts ───────────────────────────────
+        # Detect consecutive state changes for each track and emit transition facts.
+        for tid, grp in support_df.groupby("track_id"):
+            grp_s = grp.sort_values("start_frame_idx").reset_index(drop=True)
+            for i in range(len(grp_s) - 1):
+                prev_row = grp_s.iloc[i]
+                next_row = grp_s.iloc[i + 1]
+                prev_state = str(prev_row.get("state", ""))
+                next_state  = str(next_row.get("state", ""))
+                t_frame = int(next_row.get("start_frame_idx", 0))
+
+                op_ref = next_row.get("trigger_operation_id") or prev_row.get("trigger_operation_id")
+                refs   = [str(op_ref)] if _valid_id(op_ref) else []
+
+                # CARRIED → RESTING or IN_CONTACT: object was released / set down
+                if prev_state == "CARRIED" and next_state in ("RESTING", "IN_CONTACT"):
+                    rows.append(_row(
+                        "released", str(tid), None, 0.80,
+                        t_frame, t_frame, refs, "support_state",
+                        status_override="achieved",
+                    ))
+
+                # Generic state transition marker
+                rows.append(_row(
+                    "support_changed", str(tid), None, 0.75,
+                    t_frame, t_frame, refs, "support_state",
+                ))
+
     if not rows:
         return pd.DataFrame(columns=_FACT_COLS)
 

@@ -97,6 +97,12 @@ subtask_templates:
     agent_role: workpiece
     patient_role: workpiece
     description: Two bricks come into contact (stacking)
+  - name: release_part
+    trigger_operations: []
+    trigger_predicates: [carried]
+    agent_role: hand
+    patient_role: workpiece
+    description: Hand releases a Lego brick (inferred from support-state transition)
 
 subgoal_templates:
   - name: part_is_picked_up
@@ -115,6 +121,10 @@ subgoal_templates:
     achieved_by: contact_parts
     predicate: in_contact
     description: Two Lego bricks are in contact
+  - name: part_is_released
+    achieved_by: release_part
+    predicate: released
+    description: A Lego brick was released from the hand
 
 dependency_rules: []
 
@@ -122,3 +132,4 @@ phase_hints:
   manipulation: [pick_up_part, place_part]
   hold: [hold_part]
   contact: [contact_parts]
+  release: [release_part]

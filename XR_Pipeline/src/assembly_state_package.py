@@ -95,12 +95,14 @@ def build_assembly_state_package(
     if assembly_graph is not None:
         for node in assembly_graph.get("nodes", []):
             if node["node_type"] == "subgoal":
-                if node["status"] == "achieved":
+                if node["status"] in ("achieved", "achieved_then_released"):
                     achieved_subgoals.append({
                         "name":              node["name"],
                         "instance_name":     node.get("instance_name", node["name"]),
                         "patient_class":     node.get("patient_class", ""),
                         "predicate":         node.get("predicate", ""),
+                        "status":            node["status"],
+                        "invalidated_at":    node.get("invalidated_at"),
                         "achieved_by_subtask": node.get("achieved_by_subtask"),
                     })
     elif domain_config is not None:
@@ -199,6 +201,21 @@ def build_assembly_state_package(
                 "subtask_id": sid,
             })
 
+    # ── State transitions ─────────────────────────────────────────────────────
+    state_transitions: List[Dict] = []
+    if not facts_df.empty and "predicate" in facts_df.columns:
+        trans_preds = {"released", "support_changed"}
+        for _, fr in facts_df[facts_df["predicate"].isin(trans_preds)].iterrows():
+            state_transitions.append({
+                "fact_id":    str(fr["fact_id"]),
+                "predicate":  str(fr["predicate"]),
+                "subject_id": str(fr["subject_id"]),
+                "frame":      int(fr["start_frame_idx"]),
+                "confidence": float(fr["confidence"]),
+                "source":     str(fr.get("source_stage", "")),
+            })
+    state_transitions.sort(key=lambda t: t["frame"])
+
     # ── Why no active step explanation ───────────────────────────────────────
     why_no_active_step: Optional[str] = None
     if not active_subtasks:
@@ -206,9 +223,17 @@ def build_assembly_state_package(
             names = ", ".join(
                 g.get("instance_name", g["name"]) for g in achieved_subgoals
             )
+            transition_summary = ""
+            if state_transitions:
+                release_events = [t for t in state_transitions if t["predicate"] == "released"]
+                if release_events:
+                    rel_desc = ", ".join(
+                        f"{t['subject_id']} at frame {t['frame']}" for t in release_events[:3]
+                    )
+                    transition_summary = f" Releases detected: {rel_desc}."
             why_no_active_step = (
                 f"All detected subtasks are completed. "
-                f"Achieved: {names}. "
+                f"Achieved: {names}.{transition_summary} "
                 f"Likely next: {[n['template_name'] for n in likely_next[:3]] or 'none identified'}."
             )
         else:
@@ -232,6 +257,7 @@ def build_assembly_state_package(
         "likely_next_subtasks":    likely_next,
         "current_assembly_phase":  current_phase,
         "why_no_active_step":      why_no_active_step,
+        "state_transitions":       state_transitions,
         "constraint_satisfaction": constraint_sat,
         "unresolved_ambiguities":  ambiguities,
         "assembly_graph_ref":      "graphs/assembly_graph.json",
