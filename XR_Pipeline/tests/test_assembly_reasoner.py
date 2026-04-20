@@ -457,3 +457,83 @@ class TestStateTransitions:
         )
         result = reason(pkg, query="state_transitions")
         assert len(result["invalidated_subgoals"]) == 1
+
+
+# ── Inter-object relations (Milestone 11) ─────────────────────────────────────
+
+def _object_relation(pred="co_held", subj="trk_a", obj="trk_b",
+                     start=5, end=15, conf=0.72, status="active"):
+    return {
+        "fact_id":    "fact_0099",
+        "predicate":  pred,
+        "subject_id": subj,
+        "object_id":  obj,
+        "status":     status,
+        "confidence": conf,
+        "start_frame": start,
+        "end_frame":   end,
+        "source":     "operations",
+    }
+
+
+class TestObjectRelations:
+    def test_what_objects_related_query_returns_dict(self):
+        pkg = _pkg(object_relations=[_object_relation()], candidate_subgoals=[])
+        result = reason(pkg, query="what_objects_related")
+        assert isinstance(result, dict)
+
+    def test_what_objects_related_returns_relations_list(self):
+        pkg = _pkg(object_relations=[_object_relation()], candidate_subgoals=[])
+        result = reason(pkg, query="what_objects_related")
+        assert "object_relations" in result
+        assert len(result["object_relations"]) == 1
+
+    def test_what_objects_related_answer_mentions_co_held(self):
+        pkg = _pkg(object_relations=[_object_relation("co_held")], candidate_subgoals=[])
+        result = reason(pkg, query="what_objects_related")
+        # Answer says "co-held" (hyphenated) or "co_held" (with underscore)
+        assert "co" in result["answer"].lower() and "held" in result["answer"].lower()
+
+    def test_what_objects_related_empty_gives_no_relations_answer(self):
+        pkg = _pkg(object_relations=[], candidate_subgoals=[])
+        result = reason(pkg, query="what_objects_related")
+        assert "no inter-object" in result["answer"].lower()
+
+    def test_full_report_includes_object_relations(self):
+        pkg = _pkg(object_relations=[_object_relation()], candidate_subgoals=[])
+        result = reason(pkg, query="full_report")
+        assert "object_relations" in result
+
+    def test_contact_keyword_routes_to_object_relations(self):
+        pkg = _pkg(object_relations=[_object_relation()], candidate_subgoals=[])
+        answer = answer_assembly_query("Did any parts come into contact?", pkg)
+        assert isinstance(answer, str)
+        assert len(answer) > 0
+
+    def test_co_held_keyword_routes_to_object_relations(self):
+        pkg = _pkg(object_relations=[_object_relation()], candidate_subgoals=[])
+        answer = answer_assembly_query("What was co_held?", pkg)
+        assert "co_held" in answer.lower() or "inter-object" in answer.lower()
+
+    def test_candidate_subgoals_included_in_what_objects_related(self):
+        cand = {"name": "parts_co_held", "instance_name": "parts_co_held(red,blue)",
+                "predicate": "co_held", "status": "candidate",
+                "achieved_by_subtask": None, "inter_object": True}
+        pkg = _pkg(object_relations=[], candidate_subgoals=[cand])
+        result = reason(pkg, query="what_objects_related")
+        assert "candidate_subgoals" in result
+        assert len(result["candidate_subgoals"]) == 1
+
+    def test_what_changed_includes_co_held_started_transitions(self):
+        co_trans = {
+            "fact_id": "f99", "predicate": "co_held_started",
+            "subject_id": "trk_a", "object_id": "trk_b",
+            "frame": 10, "confidence": 0.72, "source": "operations",
+        }
+        pkg = _pkg(
+            state_transitions=[co_trans],
+            active_facts=[_fact(frames=[10, 20])],
+        )
+        result = reason(pkg, query="what_changed")
+        descs = [c["description"] for c in result["recent_changes"]]
+        assert any("co_held_started" in d for d in descs)

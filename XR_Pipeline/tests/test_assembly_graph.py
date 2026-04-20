@@ -444,3 +444,114 @@ class TestStateChangeEdges:
         subtasks = self._release_subtask()
         g = build_assembly_graph(_tracks(), facts, subtasks, domain_config=domain)
         assert "invalidated_subgoals" in g["summary"]
+
+
+# ── Inter-object relation graph nodes (Milestone 11) ─────────────────────────
+
+def _two_obj_tracks():
+    return pd.DataFrame({
+        "track_id":       ["trk_a", "trk_b"],
+        "start_frame_idx": [0, 0],
+        "end_frame_idx":   [30, 30],
+        "semantic_class":  ["red_lego", "blue_lego"],
+        "object_role":     ["workpiece", "workpiece"],
+    })
+
+
+def _co_held_facts():
+    return pd.DataFrame([
+        {"fact_id": "fact_0001", "predicate": "co_held",
+         "subject_id": "trk_a", "object_id": "trk_b",
+         "status": "active", "confidence": 0.72,
+         "start_frame_idx": 5, "end_frame_idx": 12,
+         "source_stage": "operations"},
+        {"fact_id": "fact_0002", "predicate": "co_held_started",
+         "subject_id": "trk_a", "object_id": "trk_b",
+         "status": "active", "confidence": 0.72,
+         "start_frame_idx": 5, "end_frame_idx": 5,
+         "source_stage": "operations"},
+        {"fact_id": "fact_0003", "predicate": "co_held_ended",
+         "subject_id": "trk_a", "object_id": "trk_b",
+         "status": "active", "confidence": 0.72,
+         "start_frame_idx": 12, "end_frame_idx": 12,
+         "source_stage": "operations"},
+    ])
+
+
+class _FakeSubgoalTemplateCoHeld:
+    def __init__(self):
+        self.name = "parts_co_held"
+        self.achieved_by = "co_held_parts"
+        self.predicate = "co_held"
+
+
+class _FakeDomainCoHeld:
+    def __init__(self):
+        self.subgoal_templates = [_FakeSubgoalTemplateCoHeld()]
+        self.dependency_rules = []
+        self.subtask_templates = []
+
+    def subgoal_for_subtask(self, name):
+        for sg in self.subgoal_templates:
+            if sg.achieved_by == name:
+                return sg
+        return None
+
+    def required_before(self, name):
+        return []
+
+
+class TestInterObjectRelationGraph:
+    def test_co_held_fact_creates_relation_fact_node(self):
+        g = build_assembly_graph(_two_obj_tracks(), _co_held_facts(), pd.DataFrame())
+        fact_nodes = [n for n in g["nodes"] if n["node_type"] == "relation_fact"]
+        preds = {n["predicate"] for n in fact_nodes}
+        assert "co_held" in preds
+
+    def test_co_held_started_creates_relation_fact_node(self):
+        g = build_assembly_graph(_two_obj_tracks(), _co_held_facts(), pd.DataFrame())
+        fact_nodes = [n for n in g["nodes"] if n["node_type"] == "relation_fact"]
+        preds = {n["predicate"] for n in fact_nodes}
+        assert "co_held_started" in preds
+
+    def test_candidate_subgoal_created_for_co_held_parts_subtask(self):
+        subtasks = pd.DataFrame([{
+            "subtask_id":            "sub_0001",
+            "template_name":         "co_held_parts",
+            "instance_label":        "co_held_parts(red_lego,blue_lego)",
+            "status":                "candidate",
+            "agent_track_id":        "trk_a",
+            "patient_track_id":      "trk_b",
+            "target_track_id":       None,
+            "confidence":            0.576,
+            "start_frame_idx":       5,
+            "end_frame_idx":         12,
+            "why_this_subtask":      "co_held fact fact_0001",
+            "supporting_facts":      "[\"fact_0001\"]",
+            "supporting_operations": "[]",
+        }])
+        domain = _FakeDomainCoHeld()
+        g = build_assembly_graph(_two_obj_tracks(), _co_held_facts(), subtasks, domain_config=domain)
+        subgoal_nodes = [n for n in g["nodes"] if n["node_type"] == "subgoal"]
+        assert len(subgoal_nodes) > 0
+        assert any(n["status"] == "candidate" for n in subgoal_nodes)
+
+    def test_candidate_subgoals_in_summary(self):
+        subtasks = pd.DataFrame([{
+            "subtask_id":            "sub_0001",
+            "template_name":         "co_held_parts",
+            "instance_label":        "co_held_parts",
+            "status":                "candidate",
+            "agent_track_id":        "trk_a",
+            "patient_track_id":      "trk_b",
+            "target_track_id":       None,
+            "confidence":            0.576,
+            "start_frame_idx":       5,
+            "end_frame_idx":         12,
+            "why_this_subtask":      "co_held",
+            "supporting_facts":      "[]",
+            "supporting_operations": "[]",
+        }])
+        domain = _FakeDomainCoHeld()
+        g = build_assembly_graph(_two_obj_tracks(), _co_held_facts(), subtasks, domain_config=domain)
+        assert "candidate_subgoals" in g["summary"]

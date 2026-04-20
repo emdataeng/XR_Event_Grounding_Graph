@@ -245,7 +245,11 @@ def build_assembly_graph(
                     _add_edge(str(sub["subtask_id"]), con_id, "requires")
 
     # ── 6. Supersedes edges between consecutive support-state facts ───────────
-    support_preds = {"resting", "carried", "released", "surface_contact", "support_changed"}
+    # Also chain co_held_started / co_held_ended transitions per object pair.
+    support_preds = {
+        "resting", "carried", "released", "surface_contact", "support_changed",
+        "co_held_started", "co_held_ended",
+    }
     support_facts_by_subject: Dict[str, List[Dict]] = {}
     for n in nodes:
         if n.get("node_type") == "relation_fact" and n.get("predicate") in support_preds:
@@ -285,11 +289,62 @@ def build_assembly_graph(
                 sg_node["status"] = "achieved_then_released"
                 sg_node["invalidated_at"] = rel_frame
 
+    # ── 8. Candidate subgoals from inter-object relation subtasks ────────────
+    # For subtasks with status='candidate' that have a domain subgoal template,
+    # create a candidate-status subgoal node so the graph reflects potential
+    # assembly progress without over-promoting weak evidence.
+    _inter_relation_templates = {"co_held_parts"}  # templates from relation facts
+    if subtasks_df is not None and not subtasks_df.empty and domain_config is not None:
+        for _, sub in subtasks_df[subtasks_df["template_name"].isin(_inter_relation_templates)].iterrows():
+            sid    = str(sub["subtask_id"])
+            tmpl   = str(sub["template_name"])
+            status = str(sub["status"])
+            if status not in ("candidate", "in_progress"):
+                continue
+            sg_tmpl = domain_config.subgoal_for_subtask(tmpl)
+            if sg_tmpl is None:
+                continue
+            patient_str   = _or_none(sub.get("patient_track_id"))
+            agent_str_val = _or_none(sub.get("agent_track_id"))
+            p_class = track_classes.get(patient_str, "") if patient_str else ""
+            a_class = track_classes.get(agent_str_val, "") if agent_str_val else ""
+
+            if a_class and p_class and a_class not in ("hand", "") and p_class not in ("hand", ""):
+                base_instance = f"{sg_tmpl.name}({a_class},{p_class})"
+            elif p_class and p_class not in ("hand", ""):
+                base_instance = f"{sg_tmpl.name}({p_class})"
+            else:
+                base_instance = sg_tmpl.name
+
+            cnt = subgoal_instance_counts.get(base_instance, 0) + 1
+            subgoal_instance_counts[base_instance] = cnt
+            instance_name = base_instance if cnt == 1 else f"{base_instance}_{cnt}"
+
+            subgoal_counter[0] += 1
+            sg_id = f"sgoal_{subgoal_counter[0]:04d}"
+            _add_node({
+                "node_id":            sg_id,
+                "node_type":          "subgoal",
+                "name":               sg_tmpl.name,
+                "instance_name":      instance_name,
+                "predicate":          sg_tmpl.predicate,
+                "patient_class":      p_class,
+                "status":             "candidate",
+                "achieved_by_subtask": sid,
+                "inter_object":       True,
+            })
+            _add_edge(sid, sg_id, "achieves")
+
     # ── Summary ───────────────────────────────────────────────────────────────
     achieved_subgoals = [
         n.get("instance_name", n["name"])
         for n in nodes
         if n["node_type"] == "subgoal" and n["status"] in ("achieved", "achieved_then_released")
+    ]
+    candidate_subgoals = [
+        n.get("instance_name", n["name"])
+        for n in nodes
+        if n["node_type"] == "subgoal" and n["status"] == "candidate"
     ]
     active_subtasks   = [n["node_id"] for n in nodes if n["node_type"] == "subtask" and n["status"] in ("in_progress", "candidate")]
     blocked_subtasks  = [n["node_id"] for n in nodes if n["node_type"] == "subtask" and n["status"] == "blocked"]
@@ -304,6 +359,7 @@ def build_assembly_graph(
             "total_nodes":           len(nodes),
             "total_edges":           len(edges),
             "achieved_subgoals":     achieved_subgoals,
+            "candidate_subgoals":    candidate_subgoals,
             "invalidated_subgoals":  invalidated_subgoals,
             "active_subtasks":       active_subtasks,
             "blocked_subtasks":      blocked_subtasks,

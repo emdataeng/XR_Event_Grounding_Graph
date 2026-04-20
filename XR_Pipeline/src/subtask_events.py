@@ -50,6 +50,13 @@ _GENERIC_OP_TO_TEMPLATE: Dict[str, str] = {
     "APPROACH":              "approach_target",
 }
 
+# Inter-object relation facts → generic template fallback
+_RELATION_FACT_TO_TEMPLATE: Dict[str, str] = {
+    "co_held":            "co_held_parts",
+    "in_contact":         "contact_parts",
+    "touching_candidate": "contact_parts",
+}
+
 # Support-state transitions that imply a subtask (independent of explicit ops)
 _SUPPORT_TRANSITION_TO_TEMPLATE: Dict[Tuple[str, str], str] = {
     ("CARRIED", "RESTING"):     "release_part",
@@ -323,6 +330,65 @@ def infer_subtask_events(
                     "why_this_subtask":      why,
                 })
 
+    # ── Derive subtasks from inter-object relation facts ───────────────────────
+    # Use co_held facts to infer co_held_parts(a, b) as a candidate subtask.
+    # This models the observation that two objects held by the same agent are
+    # potentially in proximity / weak contact — a candidate assembly event.
+    _inter_preds = {"co_held"}
+    for pred_name in _inter_preds:
+        for f in fact_lookup.get(pred_name, []):
+            subj = str(f.get("subject_id", "")) if _valid_str(f.get("subject_id")) else None
+            obj  = str(f.get("object_id",  "")) if _valid_str(f.get("object_id"))  else None
+            if not subj or not obj:
+                continue
+
+            start_f = int(f.get("start_frame_idx", 0))
+            end_f   = int(f.get("end_frame_idx", start_f))
+            conf    = float(f.get("confidence", 0.5))
+            fid     = str(f.get("fact_id", ""))
+
+            # Choose template from domain config if available
+            if templates is not None:
+                tmpl_name = _match_template_for_pred(pred_name, templates)
+            else:
+                tmpl_name = _RELATION_FACT_TO_TEMPLATE.get(pred_name)
+
+            if not tmpl_name:
+                continue
+
+            subj_class = track_classes.get(subj, "")
+            obj_class  = track_classes.get(obj,  "")
+
+            if subj_class and obj_class and subj_class not in ("hand", "") and obj_class not in ("hand", ""):
+                instance_label = f"{tmpl_name}({subj_class},{obj_class})"
+            elif subj_class and subj_class not in ("hand", ""):
+                instance_label = f"{tmpl_name}({subj_class})"
+            else:
+                instance_label = tmpl_name
+
+            duration = end_f - start_f + 1
+            why = (
+                f"{pred_name} fact {fid}: {subj_class or subj} and {obj_class or obj} "
+                f"co-held ({start_f}→{end_f}, {duration} frames)"
+            )
+
+            rows.append({
+                "subtask_id":            _next_id(),
+                "template_name":         tmpl_name,
+                "instance_label":        instance_label,
+                "status":                "candidate",  # co_held is weak contact evidence
+                "agent_track_id":        subj,
+                "patient_track_id":      obj,
+                "target_track_id":       None,
+                "required_facts":        json.dumps([]),
+                "supporting_facts":      json.dumps([fid]),
+                "supporting_operations": json.dumps([]),
+                "confidence":            round(conf * 0.8, 3),
+                "start_frame_idx":       start_f,
+                "end_frame_idx":         end_f,
+                "why_this_subtask":      why,
+            })
+
     if not rows:
         return pd.DataFrame(columns=_SUBTASK_COLS)
 
@@ -375,6 +441,15 @@ def _match_template_for_op(otype: str, templates: Dict) -> Optional[str]:
             return name
     # fallback: generic map
     return _GENERIC_OP_TO_TEMPLATE.get(otype)
+
+
+def _match_template_for_pred(pred: str, templates: Dict) -> Optional[str]:
+    """Find the first template whose trigger_predicates includes pred."""
+    for name, tmpl in templates.items():
+        if pred in getattr(tmpl, "trigger_predicates", []):
+            return name
+    # fallback: relation fact map
+    return _RELATION_FACT_TO_TEMPLATE.get(pred)
 
 
 def _facts_near_window(

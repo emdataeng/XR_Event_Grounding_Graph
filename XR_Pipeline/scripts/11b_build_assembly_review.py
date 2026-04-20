@@ -165,6 +165,9 @@ def _build_review(
         "achieved_subgoal_count": ev.get("total_achieved_subgoals", 0),
         "blocked_count":         ev.get("total_blocked", 0),
         "achieved_subgoals":     pkg.get("achieved_subgoals", []),
+        "candidate_subgoals":    pkg.get("candidate_subgoals", []),
+        "object_relations":      pkg.get("object_relations", []),
+        "state_transitions":     pkg.get("state_transitions", []),
         "blocked_subgoals":      pkg.get("blocked_subgoals", []),
         "likely_next":           pkg.get("likely_next_subtasks", []),
         "why_no_active_step":    pkg.get("why_no_active_step"),
@@ -209,6 +212,29 @@ def _build_diagnostics(pkg: Dict, subtask_timeline: List[Dict]) -> Dict[str, Any
     diag["has_contact_facts"]     = any(p in predicates_seen for p in ("in_contact", "touching_candidate"))
     diag["has_candidate_facts"]   = any(f["predicate"] in ("touching_candidate", "near") for f in active_facts)
 
+    # Inter-object relation diagnostics
+    obj_rels = pkg.get("object_relations", [])
+    diag["has_inter_object_relations"] = len(obj_rels) > 0
+    diag["inter_object_relation_count"] = len(obj_rels)
+    diag["co_held_count"]    = sum(1 for r in obj_rels if r["predicate"] == "co_held")
+    diag["in_contact_count"] = sum(1 for r in obj_rels if r["predicate"] == "in_contact")
+    cand_subgoals = pkg.get("candidate_subgoals", [])
+    diag["candidate_subgoal_count"] = len(cand_subgoals)
+    diag["has_candidate_subgoals"] = len(cand_subgoals) > 0
+
+    # Main limitation summary
+    limitations: List[str] = []
+    if not diag["has_inter_object_relations"]:
+        limitations.append("No inter-object relations detected — CONTACT operations absent and no co-held pairs found.")
+    elif diag["co_held_count"] > 0 and diag["in_contact_count"] == 0:
+        limitations.append(
+            f"Only co_held evidence ({diag['co_held_count']} pair(s)) — no strong CONTACT operation detected. "
+            "Assembly-level contact remains candidate."
+        )
+    if not diag["has_placement_facts"]:
+        limitations.append("No placement facts — PUT_DOWN not detected; placement subgoals absent.")
+    diag["main_limitations"] = limitations
+
     # Identify weak areas
     weak_areas: List[str] = []
     if diag["hold_heavy"]:
@@ -219,6 +245,8 @@ def _build_diagnostics(pkg: Dict, subtask_timeline: List[Dict]) -> Dict[str, Any
         weak_areas.append("No placement facts (released/resting after manipulation) — PUT_DOWN not detected.")
     if not diag["has_contact_facts"]:
         weak_areas.append("No contact facts — CONTACT/INTERACT operations not detected.")
+    if not diag["has_inter_object_relations"]:
+        weak_areas.append("No inter-object relations — relation-driven assembly progress not detectable.")
     diag["weak_areas"] = weak_areas
 
     return diag
@@ -292,6 +320,32 @@ def _render_markdown(review: Dict) -> str:
             lines.append(f"- **{instance}**{patient} — predicate: `{sg.get('predicate', '')}`")
         lines.append("")
 
+    if review.get("candidate_subgoals"):
+        lines.append("## Candidate Subgoals (inter-object, weak evidence)")
+        for sg in review["candidate_subgoals"]:
+            instance = sg.get("instance_name") or sg["name"]
+            lines.append(f"- **{instance}** — predicate: `{sg.get('predicate', '')}` (candidate)")
+        lines.append("")
+
+    if review.get("object_relations"):
+        lines.append("## Inter-Object Relations")
+        for rel in review["object_relations"]:
+            lines.append(
+                f"- `{rel['predicate']}({rel['subject_id']}, {rel['object_id']})` "
+                f"frames {rel['start_frame']}–{rel['end_frame']} "
+                f"conf={rel['confidence']:.2f} [{rel['status']}]"
+            )
+        lines.append("")
+
+    if review.get("state_transitions"):
+        co_held_trans = [t for t in review["state_transitions"] if t["predicate"] in ("co_held_started", "co_held_ended")]
+        if co_held_trans:
+            lines.append("## Relation Transitions")
+            for t in co_held_trans:
+                obj_part = f"+{t['object_id']}" if t.get("object_id") else ""
+                lines.append(f"- `{t['predicate']}({t['subject_id']}{obj_part})` at frame {t['frame']}")
+            lines.append("")
+
     if review["blocked_subgoals"]:
         lines.append("## Blocked Subgoals")
         for sg in review["blocked_subgoals"]:
@@ -357,12 +411,20 @@ def _render_markdown(review: Dict) -> str:
             for w in weak:
                 lines.append(f"- ⚠ {w}")
             lines.append("")
+        limits = diag.get("main_limitations", [])
+        if limits:
+            lines.append("### Main Limitations")
+            for lim in limits:
+                lines.append(f"- {lim}")
+            lines.append("")
         lines += [
             "### Signal Coverage",
             f"- Holding facts: {'✓' if diag.get('has_holding_facts') else '✗'}",
             f"- Placement facts: {'✓' if diag.get('has_placement_facts') else '✗'}",
             f"- Contact facts: {'✓' if diag.get('has_contact_facts') else '✗'}",
             f"- Candidate/proximity facts: {'✓' if diag.get('has_candidate_facts') else '✗'}",
+            f"- Inter-object relations: {'✓' if diag.get('has_inter_object_relations') else '✗'} ({diag.get('inter_object_relation_count', 0)} total, {diag.get('co_held_count', 0)} co_held)",
+            f"- Candidate subgoals: {'✓' if diag.get('has_candidate_subgoals') else '✗'} ({diag.get('candidate_subgoal_count', 0)} total)",
             f"- Subgoal variety: {diag.get('subgoal_variety', 0)} unique instance(s)",
             "",
         ]

@@ -88,8 +88,9 @@ def build_assembly_state_package(
             elif status == "blocked":
                 blocked_subtasks.append(str(sub["subtask_id"]))
 
-    # ── Achieved subgoals ─────────────────────────────────────────────────────
+    # ── Achieved + candidate subgoals ─────────────────────────────────────────
     achieved_subgoals: List[Dict] = []
+    candidate_subgoals: List[Dict] = []
     blocked_subgoals: List[str] = []
 
     if assembly_graph is not None:
@@ -105,6 +106,18 @@ def build_assembly_state_package(
                         "invalidated_at":    node.get("invalidated_at"),
                         "achieved_by_subtask": node.get("achieved_by_subtask"),
                     })
+        # Also collect candidate subgoals from graph
+        for node in assembly_graph.get("nodes", []):
+            if node.get("node_type") == "subgoal" and node.get("status") == "candidate":
+                candidate_subgoals.append({
+                    "name":              node["name"],
+                    "instance_name":     node.get("instance_name", node["name"]),
+                    "patient_class":     node.get("patient_class", ""),
+                    "predicate":         node.get("predicate", ""),
+                    "status":            "candidate",
+                    "achieved_by_subtask": node.get("achieved_by_subtask"),
+                    "inter_object":      node.get("inter_object", False),
+                })
     elif domain_config is not None:
         # Derive from achieved subtask templates when no graph available
         for sg in domain_config.subgoal_templates:
@@ -131,9 +144,20 @@ def build_assembly_state_package(
                 blocked_subgoals.append(sg.name)
 
     # ── Likely next subtasks ──────────────────────────────────────────────────
+    # Relation-fact-only templates (trigger_operations=[], trigger_predicates=[...])
+    # are excluded from likely_next — they fire from state, not manual planning.
+    _relation_only_templates: set = set()
+    if domain_config is not None:
+        for tmpl in domain_config.subtask_templates:
+            if not tmpl.trigger_operations:
+                _relation_only_templates.add(tmpl.name)
+
     likely_next: List[Dict] = []
     if domain_config is not None and not subtasks_df.empty:
         for tmpl in domain_config.subtask_templates:
+            # Skip relation-only templates (they self-trigger, not "likely next")
+            if tmpl.name in _relation_only_templates:
+                continue
             # Not yet achieved, not currently active
             if tmpl.name in achieved_subtask_templates:
                 continue
@@ -201,26 +225,51 @@ def build_assembly_state_package(
                 "subtask_id": sid,
             })
 
+    # ── Object relations (inter-object pairwise facts) ────────────────────────
+    _inter_preds = {"co_held", "in_contact", "in_contact_candidate", "near_candidate",
+                    "aligned_with_candidate", "inserted_into_candidate",
+                    "placed_on_candidate", "attached_to_candidate"}
+    object_relations: List[Dict] = []
+    if not facts_df.empty and "predicate" in facts_df.columns:
+        for _, fr in facts_df[facts_df["predicate"].isin(_inter_preds)].iterrows():
+            if _or_none(fr.get("object_id")) is None:
+                continue
+            object_relations.append({
+                "fact_id":    str(fr["fact_id"]),
+                "predicate":  str(fr["predicate"]),
+                "subject_id": str(fr["subject_id"]),
+                "object_id":  str(fr["object_id"]),
+                "status":     str(fr["status"]),
+                "confidence": float(fr["confidence"]),
+                "start_frame": int(fr["start_frame_idx"]),
+                "end_frame":   int(fr["end_frame_idx"]),
+                "source":     str(fr.get("source_stage", "")),
+            })
+
     # ── State transitions ─────────────────────────────────────────────────────
     state_transitions: List[Dict] = []
     if not facts_df.empty and "predicate" in facts_df.columns:
-        trans_preds = {"released", "support_changed"}
+        trans_preds = {"released", "support_changed", "co_held_started", "co_held_ended"}
         for _, fr in facts_df[facts_df["predicate"].isin(trans_preds)].iterrows():
-            state_transitions.append({
+            entry: Dict = {
                 "fact_id":    str(fr["fact_id"]),
                 "predicate":  str(fr["predicate"]),
                 "subject_id": str(fr["subject_id"]),
                 "frame":      int(fr["start_frame_idx"]),
                 "confidence": float(fr["confidence"]),
                 "source":     str(fr.get("source_stage", "")),
-            })
+            }
+            # co_held transitions also carry the related object
+            if str(fr["predicate"]) in ("co_held_started", "co_held_ended"):
+                entry["object_id"] = _or_none(fr.get("object_id"))
+            state_transitions.append(entry)
     state_transitions.sort(key=lambda t: t["frame"])
 
     # ── Why no active step explanation ───────────────────────────────────────
     why_no_active_step: Optional[str] = None
     if not active_subtasks:
-        if achieved_subgoals:
-            names = ", ".join(
+        if achieved_subgoals or candidate_subgoals:
+            achieved_names = ", ".join(
                 g.get("instance_name", g["name"]) for g in achieved_subgoals
             )
             transition_summary = ""
@@ -231,9 +280,20 @@ def build_assembly_state_package(
                         f"{t['subject_id']} at frame {t['frame']}" for t in release_events[:3]
                     )
                     transition_summary = f" Releases detected: {rel_desc}."
+                co_held_events = [t for t in state_transitions if t["predicate"] == "co_held_started"]
+                if co_held_events:
+                    ch_desc = "; ".join(
+                        f"{t['subject_id']}+{t.get('object_id','?')} at frame {t['frame']}"
+                        for t in co_held_events[:2]
+                    )
+                    transition_summary += f" Co-held events: {ch_desc}."
+            candidate_desc = ""
+            if candidate_subgoals:
+                cnames = ", ".join(g.get("instance_name", g["name"]) for g in candidate_subgoals[:3])
+                candidate_desc = f" Candidate: {cnames}."
             why_no_active_step = (
                 f"All detected subtasks are completed. "
-                f"Achieved: {names}.{transition_summary} "
+                f"Achieved: {achieved_names}.{transition_summary}{candidate_desc} "
                 f"Likely next: {[n['template_name'] for n in likely_next[:3]] or 'none identified'}."
             )
         else:
@@ -241,10 +301,12 @@ def build_assembly_state_package(
 
     # ── Evidence summary ──────────────────────────────────────────────────────
     evidence_summary = {
-        "total_active_facts":     len(active_facts),
-        "total_active_subtasks":  len(active_subtasks),
-        "total_achieved_subgoals": len(achieved_subgoals),
-        "total_blocked":          len(blocked_subtasks),
+        "total_active_facts":        len(active_facts),
+        "total_active_subtasks":     len(active_subtasks),
+        "total_achieved_subgoals":   len(achieved_subgoals),
+        "total_candidate_subgoals":  len(candidate_subgoals),
+        "total_object_relations":    len(object_relations),
+        "total_blocked":             len(blocked_subtasks),
     }
 
     return {
@@ -253,6 +315,8 @@ def build_assembly_state_package(
         "active_facts":            active_facts,
         "active_subtasks":         active_subtasks,
         "achieved_subgoals":       achieved_subgoals,
+        "candidate_subgoals":      candidate_subgoals,
+        "object_relations":        object_relations,
         "blocked_subgoals":        blocked_subgoals,
         "likely_next_subtasks":    likely_next,
         "current_assembly_phase":  current_phase,

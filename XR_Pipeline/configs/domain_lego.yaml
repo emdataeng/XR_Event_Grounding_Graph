@@ -71,6 +71,12 @@ assembly_predicates:
     description: Object resting with no active operation
   - name: carried
     description: Object being carried by hand
+  - name: co_held
+    description: Two bricks simultaneously held by the same hand (inter-object relation)
+  - name: co_held_started
+    description: Point transition — co_held relation began
+  - name: co_held_ended
+    description: Point transition — co_held relation ended
 
 subtask_templates:
   - name: pick_up_part
@@ -103,6 +109,12 @@ subtask_templates:
     agent_role: hand
     patient_role: workpiece
     description: Hand releases a Lego brick (inferred from support-state transition)
+  - name: co_held_parts
+    trigger_operations: []
+    trigger_predicates: [co_held]
+    agent_role: workpiece
+    patient_role: workpiece
+    description: Two bricks co-held by the same hand — candidate contact event
 
 subgoal_templates:
   - name: part_is_picked_up
@@ -125,11 +137,28 @@ subgoal_templates:
     achieved_by: release_part
     predicate: released
     description: A Lego brick was released from the hand
+  - name: parts_co_held
+    achieved_by: co_held_parts
+    predicate: co_held
+    description: Two Lego bricks were co-held by the same hand (candidate stacking event)
 
 dependency_rules: []
+
+# Inter-object relation rules: describe pairwise relations in this domain
+relation_rules:
+  - predicate: co_held
+    subject_role: workpiece
+    object_role: workpiece
+    symmetrical: true
+    description: Two workpieces co-held by same agent — weak contact candidate
+  - predicate: in_contact
+    subject_role: workpiece
+    object_role: workpiece
+    symmetrical: true
+    description: Two workpieces physically in contact
 
 phase_hints:
   manipulation: [pick_up_part, place_part]
   hold: [hold_part]
-  contact: [contact_parts]
+  contact: [contact_parts, co_held_parts]
   release: [release_part]

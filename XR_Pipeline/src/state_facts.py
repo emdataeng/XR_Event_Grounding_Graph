@@ -33,6 +33,11 @@ Operation-derived relations
     attached_to_candidate(a, b)     — ATTACH_CANDIDATE operation
     used_tool_on(tool, object)      — USE_TOOL operation
 
+Inter-object relation facts (Section 5)
+    co_held(a, b)           — two non-hand objects held by same agent simultaneously
+    co_held_started(a, b)   — point fact: co_held relation begins at this frame
+    co_held_ended(a, b)     — point fact: co_held relation ends at this frame
+
 Fact status lifecycle
 ---------------------
   candidate   — weak evidence, below confidence threshold or single-source
@@ -110,16 +115,19 @@ def compute_state_facts(
     ops_df: pd.DataFrame,
     support_df: Optional[pd.DataFrame] = None,
     domain_config=None,  # Optional[DomainConfig]
+    track_classes: Optional[Dict[str, str]] = None,  # pre-built track→class lookup
 ) -> pd.DataFrame:
     """Compute explicit state facts from pipeline outputs.
 
     Parameters
     ----------
-    tracks_df   : object_tracks.csv
-    events_df   : events.csv  (event_windows or merged)
-    ops_df      : operation_events.csv
-    support_df  : support_state_transitions.csv  (optional)
+    tracks_df     : object_tracks.csv
+    events_df     : events.csv  (event_windows or merged)
+    ops_df        : operation_events.csv
+    support_df    : support_state_transitions.csv  (optional)
     domain_config : DomainConfig  (optional — used to mark domain_relevance)
+    track_classes : pre-built track_id→semantic_class dict (optional — derived from
+                    tracks_df when not supplied)
 
     Returns
     -------
@@ -297,6 +305,78 @@ def compute_state_facts(
                     "support_changed", str(tid), None, 0.75,
                     t_frame, t_frame, refs, "support_state",
                 ))
+
+    # ── 5. Inter-object relation facts ───────────────────────────────────────────
+    # Build a track→class lookup (used to skip hand tracks from co_held pairs)
+    _tc: Dict[str, str] = {}
+    if track_classes:
+        _tc = {str(k): str(v) for k, v in track_classes.items()}
+    elif tracks_df is not None and not tracks_df.empty and "semantic_class" in tracks_df.columns:
+        for _tid, _grp in tracks_df.groupby("track_id"):
+            _tc[str(_tid)] = str(_grp["semantic_class"].iloc[0])
+
+    _hand_role_keywords = {"hand"}
+
+    def _is_hand_track(tid: str) -> bool:
+        cls = _tc.get(str(tid), "")
+        return cls.lower() in _hand_role_keywords or "hand" in cls.lower()
+
+    # 5a — co_held(a, b): two non-hand objects held by same agent simultaneously
+    if ops_df is not None and not ops_df.empty:
+        hold_types = {"HOLD", "PICK_UP"}
+        hold_ops = ops_df[ops_df["operation_type"].isin(hold_types)].copy()
+
+        for agent_raw, agent_grp in hold_ops.groupby("agent_track_id"):
+            if not _valid_id(agent_raw):
+                continue
+            recs = agent_grp[
+                ["object_track_id", "start_frame_idx", "end_frame_idx", "confidence", "operation_id"]
+            ].to_dict("records")
+
+            for i in range(len(recs)):
+                for j in range(i + 1, len(recs)):
+                    a, b = recs[i], recs[j]
+                    a_obj = str(a["object_track_id"]) if _valid_id(a["object_track_id"]) else None
+                    b_obj = str(b["object_track_id"]) if _valid_id(b["object_track_id"]) else None
+                    if not a_obj or not b_obj:
+                        continue
+                    # Skip hand-to-hand pairs
+                    if _is_hand_track(a_obj) or _is_hand_track(b_obj):
+                        continue
+
+                    a_s, a_e = int(a["start_frame_idx"]), int(a["end_frame_idx"])
+                    b_s, b_e = int(b["start_frame_idx"]), int(b["end_frame_idx"])
+
+                    # Compute temporal overlap
+                    ov_start = max(a_s, b_s)
+                    ov_end   = min(a_e, b_e)
+                    if ov_start > ov_end:
+                        continue  # no overlap
+
+                    conf = round(min(float(a["confidence"]), float(b["confidence"])) * 0.9, 3)
+                    refs = [
+                        str(r) for r in [a.get("operation_id"), b.get("operation_id")]
+                        if _valid_id(r)
+                    ]
+
+                    # Sustained co_held fact
+                    rows.append(_row(
+                        "co_held", a_obj, b_obj, conf,
+                        ov_start, ov_end, refs, "operations",
+                        status_override="active",
+                    ))
+                    # Transition: co_held begins
+                    rows.append(_row(
+                        "co_held_started", a_obj, b_obj, conf,
+                        ov_start, ov_start, refs, "operations",
+                        status_override="active",
+                    ))
+                    # Transition: co_held ends
+                    rows.append(_row(
+                        "co_held_ended", a_obj, b_obj, conf,
+                        ov_end, ov_end, refs, "operations",
+                        status_override="active",
+                    ))
 
     if not rows:
         return pd.DataFrame(columns=_FACT_COLS)

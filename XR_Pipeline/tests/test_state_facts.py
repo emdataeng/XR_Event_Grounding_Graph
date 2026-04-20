@@ -405,6 +405,100 @@ class TestUtilityFunctions:
         assert all(holding["predicate"] == "holding")
         assert len(holding) > 0
 
+
+# ── Inter-object relation facts (Milestone 11) ────────────────────────────────
+
+def _make_ops_multi(**rows):
+    """Two HOLD ops by same agent on different objects with overlapping windows."""
+    defaults = dict(
+        operation_id=["op_001", "op_002"],
+        operation_type=["HOLD", "HOLD"],
+        agent_track_id=["trk_hand", "trk_hand"],
+        object_track_id=["trk_a", "trk_b"],
+        start_frame_idx=[5, 5],
+        end_frame_idx=[15, 12],
+        confidence=[0.8, 0.8],
+    )
+    defaults.update(rows)
+    return pd.DataFrame(defaults)
+
+
+class TestCoHeldFacts:
+    def test_co_held_fact_generated_from_overlapping_hold_ops(self):
+        ops = _make_ops_multi()
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), ops)
+        co = df[df["predicate"] == "co_held"]
+        assert len(co) == 1
+        row = co.iloc[0]
+        assert row["subject_id"] in ("trk_a", "trk_b")
+        assert row["object_id"] in ("trk_a", "trk_b")
+        assert row["subject_id"] != row["object_id"]
+
+    def test_co_held_overlap_window_is_correct(self):
+        ops = _make_ops_multi(start_frame_idx=[5, 8], end_frame_idx=[20, 15])
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), ops)
+        co = df[df["predicate"] == "co_held"]
+        assert len(co) == 1
+        row = co.iloc[0]
+        assert row["start_frame_idx"] == 8   # max(5, 8)
+        assert row["end_frame_idx"]   == 15  # min(20, 15)
+
+    def test_co_held_started_and_ended_markers_emitted(self):
+        ops = _make_ops_multi()
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), ops)
+        assert len(df[df["predicate"] == "co_held_started"]) == 1
+        assert len(df[df["predicate"] == "co_held_ended"])   == 1
+
+    def test_co_held_started_is_point_fact(self):
+        ops = _make_ops_multi(start_frame_idx=[5, 5], end_frame_idx=[15, 12])
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), ops)
+        started = df[df["predicate"] == "co_held_started"].iloc[0]
+        assert started["start_frame_idx"] == started["end_frame_idx"]
+
+    def test_co_held_not_generated_for_non_overlapping_windows(self):
+        ops = _make_ops_multi(start_frame_idx=[5, 20], end_frame_idx=[15, 30])
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), ops)
+        assert len(df[df["predicate"] == "co_held"]) == 0
+
+    def test_co_held_not_generated_for_single_hold_op(self):
+        ops = _make_ops()  # only one HOLD
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), ops)
+        assert len(df[df["predicate"] == "co_held"]) == 0
+
+    def test_co_held_skips_hand_tracks(self):
+        # Hand as one of the objects — should not be co_held with another hand object
+        ops = pd.DataFrame({
+            "operation_id":    ["op_001", "op_002"],
+            "operation_type":  ["HOLD", "HOLD"],
+            "agent_track_id":  ["trk_hand", "trk_hand"],
+            "object_track_id": ["trk_hand2", "trk_a"],
+            "start_frame_idx": [5, 5],
+            "end_frame_idx":   [15, 15],
+            "confidence":      [0.8, 0.8],
+        })
+        tracks = pd.DataFrame({
+            "track_id":       ["trk_hand2", "trk_a"],
+            "frame_idx":      [0, 0],
+            "semantic_class": ["hand", "workpiece"],
+        })
+        df = compute_state_facts(tracks, pd.DataFrame(), ops)
+        co = df[df["predicate"] == "co_held"]
+        # trk_hand2 is a hand track, so it should be excluded
+        assert len(co) == 0
+
+    def test_co_held_status_is_active(self):
+        ops = _make_ops_multi()
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), ops)
+        co = df[df["predicate"] == "co_held"]
+        assert co.iloc[0]["status"] == "active"
+
+    def test_co_held_confidence_downgraded_from_source_ops(self):
+        ops = _make_ops_multi(confidence=[0.9, 0.8])
+        df = compute_state_facts(pd.DataFrame(), pd.DataFrame(), ops)
+        co = df[df["predicate"] == "co_held"]
+        # Should be min(0.9, 0.8) * 0.9 = 0.72
+        assert abs(co.iloc[0]["confidence"] - 0.72) < 0.01
+
     def test_facts_to_json_serialisable(self):
         df = compute_state_facts(_make_tracks(), pd.DataFrame(), pd.DataFrame())
         data = facts_to_json(df)

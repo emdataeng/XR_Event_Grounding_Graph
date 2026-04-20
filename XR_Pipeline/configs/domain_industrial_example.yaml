@@ -206,3 +206,36 @@ phase_hints:
   tool_use:    [use_tool]
   contact:     [contact_parts]
   hold:        [pick_up_part]
+
+# Inter-object relation rules: pairwise assembly-relevant relations
+relation_rules:
+  - predicate: co_held
+    subject_role: workpiece
+    object_role: workpiece
+    symmetrical: true
+    description: Two workpieces co-held by same agent — candidate proximity event
+  - predicate: in_contact
+    subject_role: workpiece
+    object_role: workpiece
+    symmetrical: true
+    description: Two workpieces physically in contact
+  - predicate: aligned_with_candidate
+    subject_role: workpiece
+    object_role: fixture
+    symmetrical: false
+    description: Workpiece aligned to fixture/target for insertion
+  - predicate: inserted_into_candidate
+    subject_role: workpiece
+    object_role: fixture
+    symmetrical: false
+    description: Workpiece inserted into fixture
+  - predicate: attached_to_candidate
+    subject_role: workpiece
+    object_role: machine_part
+    symmetrical: false
+    description: Workpiece attached to machine part
+  - predicate: placed_on_candidate
+    subject_role: workpiece
+    object_role: fixture
+    symmetrical: false
+    description: Workpiece placed onto a surface or fixture

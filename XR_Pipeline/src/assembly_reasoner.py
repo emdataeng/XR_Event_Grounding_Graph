@@ -6,14 +6,15 @@ symbolic rules — no LLM calls, no model downloads.
 
 Supported queries
 -----------------
-  what_step_now       — most recent active/candidate subtask
-  what_is_achieved    — all achieved subgoals + their evidence
-  what_is_blocked     — blocked subtasks + unmet dependencies
-  what_changed        — facts/subtasks with start_frame in recent N frames
-  likely_next         — pending subtasks with all prerequisites met
-  why_current_step    — evidence chain for the active subtask
-  state_transitions   — released/support_changed facts (state-change timeline)
-  full_report         — all of the above in one dict
+  what_step_now        — most recent active/candidate subtask
+  what_is_achieved     — all achieved subgoals + their evidence
+  what_is_blocked      — blocked subtasks + unmet dependencies
+  what_changed         — facts/subtasks with start_frame in recent N frames
+  likely_next          — pending subtasks with all prerequisites met
+  why_current_step     — evidence chain for the active subtask
+  state_transitions    — released/support_changed/co_held facts (state-change timeline)
+  what_objects_related — inter-object pairwise relations (co_held, in_contact, etc.)
+  full_report          — all of the above in one dict
 """
 from __future__ import annotations
 
@@ -72,6 +73,8 @@ def reason(
             return _why_current_step(pkg, subtask_nodes, edge_index, trace)
         elif q == "state_transitions":
             return _state_transitions(pkg, trace)
+        elif q == "what_objects_related":
+            return _what_objects_related(pkg, trace)
         else:
             trace.append(f"Unknown query '{q}' — running full_report")
             return {}
@@ -87,6 +90,7 @@ def reason(
         result["constraint_status"]  = _constraint_status(pkg, trace)
         result["why_no_active_step"] = pkg.get("why_no_active_step")
         result["state_transitions"]  = _state_transitions(pkg, trace)
+        result["object_relations"]   = _what_objects_related(pkg, trace)
     else:
         result.update(_run(query))
 
@@ -154,6 +158,16 @@ def answer_assembly_query(query: str, pkg: Dict, graph: Optional[Dict] = None) -
         if changes:
             return f"{len(changes)} recent change(s): {[c.get('description','') for c in changes[:3]]}"
         return "No recent changes detected."
+
+    elif any(k in q for k in ("contact", "relation", "co_held", "together", "near", "touching")):
+        result = reason(pkg, graph, query="what_objects_related")
+        rels = result.get("object_relations", [])
+        if rels:
+            summary = "; ".join(
+                f"{r['predicate']}({r['subject_id']},{r['object_id']})" for r in rels[:4]
+            )
+            return f"{len(rels)} inter-object relation(s): {summary}"
+        return result.get("answer", "No inter-object relations detected.")
 
     else:
         result = reason(pkg, graph, query="full_report")
@@ -260,7 +274,7 @@ def _what_changed(
     regardless of the frame window, since they represent discrete transitions.
     """
     changes: List[Dict] = []
-    _ALWAYS_INCLUDE = {"released", "support_changed"}
+    _ALWAYS_INCLUDE = {"released", "support_changed", "co_held_started", "co_held_ended"}
 
     # Find max frame across active facts and state transitions
     all_frames = [f["frames"][0] for f in pkg.get("active_facts", []) if f.get("frames")]
@@ -319,6 +333,55 @@ def _what_changed(
             f"{len(unique_changes)} change(s) in last {window} frames"
             if unique_changes else "No recent changes."
         ),
+    }
+
+
+def _what_objects_related(pkg: Dict, trace: List[str]) -> Dict[str, Any]:
+    """Return inter-object pairwise relations (co_held, in_contact, etc.)."""
+    rels = pkg.get("object_relations", [])
+    candidates = pkg.get("candidate_subgoals", [])
+
+    trace.append(f"what_objects_related: {len(rels)} relation(s)")
+
+    if not rels and not candidates:
+        return {
+            "object_relations": [],
+            "candidate_subgoals": [],
+            "answer": (
+                "No inter-object relations detected. "
+                "Possible reasons: no two non-hand objects were simultaneously "
+                "manipulated, and no CONTACT operation was detected."
+            ),
+        }
+
+    co_held = [r for r in rels if r["predicate"] == "co_held"]
+    in_contact = [r for r in rels if r["predicate"] == "in_contact"]
+    other = [r for r in rels if r["predicate"] not in ("co_held", "in_contact")]
+
+    parts: List[str] = []
+    if co_held:
+        ch_desc = "; ".join(
+            f"{r['subject_id']}+{r['object_id']} frames {r['start_frame']}–{r['end_frame']}"
+            for r in co_held[:3]
+        )
+        parts.append(f"{len(co_held)} co-held pair(s): {ch_desc}")
+    if in_contact:
+        ic_desc = "; ".join(
+            f"{r['subject_id']}+{r['object_id']}" for r in in_contact[:3]
+        )
+        parts.append(f"{len(in_contact)} in-contact pair(s): {ic_desc}")
+    if other:
+        parts.append(f"{len(other)} other relation(s): {[r['predicate'] for r in other[:3]]}")
+    if candidates:
+        cnames = ", ".join(c.get("instance_name", c["name"]) for c in candidates[:3])
+        parts.append(f"candidate subgoals: {cnames}")
+
+    answer = "; ".join(parts) if parts else "No inter-object relations detected."
+
+    return {
+        "object_relations":  rels,
+        "candidate_subgoals": candidates,
+        "answer":            answer,
     }
 
 

@@ -7,6 +7,7 @@ from src.domain_config import (
     SubtaskTemplate,
     SubgoalTemplate,
     DependencyRule,
+    RelationRule,
     load_domain_config,
 )
 
@@ -277,3 +278,71 @@ class TestYamlParsing:
         for tmpl in domain.subtask_templates:
             assert isinstance(tmpl.name, str)
             assert len(tmpl.name) > 0
+
+
+# ── RelationRule dataclass (Milestone 11) ─────────────────────────────────────
+
+class TestRelationRuleDataclass:
+    def test_relation_rule_basic_fields(self):
+        r = RelationRule(predicate="co_held", subject_role="workpiece", object_role="workpiece")
+        assert r.predicate == "co_held"
+        assert r.subject_role == "workpiece"
+        assert r.object_role == "workpiece"
+
+    def test_relation_rule_symmetrical_default_false(self):
+        r = RelationRule(predicate="co_held")
+        assert r.symmetrical is False
+
+    def test_relation_rule_description_default_empty(self):
+        r = RelationRule(predicate="co_held")
+        assert r.description == ""
+
+
+_CONFIGS_DIR_M11 = __import__("pathlib").Path(__file__).parent.parent / "configs"
+
+
+class TestRelationRuleYamlParsing:
+    def test_lego_domain_has_relation_rules(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_lego.yaml")
+        assert len(domain.relation_rules) >= 1
+
+    def test_lego_domain_co_held_rule_present(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_lego.yaml")
+        preds = [r.predicate for r in domain.relation_rules]
+        assert "co_held" in preds
+
+    def test_lego_domain_co_held_rule_symmetrical(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_lego.yaml")
+        co_rule = next(r for r in domain.relation_rules if r.predicate == "co_held")
+        assert co_rule.symmetrical is True
+
+    def test_lego_domain_inter_object_predicates_includes_co_held(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_lego.yaml")
+        assert "co_held" in domain.inter_object_predicates()
+
+    def test_relation_rule_for_returns_rule(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_lego.yaml")
+        rule = domain.relation_rule_for("co_held")
+        assert rule is not None
+        assert rule.predicate == "co_held"
+
+    def test_relation_rule_for_unknown_returns_none(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_lego.yaml")
+        assert domain.relation_rule_for("nonexistent_pred") is None
+
+    def test_industrial_domain_has_rich_relation_rules(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_industrial_example.yaml")
+        preds = [r.predicate for r in domain.relation_rules]
+        assert "co_held" in preds
+        assert "aligned_with_candidate" in preds
+        assert "inserted_into_candidate" in preds
+
+    def test_lego_domain_co_held_parts_subtask_template_exists(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_lego.yaml")
+        names = [t.name for t in domain.subtask_templates]
+        assert "co_held_parts" in names
+
+    def test_lego_domain_parts_co_held_subgoal_template_exists(self):
+        domain = load_domain_config(path=_CONFIGS_DIR_M11 / "domain_lego.yaml")
+        names = [sg.name for sg in domain.subgoal_templates]
+        assert "parts_co_held" in names

@@ -129,6 +129,16 @@ class DependencyRule:
 
 
 @dataclass
+class RelationRule:
+    """Describes a meaningful inter-object relation in this domain."""
+    predicate: str              # e.g. "co_held", "in_contact", "stacked_on"
+    subject_role: str = ""      # role of the first argument (e.g. "workpiece")
+    object_role: str = ""       # role of the second argument (e.g. "workpiece")
+    symmetrical: bool = False   # True if relation(a,b) ⟺ relation(b,a)
+    description: str = ""
+
+
+@dataclass
 class DomainConfig:
     domain_name: str
     domain_version: str
@@ -143,6 +153,7 @@ class DomainConfig:
     subtask_templates:   List[SubtaskTemplate]   = field(default_factory=list)
     subgoal_templates:   List[SubgoalTemplate]   = field(default_factory=list)
     dependency_rules:    List[DependencyRule]     = field(default_factory=list)
+    relation_rules:      List[RelationRule]       = field(default_factory=list)
     phase_hints:         Dict[str, List[str]]     = field(default_factory=dict)
 
     # Derived lookups (populated by validate_domain_config)
@@ -186,6 +197,16 @@ class DomainConfig:
 
     def assembly_predicate_names(self) -> List[str]:
         return [p.name for p in self.assembly_predicates]
+
+    def relation_rule_for(self, predicate: str) -> Optional["RelationRule"]:
+        for r in self.relation_rules:
+            if r.predicate == predicate:
+                return r
+        return None
+
+    def inter_object_predicates(self) -> List[str]:
+        """Return predicate names that describe object-to-object relations."""
+        return [r.predicate for r in self.relation_rules]
 
 
 # ── Loader ────────────────────────────────────────────────────────────────────
@@ -386,6 +407,22 @@ def _parse_and_validate(raw: Dict[str, Any], source: Any = None) -> DomainConfig
                 description=str(entry.get("description", "")),
             ))
 
+    # ── Relation rules ────────────────────────────────────────────────────────
+    relation_rules: List[RelationRule] = []
+    for entry in raw.get("relation_rules") or []:
+        if isinstance(entry, str):
+            relation_rules.append(RelationRule(predicate=entry))
+        elif isinstance(entry, dict):
+            pred = str(entry.get("predicate", ""))
+            if pred:
+                relation_rules.append(RelationRule(
+                    predicate=pred,
+                    subject_role=str(entry.get("subject_role", "")).lower(),
+                    object_role=str(entry.get("object_role", "")).lower(),
+                    symmetrical=bool(entry.get("symmetrical", False)),
+                    description=str(entry.get("description", "")),
+                ))
+
     # ── Phase hints ───────────────────────────────────────────────────────────
     phase_hints: Dict[str, List[str]] = {}
     for phase_label, hint_list in (raw.get("phase_hints") or {}).items():
@@ -409,6 +446,7 @@ def _parse_and_validate(raw: Dict[str, Any], source: Any = None) -> DomainConfig
         subtask_templates=subtask_templates,
         subgoal_templates=subgoal_templates,
         dependency_rules=dependency_rules,
+        relation_rules=relation_rules,
         phase_hints=phase_hints,
     )
     dc._classes_by_role = classes_by_role

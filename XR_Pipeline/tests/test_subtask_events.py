@@ -392,3 +392,79 @@ class TestSubtaskSequenceJson:
     def test_empty_df_returns_empty_subtasks(self):
         result = subtask_sequence_json(pd.DataFrame(columns=SUBTASK_COLS), session_id="test_session")
         assert result["subtask_sequence"] == []
+
+
+# ── Inter-object relation subtasks (Milestone 11) ─────────────────────────────
+
+def _make_co_held_facts(subj="trk_a", obj="trk_b", start=5, end=15, conf=0.72):
+    return pd.DataFrame([{
+        "fact_id":         "fact_0099",
+        "predicate":       "co_held",
+        "subject_id":      subj,
+        "object_id":       obj,
+        "status":          "active",
+        "confidence":      conf,
+        "start_frame_idx": start,
+        "end_frame_idx":   end,
+        "evidence_refs":   "[]",
+        "source_stage":    "operations",
+        "domain_relevance": True,
+    }])
+
+
+class TestInterObjectSubtasks:
+    def test_co_held_fact_produces_co_held_parts_subtask(self):
+        facts = _make_co_held_facts()
+        df = infer_subtask_events(facts, pd.DataFrame())
+        assert len(df) > 0
+        assert "co_held_parts" in df["template_name"].values
+
+    def test_co_held_subtask_has_candidate_status(self):
+        facts = _make_co_held_facts()
+        df = infer_subtask_events(facts, pd.DataFrame())
+        co = df[df["template_name"] == "co_held_parts"]
+        assert all(co["status"] == "candidate")
+
+    def test_co_held_subtask_preserves_agent_and_patient(self):
+        facts = _make_co_held_facts(subj="trk_a", obj="trk_b")
+        df = infer_subtask_events(facts, pd.DataFrame())
+        co = df[df["template_name"] == "co_held_parts"].iloc[0]
+        assert co["agent_track_id"] == "trk_a"
+        assert co["patient_track_id"] == "trk_b"
+
+    def test_co_held_subtask_frame_range_matches_fact(self):
+        facts = _make_co_held_facts(start=7, end=20)
+        df = infer_subtask_events(facts, pd.DataFrame())
+        co = df[df["template_name"] == "co_held_parts"].iloc[0]
+        assert co["start_frame_idx"] == 7
+        assert co["end_frame_idx"]   == 20
+
+    def test_co_held_subtask_instance_label_uses_track_classes(self):
+        facts = _make_co_held_facts()
+        tracks = pd.DataFrame({
+            "track_id":       ["trk_a", "trk_b"],
+            "frame_idx":      [0, 0],
+            "semantic_class": ["red_lego", "blue_lego"],
+        })
+        df = infer_subtask_events(facts, pd.DataFrame(), tracks_df=tracks)
+        co = df[df["template_name"] == "co_held_parts"].iloc[0]
+        assert "red_lego" in co["instance_label"]
+        assert "blue_lego" in co["instance_label"]
+
+    def test_co_held_subtask_why_mentions_co_held(self):
+        facts = _make_co_held_facts()
+        df = infer_subtask_events(facts, pd.DataFrame())
+        co = df[df["template_name"] == "co_held_parts"].iloc[0]
+        assert "co_held" in co["why_this_subtask"].lower()
+
+    def test_no_co_held_subtask_without_co_held_fact(self):
+        # Only a held fact, no co_held predicate
+        facts = pd.DataFrame([{
+            "fact_id": "f1", "predicate": "holding", "subject_id": "trk_hand",
+            "object_id": "trk_a", "status": "active", "confidence": 0.8,
+            "start_frame_idx": 5, "end_frame_idx": 15,
+            "evidence_refs": "[]", "source_stage": "operations", "domain_relevance": True,
+        }])
+        df = infer_subtask_events(facts, pd.DataFrame())
+        co = df[df["template_name"] == "co_held_parts"] if len(df) > 0 else pd.DataFrame()
+        assert len(co) == 0

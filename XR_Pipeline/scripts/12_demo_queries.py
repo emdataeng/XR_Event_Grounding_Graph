@@ -39,6 +39,9 @@ ASSEMBLY_QUERIES = [
     "What is the likely next step?",
     "What evidence supports the current step?",
     "What changed recently?",
+    # Milestone 11 — inter-object relation queries
+    "Did any parts come into contact or co-held?",
+    "What inter-object relations were detected?",
 ]
 
 # ── Workflow queries (answered against operation_events.csv + SSP + timeline) ──
