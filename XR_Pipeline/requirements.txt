@@ -1,15 +1,27 @@
+# Core pipeline
 pandas
 numpy
 pydantic
 pyyaml
 networkx
-open3d
-opencv-python
+opencv-python-headless
 pillow
 matplotlib
 rich
 typer
 python-dotenv
-neo4j
 scipy
+
+# Graph export
+neo4j
+
+# Object detection — fixed-class
 ultralytics
+
+# Open-vocabulary detection + VLMs (optional; required for grounding_dino / mm_grounding_dino backends)
+transformers>=4.40.0
+torch
+torchvision
+accelerate
+safetensors
+huggingface_hub

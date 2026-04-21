@@ -1,0 +1,23 @@
+{
+  "_comment": "Ground-truth annotation template for session_003. Copy to session_003.json and fill in boxes.",
+  "_format": "bbox coordinates are [x1, y1, x2, y2] in RGB image pixel space (640x240 for session_003 left-eye crop).",
+  "_classes": ["red_lego", "blue_lego"],
+  "_instructions": [
+    "1. Run 05_build_object_observations.py with save_debug=True to generate debug overlay images.",
+    "2. Open data/processed/session_003/graphs/debug_boxes/ to see detection frames.",
+    "3. For each frame you want to annotate, add an entry in 'frames' below.",
+    "4. Draw bboxes tightly around each visible lego brick.",
+    "5. Aim for 20-30 frames spread across the session for meaningful metrics.",
+    "6. Run: python evaluation/bakeoff.py --session session_003 --annotations evaluation/annotations/session_003.json"
+  ],
+  "session_id": "session_003",
+  "frames": [
+    {
+      "frame_idx": 0,
+      "objects": [
+        {"class": "red_lego",  "bbox": [0, 0, 0, 0]},
+        {"class": "blue_lego", "bbox": [0, 0, 0, 0]}
+      ]
+    }
+  ]
+}

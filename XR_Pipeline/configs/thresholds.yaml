@@ -10,12 +10,22 @@ tracking:
 
 # Event detection thresholds
 events:
-  min_move_distance_m: 0.20     # minimum displacement (after smoothing) to count as MOVE
+  min_move_distance_m: 0.15     # minimum displacement (after smoothing) to count as MOVE (baseline for unknown roles)
   near_threshold_m: 0.5         # two objects are "near" if within this distance
   event_merge_gap_ns: 2000000000  # merge event windows within this gap (2s)
   min_event_duration_ns: 500000000  # ignore very short events (<0.5s)
   disappear_frames: 3           # frames without observation before DISAPPEAR
   position_smooth_window: 7     # rolling-mean window for track positions before MOVE detection (suppresses depth/bbox noise; ~0.7s at 10fps)
+  min_2d_disp_px: 20            # B3: fallback 2D bbox center displacement (px) for MOVE when 3D signal is below threshold (0 = disabled)
+
+  # Per-role MOVE thresholds (override min_move_distance_m when object_role column is present).
+  # Smaller objects (workpiece) use a tighter threshold; fixtures rarely/never move.
+  # If a track's role is not listed here, min_move_distance_m is used as fallback.
+  min_move_distance_by_role:
+    hand:      0.15   # arms reach far; 15 cm is clearly intentional
+    workpiece: 0.08   # Lego-scale objects: 8 cm is a significant displacement
+    tool:      0.12   # tools: between hand and workpiece
+    fixture:   0.30   # fixtures are stationary; only fire on gross misplacement
 
 # Object detection (shared)
 detection:
@@ -25,14 +35,58 @@ detection:
   max_blobs_per_frame: 20       # maximum objects to extract per frame (depth_blobs backend)
   depth_cluster_tolerance_m: 0.1  # depth difference within a blob (depth_blobs backend)
   max_detections_per_class_per_frame: 1  # keep only top-confidence detection per class per frame (suppresses Grounding DINO duplicates)
+  # V2 post-processing controls
+  min_bbox_area_px: 100         # drop detections whose pixel-space bbox area is below this
+  nms_iou_threshold: 0.5        # IoU threshold for class-aware 2D NMS (0 = disabled)
 
 # Grounding DINO detection thresholds
 grounding_dino:
-  box_threshold: 0.22           # minimum objectness score to keep a box (passed as `threshold`)
+  box_threshold: 0.25           # sweep result: 0.25 cleanest for "red block. blue block." prompt
   text_threshold: 0.25          # minimum text-alignment score to assign a label
+
+# MM-Grounding-DINO detection thresholds
+# MM-GDINO is generally more conservative — start lower and tune via sweep.
+mm_grounding_dino:
+  box_threshold: 0.20           # slightly lower default; MM-GDINO scores tend to spread wider
+  text_threshold: 0.20
 
 # Confidence thresholds
 confidence:
   min_observation: 0.3          # discard observations below this confidence
   min_track: 0.4                # discard tracks below this confidence
   min_event: 0.5                # discard events below this confidence
+
+# Operation event detection thresholds (stage 10b)
+# All distances in meters; all times in nanoseconds or frames.
+operation_events:
+  contact_threshold_m: 0.08           # max distance to classify as physical contact
+  move_threshold_m: 0.05              # min workpiece displacement to count as MOVE in pick/put
+  pickup_link_frame_gap: 10           # max frames between INTERACTION onset and MOVE to link as PICK_UP
+  putdown_link_frame_gap: 8           # if MOVE ends within this many frames of INTERACTION end → PUT_DOWN
+  hold_min_frames: 5                  # min INTERACTION duration (frames) to emit HOLD
+  tool_min_frames: 3                  # min CO_LOCATE duration (frames) to emit USE_TOOL
+  transfer_stationary_window_ns: 3000000000  # window (ns) before/after MOVE to check for rest state
+
+  # Phase 2: fixture-workpiece candidate operation thresholds
+  approach_convergence_frames: 5      # min frames of converging distance to emit APPROACH
+  approach_max_start_distance_m: 0.5  # max starting distance (m) to consider for APPROACH
+  placement_proximity_m: 0.15         # workpiece-fixture distance for PLACE_ONTO_CANDIDATE
+  align_tolerance_m: 0.05             # tighter alignment threshold for ALIGN_CANDIDATE
+  attachment_min_frames: 8            # min sustained CO_LOCATE frames for ATTACH_CANDIDATE
+
+  # Per-operation enable/disable toggles (true = enabled, false = suppressed)
+  # Absent keys default to enabled. Useful for disabling noisy detectors per domain.
+  enabled_operations:
+    PICK_UP: true
+    PUT_DOWN: true
+    HOLD: true
+    USE_TOOL: true
+    CONTACT: true
+    TRANSFER: true
+    PICK_UP_CANDIDATE: true
+    PUT_DOWN_CANDIDATE: true
+    APPROACH: true
+    PLACE_ONTO_CANDIDATE: true
+    INSERT_CANDIDATE: true
+    ALIGN_CANDIDATE: true
+    ATTACH_CANDIDATE: true

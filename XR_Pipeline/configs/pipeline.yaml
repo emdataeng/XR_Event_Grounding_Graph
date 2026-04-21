@@ -47,9 +47,92 @@ observations_source: grounding_dino
 # Grounding DINO model (auto-downloaded on first run, ~700MB)
 grounding_dino_model: IDEA-Research/grounding-dino-base
 
+# MM-Grounding-DINO model (auto-downloaded on first run, ~830MB)
+# Trained on Objects365 + COCO + RefCOCO — better recall on small objects.
+# Switch observations_source to mm_grounding_dino to use this backend.
+mm_grounding_dino_model: openmmlab-community/mm_grounding_dino_base_all
+
 # Candidate object categories for Grounding DINO detection.
-# Lowercase, dot-separated. Add any object you expect to appear in your scene.
-detection_prompt: "red lego. blue lego."
+# When object_vocabulary is defined below, script 05 automatically builds the
+# prompt from vocabulary entries (using each entry's first prompt phrase).
+# This field is the fallback when object_vocabulary is absent or empty.
+detection_prompt: "a red lego brick. a blue lego brick."
+
+# Object vocabulary: maps raw detector labels to stable canonical class names.
+# prompts   — text phrases sent to Grounding DINO (first phrase used in prompt)
+# aliases   — additional raw labels that should map to this canonical class
+#             (catches composite outputs like "red lego blue lego")
+# ignore_for_object_tracks — if true, observations are created but not tracked
+#                             (useful for transient context like hands/sleeves)
+object_vocabulary:
+  red_lego:
+    # "red block" first — sweep showed it gives cleanest single-class labels (17/29 frames)
+    # with almost no composite outputs vs "a red lego brick" (8/29 composite)
+    prompts: ["red block", "a red lego brick", "red lego", "red brick"]
+    aliases: ["red lego blue", "red lego blue lego", "red lego brick", "red block blue block"]
+    object_role: workpiece
+    ignore_for_object_tracks: false
+  blue_lego:
+    prompts: ["blue block", "a blue lego brick", "blue lego", "blue brick"]
+    aliases: ["blue lego red", "blue lego red lego", "blue lego brick", "blue block red block"]
+    object_role: workpiece
+    ignore_for_object_tracks: false
+  hand:
+    # "hand" first — sweep showed it's the only combined-prompt phrase that
+    # produces zero composite labels alongside the lego prompts (box_thr=0.25).
+    # Note: token competition with lego entries reduces hand recall to ~26 % of
+    # frames; "hand." alone detects the hand in ~85 % of frames but cannot be
+    # used without a separate detector pass. Accept this trade-off for now.
+    prompts: ["hand", "human hand", "open hand"]
+    aliases: ["person hand", "glove", "arm", "hand holding"]
+    object_role: hand
+    ignore_for_object_tracks: false
+  # ── Future entries ──────────────────────────────────────────────────────────
+  # screwdriver:
+  #   prompts: ["screwdriver", "hand tool", "fastening tool"]
+  #   object_role: tool
+  #   ignore_for_object_tracks: false
+  # assembly_fixture:
+  #   prompts: ["fixture", "jig", "workbench"]
+  #   object_role: fixture
+  #   ignore_for_object_tracks: true
+
+# ── Multi-pass detection groups ────────────────────────────────────────────
+# Each enabled group runs as a separate detector pass with its own prompt
+# (and optionally its own box/text thresholds).  This eliminates token
+# competition between classes of different roles.
+#
+# Per-group box_threshold / text_threshold override the global values in
+# thresholds.yaml for that pass only.  Omit to use global defaults.
+detection_groups:
+  hands:
+    enabled: true
+    classes: ["hand"]
+    box_threshold: 0.20      # lower than default; hand is a complex deformable object
+    text_threshold: 0.20
+    # Isolated prompt → ~85% recall vs ~26% when mixed with lego vocabulary
+  workpieces:
+    enabled: true
+    classes: ["red_lego", "blue_lego"]
+    box_threshold: 0.25      # tuned via sweep (session_003)
+    text_threshold: 0.25
+  tools:
+    enabled: false
+    classes: []
+  fixtures:
+    enabled: false
+    classes: []
+
+# ── Domain configuration ───────────────────────────────────────────────────
+# Optional domain-specific knowledge: roles, enabled operations, role pairings.
+# When set, domain config overrides thresholds.yaml enabled_operations at runtime.
+domain_config: configs/domain_lego.yaml
+
+# ── Offline model loading ──────────────────────────────────────────────────
+# Set to true to force local_files_only on HuggingFace model loading.
+# Use this after the model has been cached to avoid network access on every run.
+# Requires the model to already be in the HF hub cache (~/.cache/huggingface/).
+offline_mode: false
 
 # Event summaries source
 # "rules" = deterministic templates

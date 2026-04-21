@@ -64,15 +64,20 @@ def save_pose_trajectory(pose_list: list, out_path: Path, title: str = "Camera t
 def draw_detections_on_rgb(rgb: np.ndarray, detections: list, out_path: Path):
     """Draw detection bounding boxes with class labels and confidence scores.
 
-    Each detection dict must have: _u_min, _u_max, _v_min, _v_max,
-    semantic_class, confidence.
+    Accepts observation dicts from script 05.  Bbox is read from:
+      1. V2 fields bbox_x1/y1/x2/y2  (new schema)
+      2. Private keys _u_min/_v_min/_u_max/_v_max  (legacy / fallback)
+    Falls back to a small placeholder box at (0,0,10,10) if neither is present.
+
+    Label shown is raw label (field: label) with canonical in parentheses when
+    different, e.g. "red lego blue lego (red_lego)".
     """
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import matplotlib.patches as patches
 
-    # Assign a consistent color per class
+    # Colour by semantic_class (the tracking class, stable across frames)
     all_classes = sorted({d.get("semantic_class", "?") for d in detections})
     palette = plt.cm.tab10.colors
     class_color = {cls: palette[i % len(palette)] for i, cls in enumerate(all_classes)}
@@ -81,13 +86,29 @@ def draw_detections_on_rgb(rgb: np.ndarray, detections: list, out_path: Path):
     ax.imshow(rgb)
 
     for d in detections:
-        x1 = d.get("_u_min", 0)
-        y1 = d.get("_v_min", 0)
-        x2 = d.get("_u_max", 10)
-        y2 = d.get("_v_max", 10)
-        label = d.get("semantic_class", "?")
+        # Prefer V2 bbox fields; fall back to legacy private keys
+        if d.get("bbox_x1") is not None:
+            x1 = float(d["bbox_x1"])
+            y1 = float(d["bbox_y1"])
+            x2 = float(d["bbox_x2"])
+            y2 = float(d["bbox_y2"])
+        else:
+            x1 = float(d.get("_u_min", 0))
+            y1 = float(d.get("_v_min", 0))
+            x2 = float(d.get("_u_max", 10))
+            y2 = float(d.get("_v_max", 10))
+
+        sem_class = d.get("semantic_class", "?")
+        raw_label = d.get("label", sem_class)
         conf = d.get("confidence", 0.0)
-        color = class_color.get(label, "white")
+        color = class_color.get(sem_class, "white")
+
+        # Show raw label; append canonical in parens when it differs
+        if raw_label != sem_class:
+            display_label = f"{raw_label} ({sem_class})"
+        else:
+            display_label = sem_class
+        label = display_label
 
         rect = patches.Rectangle(
             (x1, y1), x2 - x1, y2 - y1,
@@ -99,7 +120,7 @@ def draw_detections_on_rgb(rgb: np.ndarray, detections: list, out_path: Path):
         ax.text(
             x1 + 2, y1 + 12,
             f"{label}  {conf:.2f}",
-            fontsize=8, color="white",
+            fontsize=7, color="white",
             bbox=dict(boxstyle="square,pad=0.15", fc=color, ec="none", alpha=0.75),
         )
 

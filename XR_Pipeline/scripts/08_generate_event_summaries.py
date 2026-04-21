@@ -10,8 +10,12 @@ import pandas as pd
 import numpy as np
 from rich.console import Console
 
-from src.config import PipelinePaths, load_pipeline_config
+from src.config import PipelinePaths, load_pipeline_config, load_thresholds
 from src.events import generate_event_summary
+from src.run_metadata import (
+    build_run_metadata, save_run_metadata,
+    check_staleness, emit_staleness_warnings,
+)
 
 app = typer.Typer()
 console = Console()
@@ -21,11 +25,18 @@ console = Console()
 def main(
     session: str = typer.Option("session_001"),
     config: str = typer.Option(None),
+    force: bool = typer.Option(False, "--force", help="Continue even if upstream output is stale."),
 ):
     """Generate event summaries and object role assignments."""
     cfg = load_pipeline_config(Path(config) if config else None)
+    thr = load_thresholds()
     paths = PipelinePaths(session, cfg)
     paths.ensure_dirs()
+
+    # Staleness guard.
+    warnings = check_staleness(paths.processed_root, "07_build_event_windows", cfg, thr)
+    if not emit_staleness_warnings(warnings, console=console, force=force):
+        raise typer.Exit(1)
 
     if not paths.event_windows.exists():
         console.print("[red]event_windows.csv not found. Run 07 first.[/red]")
@@ -101,6 +112,17 @@ def main(
     console.print("\n[bold]Sample event summaries:[/bold]")
     for _, r in events_df.head(5).iterrows():
         console.print(f"  [{r['event_type']}] {r['summary']}")
+
+    # Write run metadata.
+    meta = build_run_metadata(
+        session_id=session,
+        stage="08_generate_event_summaries",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        extra={"n_events": len(events_df), "n_roles": len(roles_df)},
+    )
+    saved = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]Run metadata → {saved}[/dim]")
 
 
 if __name__ == "__main__":

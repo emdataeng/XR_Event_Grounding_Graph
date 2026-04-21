@@ -2,9 +2,17 @@
 """05_build_object_observations.py — Derive object observations from RGB-D frames.
 
 Detection backends (set via configs/pipeline.yaml → observations_source):
-  grounding_dino  — open-vocabulary detection with text prompts (default, requires transformers)
+  grounding_dino  — open-vocabulary detection with text prompts (requires transformers)
   yolo            — YOLOv8 fixed-class detection (requires ultralytics)
   depth_blobs     — depth segmentation, no semantic labels (no extra dependencies)
+
+Architecture:
+  Each backend is a thin DetectionResult producer that returns pixel-space
+  bounding boxes only (src/detectors/). Depth back-projection to 3D world
+  coordinates happens here, after detection.
+
+Canonicalization, confidence filtering, and class-aware NMS are applied in
+src/detection_postprocess.py before observations are written to CSV.
 """
 import sys
 from pathlib import Path
@@ -19,10 +27,17 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeEl
 
 from src.config import PipelinePaths, load_pipeline_config, load_thresholds
 from src.io_utils import load_rgba, load_depth_npy, rgba_to_rgb
-from src.depth_utils import extract_depth_blobs, blob_to_world_box
 from src.geometry import flat_to_matrix, deproject_pixel_to_world
-from src.objects import make_observation, classify_blob, OBSERVATION_COLUMNS
-from src.viz import draw_blobs_on_rgb, draw_detections_on_rgb
+from src.objects import (
+    make_observation, OBSERVATION_COLUMNS,
+    compute_depth_stats,
+)
+from src.detectors.base import load_detector, DetectionResult
+from src.detection_postprocess import postprocess_detections
+from src.vocabulary import Vocabulary
+from src.detection_groups import parse_detection_groups, cross_pass_nms
+from src.run_metadata import build_run_metadata, save_run_metadata, check_staleness, emit_staleness_warnings
+from src.viz import draw_detections_on_rgb
 
 app = typer.Typer()
 console = Console()
@@ -35,6 +50,7 @@ def main(
     config: str = typer.Option(None),
     max_frames: int = typer.Option(0, help="Limit to first N frames (0 = all)"),
     save_debug: bool = typer.Option(True, help="Save detection overlay images"),
+    force: bool = typer.Option(False, help="Continue even if upstream outputs are stale"),
 ):
     """Build object_observations.csv from RGB-D frames."""
     cfg = load_pipeline_config(Path(config) if config else None)
@@ -46,6 +62,14 @@ def main(
         console.print("[red]frame_manifest.csv not found. Run 01 first.[/red]")
         raise typer.Exit(1)
 
+    # ── Staleness check ───────────────────────────────────────────────────────
+    warnings = check_staleness(
+        paths.processed_root, "01_build_frame_manifest", cfg, thr,
+    )
+    if not emit_staleness_warnings(warnings, console=console, force=force):
+        raise typer.Exit(1)
+
+    # ── Load config ───────────────────────────────────────────────────────────
     df_manifest = pd.read_csv(paths.frame_manifest)
     if max_frames > 0:
         df_manifest = df_manifest.head(max_frames)
@@ -53,64 +77,66 @@ def main(
     obs_source = cfg.get("observations_source", "grounding_dino")
     flip_vertical = cfg.get("camera", {}).get("flip_vertical", True)
     det_cfg = thr.get("detection", {})
-    dino_cfg = thr.get("grounding_dino", {})
     depth_min = float(det_cfg.get("depth_min_m", 0.1))
     depth_max = float(det_cfg.get("depth_max_m", 5.0))
     room_id = cfg.get("default_room_id", "workstation_A")
     pose_cols = [f"T_world_cam_{i:02d}" for i in range(16)]
 
-    # ── Load detection model ──────────────────────────────────────────────────
-    dino_model = dino_processor = None
-    yolo_model = None
+    # ── Vocabulary + postprocess config ──────────────────────────────────────
+    # Vocabulary is built first so its prompt can be passed to the detector.
+    vocab = Vocabulary.from_config(cfg)
+    conf_min = float(thr.get("confidence", {}).get("min_observation", 0.3))
+    min_area_px = float(det_cfg.get("min_bbox_area_px", 0))
+    nms_iou_thr = float(det_cfg.get("nms_iou_threshold", 0.5))
 
-    if obs_source == "grounding_dino":
-        model_id = cfg.get("grounding_dino_model", "IDEA-Research/grounding-dino-base")
-        detection_prompt = cfg.get("detection_prompt", "object.")
-        box_threshold = float(dino_cfg.get("box_threshold", 0.30))
-        text_threshold = float(dino_cfg.get("text_threshold", 0.25))
-        console.print(f"Loading Grounding DINO: [bold]{model_id}[/bold]")
-        console.print(f"  Detection prompt: [italic]{detection_prompt}[/italic]")
-        console.print(f"  Thresholds: box={box_threshold}, text={text_threshold}")
-        try:
-            from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
-            import torch
-            dino_processor = AutoProcessor.from_pretrained(model_id)
-            dino_model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id)
-            device = "cuda" if torch.cuda.is_available() else "cpu"
-            dino_model = dino_model.to(device)
-            dino_model.eval()
-            console.print(f"[green]✓ Grounding DINO ready on {device}[/green]")
-        except ImportError:
-            console.print("[red]transformers not installed. Run: pip install transformers[/red]")
-            raise typer.Exit(1)
-
-    elif obs_source == "yolo":
-        yolo_model_name = cfg.get("yolo_model")
-        if not yolo_model_name:
-            console.print("[red]observations_source=yolo but yolo_model not set in pipeline.yaml.[/red]")
-            raise typer.Exit(1)
-        try:
-            from ultralytics import YOLO
-            yolo_model = YOLO(yolo_model_name)
-            console.print(f"[green]✓ YOLO model loaded: {yolo_model_name}[/green]")
-        except ImportError:
-            console.print("[red]ultralytics not installed. Run: pip install ultralytics[/red]")
-            raise typer.Exit(1)
-
-    elif obs_source == "depth_blobs":
-        min_blob_px = int(det_cfg.get("min_blob_pixels", 200))
-        max_blobs = int(det_cfg.get("max_blobs_per_frame", 20))
-        console.print("[yellow]Using depth_blobs backend (no semantic labels).[/yellow]")
-
+    # Resolve detection prompt: use vocabulary prompt when vocab is configured,
+    # fall back to detection_prompt in pipeline.yaml.
+    _OPEN_VOCAB_BACKENDS = {"grounding_dino", "mm_grounding_dino"}
+    if obs_source in _OPEN_VOCAB_BACKENDS and not vocab.is_empty:
+        resolved_prompt = vocab.build_prompt()
+        console.print(f"[dim]  Prompt from object_vocabulary: {resolved_prompt!r}[/dim]")
     else:
-        console.print(f"[red]Unknown observations_source: {obs_source}[/red]")
+        resolved_prompt = cfg.get("detection_prompt", "object.")
+
+    # Vocabulary rejection only applies to open-vocabulary detectors.
+    apply_vocab = obs_source in _OPEN_VOCAB_BACKENDS
+
+    # ── Multi-pass group config ───────────────────────────────────────────────
+    # parse_detection_groups returns [] when detection_groups absent → single-pass
+    group_passes = parse_detection_groups(cfg, vocab) if apply_vocab else []
+    if group_passes:
+        console.print(
+            f"[cyan]Multi-pass detection: {len(group_passes)} group(s) — "
+            + ", ".join(f"{gp.group.name}({len(gp.group.classes)} cls)" for gp in group_passes)
+            + "[/cyan]"
+        )
+    else:
+        console.print("[dim]  Single-pass detection (no detection_groups configured)[/dim]")
+
+    # ── Load detector ─────────────────────────────────────────────────────────
+    console.print(f"Loading detector backend: [bold]{obs_source}[/bold]")
+    try:
+        detector = load_detector(obs_source, cfg, thr, prompt=resolved_prompt)
+    except (ImportError, ValueError) as e:
+        console.print(f"[red]{e}[/red]")
         raise typer.Exit(1)
+
+    # Trigger model loading now (before the progress bar) so load time is visible
+    if obs_source in ("grounding_dino", "yolo"):
+        try:
+            detector._load()
+            console.print(f"[green]✓ Detector ready ({detector.model_id})[/green]")
+        except ImportError as e:
+            console.print(f"[red]{e}[/red]")
+            raise typer.Exit(1)
+    else:
+        console.print(f"[green]✓ Detector ready ({detector.model_id})[/green]")
 
     # ── Process frames ────────────────────────────────────────────────────────
     all_obs = []
     frames_with_depth = df_manifest[df_manifest["depth_encoding"] != "none"]
     console.print(f"Frames with depth: {len(frames_with_depth)} / {len(df_manifest)}")
-    console.print(f"Detection backend: [bold]{obs_source}[/bold]")
+    console.print(f"Prompt: [italic]{getattr(detector, 'prompt', '—')}[/italic]")
 
     with Progress(SpinnerColumn(), TextColumn("{task.description}"), BarColumn(),
                   TimeElapsedColumn(), console=console) as progress:
@@ -123,17 +149,19 @@ def main(
             cx, cy = float(row["cx"]), float(row["cy"])
             w, h = int(row["width"]), int(row["height"])
 
-            # Load RGB
+            # ── Load RGB ──────────────────────────────────────────────────────
             rgb = None
             rp = _resolve(row["rgb_path"])
             if rp.exists():
                 try:
-                    rgba = load_rgba(rp, width=w, height=h, stereo_eye=cfg.get("stereo_eye"), flip_vertical=flip_vertical)
+                    rgba = load_rgba(rp, width=w, height=h,
+                                     stereo_eye=cfg.get("stereo_eye"),
+                                     flip_vertical=flip_vertical)
                     rgb = rgba_to_rgb(rgba)
                 except Exception:
                     pass
 
-            # Load depth
+            # ── Load depth ────────────────────────────────────────────────────
             depth = None
             if row["depth_encoding"] not in ("none", "") and pd.notna(row["depth_path"]) and row["depth_path"]:
                 dp = _resolve(row["depth_path"])
@@ -141,56 +169,130 @@ def main(
 
             T_world_cam = flat_to_matrix([row[c] for c in pose_cols])
 
-            frame_obs = []
-
-            if obs_source == "grounding_dino":
-                if rgb is None:
-                    progress.advance(task)
-                    continue
-                frame_obs = _detect_grounding_dino(
-                    rgb, depth, fidx, ts_ns, fx, fy, cx, cy,
-                    T_world_cam, dino_model, dino_processor,
-                    room_id, depth_min, depth_max,
-                    detection_prompt, box_threshold, text_threshold,
-                )
-
-            elif obs_source == "yolo":
-                if rgb is None:
-                    progress.advance(task)
-                    continue
-                frame_obs = _detect_yolo(
-                    rgb, depth, fidx, ts_ns, fx, fy, cx, cy,
-                    T_world_cam, yolo_model, room_id, depth_min, depth_max,
-                )
-
-            elif obs_source == "depth_blobs" and depth is not None:
+            # Depth ↔ RGB scale factors (depth may be taller than RGB)
+            if depth is not None:
                 dh, dw = depth.shape
                 rgb_h, rgb_w = (rgb.shape[:2] if rgb is not None else (h, w))
-                d_fx = fx * dw / rgb_w
-                d_fy = fy * dh / rgb_h
-                d_cx = cx * dw / rgb_w
-                d_cy = cy * dh / rgb_h
-                frame_obs = _detect_depth_blobs(
-                    rgb, depth, fidx, ts_ns, d_fx, d_fy, d_cx, d_cy,
-                    T_world_cam, room_id, depth_min, depth_max,
-                    min_blob_px, max_blobs,
+            else:
+                dh, dw = (h, w)
+                rgb_h, rgb_w = (rgb.shape[:2] if rgb is not None else (h, w))
+
+            scale_x = dw / rgb_w
+            scale_y = dh / rgb_h
+            d_fx = fx * scale_x
+            d_fy = fy * scale_y
+            d_cx = cx * scale_x
+            d_cy = cy * scale_y
+
+            # Frame context for depth_blobs (intrinsics in depth space)
+            frame_context = {
+                "fx": d_fx, "fy": d_fy, "cx": d_cx, "cy": d_cy,
+                "T_world_cam": T_world_cam,
+                "rgb_h": rgb_h, "rgb_w": rgb_w,
+                "depth_min_m": depth_min, "depth_max_m": depth_max,
+            }
+
+            # ── Detect ────────────────────────────────────────────────────────
+            if rgb is None and obs_source != "depth_blobs":
+                progress.advance(task)
+                continue
+
+            if group_passes:
+                # ── Multi-pass: one detector call per group ───────────────────
+                # The detector model is loaded once; we swap the prompt (and
+                # optionally box/text thresholds) between passes.
+                _original_prompt = detector.prompt
+                _original_box_thr = getattr(detector, "box_threshold", None)
+                _original_text_thr = getattr(detector, "text_threshold", None)
+                frame_obs_all = []
+                for gp in group_passes:
+                    detector.prompt = gp.prompt
+                    if gp.box_threshold is not None and hasattr(detector, "box_threshold"):
+                        detector.box_threshold = gp.box_threshold
+                    if gp.text_threshold is not None and hasattr(detector, "text_threshold"):
+                        detector.text_threshold = gp.text_threshold
+                    raw_g: list[DetectionResult] = detector.detect(
+                        rgb=rgb, depth=depth, frame_context=frame_context,
+                    )
+                    dets_g = postprocess_detections(
+                        raw_g,
+                        vocab=gp.vocab,
+                        conf_min=conf_min,
+                        min_area_px=min_area_px,
+                        nms_iou_threshold=nms_iou_thr,
+                        apply_vocab=True,
+                    )
+                    for det in dets_g:
+                        obs = _detection_to_observation(
+                            det, depth,
+                            fidx, ts_ns,
+                            fx, fy, cx, cy,
+                            d_fx, d_fy, d_cx, d_cy,
+                            scale_x, scale_y,
+                            T_world_cam, room_id,
+                            depth_min, depth_max,
+                            detector_group=gp.group.name,
+                            detector_pass_id=gp.group.pass_id,
+                        )
+                        if obs is not None:
+                            frame_obs_all.append(obs)
+                detector.prompt = _original_prompt
+                if _original_box_thr is not None and hasattr(detector, "box_threshold"):
+                    detector.box_threshold = _original_box_thr
+                if _original_text_thr is not None and hasattr(detector, "text_threshold"):
+                    detector.text_threshold = _original_text_thr
+                # Cross-pass NMS: remove duplicates from overlapping groups
+                frame_obs = cross_pass_nms(frame_obs_all, iou_threshold=nms_iou_thr)
+
+            else:
+                # ── Single-pass (backward-compatible) ────────────────────────
+                raw_detections: list[DetectionResult] = detector.detect(
+                    rgb=rgb, depth=depth, frame_context=frame_context,
                 )
+                detections = postprocess_detections(
+                    raw_detections,
+                    vocab=vocab,
+                    conf_min=conf_min,
+                    min_area_px=min_area_px,
+                    nms_iou_threshold=nms_iou_thr,
+                    apply_vocab=apply_vocab,
+                )
+                frame_obs = []
+                for det in detections:
+                    obs = _detection_to_observation(
+                        det, depth,
+                        fidx, ts_ns,
+                        fx, fy, cx, cy,
+                        d_fx, d_fy, d_cx, d_cy,
+                        scale_x, scale_y,
+                        T_world_cam, room_id,
+                        depth_min, depth_max,
+                    )
+                    if obs is not None:
+                        frame_obs.append(obs)
 
             all_obs.extend(frame_obs)
 
-            # Save detection overlay for every frame that has detections
+            # Debug overlay
             if save_debug and rgb is not None and frame_obs:
                 out_dbg = paths.debug_box_dir / f"frame_{fidx:06d}_detections.png"
                 draw_detections_on_rgb(rgb, frame_obs, out_dbg)
 
             progress.advance(task)
 
+    # Build group_prompts dict for metadata (populated only in multi-pass mode)
+    _group_prompts = {gp.group.name: gp.prompt for gp in group_passes} if group_passes else {}
+    _actual_prompt = group_passes[0].prompt if len(group_passes) == 1 else resolved_prompt
+
     if not all_obs:
         console.print("[yellow]WARN: No observations generated.[/yellow]")
-        console.print("  If using grounding_dino, check that your detection_prompt covers objects in the scene.")
+        console.print("  Check detection_prompt and thresholds in pipeline.yaml / thresholds.yaml.")
         pd.DataFrame(columns=OBSERVATION_COLUMNS).to_csv(paths.object_observations, index=False)
+        _write_run_metadata(session, cfg, thr, paths, n_observations=0,
+                            resolved_prompt=_actual_prompt, group_prompts=_group_prompts)
         return
 
+    # Strip private keys (prefixed _) used internally during processing
     clean_obs = [{k: v for k, v in o.items() if not k.startswith("_")} for o in all_obs]
     obs_df = pd.DataFrame(clean_obs)
     for col in OBSERVATION_COLUMNS:
@@ -202,201 +304,159 @@ def main(
     console.print(f"[green]✓ Wrote {len(obs_df)} observations → {paths.object_observations}[/green]")
     console.print(f"  Unique frames: {obs_df['frame_idx'].nunique()}")
     console.print(f"  Classes: {obs_df['semantic_class'].value_counts().to_dict()}")
+    if "canonical_class" in obs_df.columns:
+        console.print(f"  Canonical classes: {obs_df['canonical_class'].value_counts().to_dict()}")
+
+    _write_run_metadata(session, cfg, thr, paths, n_observations=len(obs_df),
+                        resolved_prompt=_actual_prompt, group_prompts=_group_prompts)
 
 
-# ── Detection backends ────────────────────────────────────────────────────────
+# ── Depth backprojection ──────────────────────────────────────────────────────
 
-def _detect_grounding_dino(
-    rgb, depth, fidx, ts_ns, fx, fy, cx, cy,
-    T_world_cam, model, processor, room_id,
-    depth_min, depth_max, detection_prompt,
-    box_threshold, text_threshold,
+def _detection_to_observation(
+    det: DetectionResult,
+    depth,
+    fidx, ts_ns,
+    fx, fy, cx, cy,
+    d_fx, d_fy, d_cx, d_cy,
+    scale_x, scale_y,
+    T_world_cam, room_id,
+    depth_min, depth_max,
+    detector_group: "str | None" = None,
+    detector_pass_id: "str | None" = None,
 ):
-    """Open-vocabulary detection via Grounding DINO + depth back-projection."""
-    import torch
-    from PIL import Image
+    """Convert a DetectionResult to an observation dict with 3D coordinates.
 
-    pil_image = Image.fromarray(rgb)
-    rgb_h, rgb_w = rgb.shape[:2]
+    For depth_blobs, uses pre-computed 3D from metadata if available.
+    For RGB detectors, samples depth from the bbox ROI and back-projects.
+    Returns None if no valid depth can be found.
+    """
+    x1, y1, x2, y2 = det.bbox_xyxy
+    # semantic_class is the stable tracking class (canonical when vocab mapped,
+    # raw label when permissive / no vocab).
+    sem_class = det.metadata.get("canonical_class") or det.raw_label
+    canonical = det.metadata.get("canonical_class")
 
-    inputs = processor(images=pil_image, text=detection_prompt, return_tensors="pt")
-    inputs = {k: v.to(next(model.parameters()).device) for k, v in inputs.items()}
-
-    with torch.no_grad():
-        outputs = model(**inputs)
-
-    results = processor.post_process_grounded_object_detection(
-        outputs,
-        input_ids=inputs["input_ids"],
-        threshold=box_threshold,
-        text_threshold=text_threshold,
-        target_sizes=[(rgb_h, rgb_w)],
-    )
-
-    obs_list = []
-    if not results:
-        return obs_list
-
-    result = results[0]
-    boxes = result["boxes"].tolist()           # absolute pixel coords in RGB space
-    labels = result.get("text_labels", result.get("labels", []))  # text label per box
-    scores = result["scores"].tolist()
-
-    # Scale factors: RGB → depth coordinate space
-    if depth is not None:
-        dh, dw = depth.shape
-    else:
-        dh, dw = rgb_h, rgb_w
-
-    scale_x = dw / rgb_w
-    scale_y = dh / rgb_h
-    d_fx = fx * scale_x
-    d_fy = fy * scale_y
-    d_cx = cx * scale_x
-    d_cy = cy * scale_y
-
-    for box, label, score in zip(boxes, labels, scores):
-        x1, y1, x2, y2 = box
-        sem_class = label.strip().rstrip(".").strip()
-
-        # Center in RGB space
-        u_c = (x1 + x2) / 2.0
-        v_c = (y1 + y2) / 2.0
-
-        if depth is None:
-            continue
-
-        # Scale center to depth space for depth sampling
-        du_c = u_c * scale_x
-        dv_c = v_c * scale_y
-        du_i = int(np.clip(du_c, 0, dw - 1))
-        dv_i = int(np.clip(dv_c, 0, dh - 1))
-
-        d_val = float(depth[dv_i, du_i])
-        if not (depth_min < d_val < depth_max):
-            # Fallback: median of scaled bbox region
-            dx1 = int(np.clip(x1 * scale_x, 0, dw))
-            dy1 = int(np.clip(y1 * scale_y, 0, dh))
-            dx2 = int(np.clip(x2 * scale_x, 0, dw))
-            dy2 = int(np.clip(y2 * scale_y, 0, dh))
-            roi = depth[dy1:dy2, dx1:dx2]
-            valid = roi[(roi > depth_min) & (roi < depth_max)]
-            if valid.size == 0:
-                continue
-            d_val = float(np.median(valid))
-
-        # Back-project using depth-space intrinsics and depth-space center
-        center = deproject_pixel_to_world(du_c, dv_c, d_val, d_fx, d_fy, d_cx, d_cy, T_world_cam)
-
+    # ── depth_blobs: use pre-computed 3D ─────────────────────────────────────
+    if det.source == "depth_blobs":
+        meta = det.metadata
+        xyz = meta.get("pre_computed_xyz")
+        ext = meta.get("pre_computed_extent")
+        if xyz is None:
+            return None
         obs = make_observation(
             frame_idx=fidx, timestamp_ns=ts_ns,
             semantic_class=sem_class,
-            x=float(center[0]), y=float(center[1]), z=float(center[2]),
-            confidence=float(score), room_id=room_id, source="grounding_dino",
+            label=det.raw_label,          # preserve raw detector output
+            x=float(xyz[0]), y=float(xyz[1]), z=float(xyz[2]),
+            w=float(ext[0]) if ext else 0.0,
+            h=float(ext[1]) if ext else 0.0,
+            d=float(ext[2]) if ext else 0.0,
+            confidence=det.score,
+            room_id=room_id,
+            source=det.source,
+            # V2
+            canonical_class=canonical,
+            bbox_x1=float(x1), bbox_y1=float(y1),
+            bbox_x2=float(x2), bbox_y2=float(y2),
+            bbox_area_px=det.bbox_area_px,
+            detector_backend=det.source,
+            detector_model=det.model_id,
+            detector_prompt=det.prompt,
+            depth_median=meta.get("blob_depth_mean"),
+            depth_min=meta.get("blob_depth_min"),
+            depth_max=meta.get("blob_depth_max"),
+            depth_valid_px=int(meta.get("blob_area_px", 0)),
+            detector_group=detector_group,
+            detector_pass_id=detector_pass_id,
         )
+        # Private keys for debug overlay (stripped before CSV write)
         obs["_u_min"] = int(x1); obs["_u_max"] = int(x2)
         obs["_v_min"] = int(y1); obs["_v_max"] = int(y2)
-        obs_list.append(obs)
+        return obs
 
-    return obs_list
+    # ── RGB detectors: sample depth from bbox ROI ─────────────────────────────
+    if depth is None:
+        return None
 
-
-def _detect_yolo(
-    rgb, depth, fidx, ts_ns, fx, fy, cx, cy,
-    T_world_cam, yolo_model, room_id, depth_min, depth_max,
-):
-    """Detect objects with YOLO and back-project using depth."""
-    results = yolo_model(rgb, verbose=False)
-    obs_list = []
-
-    if depth is not None:
-        dh, dw = depth.shape
-    else:
-        dh, dw = rgb.shape[:2]
-
-    rgb_h, rgb_w = rgb.shape[:2]
-    scale_x = dw / rgb_w
-    scale_y = dh / rgb_h
-    d_fx = fx * scale_x
-    d_fy = fy * scale_y
-    d_cx = cx * scale_x
-    d_cy = cy * scale_y
-
-    for r in results:
-        for box in r.boxes:
-            x1, y1, x2, y2 = box.xyxy[0].tolist()
-            conf = float(box.conf[0])
-            cls_id = int(box.cls[0])
-            sem_class = yolo_model.names.get(cls_id, f"class_{cls_id}")
-
-            u_c = (x1 + x2) / 2.0
-            v_c = (y1 + y2) / 2.0
-
-            if depth is None:
-                continue
-
-            du_c = u_c * scale_x
-            dv_c = v_c * scale_y
-            du_i = int(np.clip(du_c, 0, dw - 1))
-            dv_i = int(np.clip(dv_c, 0, dh - 1))
-
-            d_val = float(depth[dv_i, du_i])
-            if not (depth_min < d_val < depth_max):
-                dx1 = int(np.clip(x1 * scale_x, 0, dw))
-                dy1 = int(np.clip(y1 * scale_y, 0, dh))
-                dx2 = int(np.clip(x2 * scale_x, 0, dw))
-                dy2 = int(np.clip(y2 * scale_y, 0, dh))
-                roi = depth[dy1:dy2, dx1:dx2]
-                valid = roi[(roi > depth_min) & (roi < depth_max)]
-                if valid.size == 0:
-                    continue
-                d_val = float(np.median(valid))
-
-            center = deproject_pixel_to_world(du_c, dv_c, d_val, d_fx, d_fy, d_cx, d_cy, T_world_cam)
-
-            obs = make_observation(
-                frame_idx=fidx, timestamp_ns=ts_ns,
-                semantic_class=sem_class,
-                x=float(center[0]), y=float(center[1]), z=float(center[2]),
-                confidence=conf, room_id=room_id, source="yolo",
-            )
-            obs["_u_min"] = int(x1); obs["_u_max"] = int(x2)
-            obs["_v_min"] = int(y1); obs["_v_max"] = int(y2)
-            obs_list.append(obs)
-
-    return obs_list
-
-
-def _detect_depth_blobs(
-    rgb, depth, fidx, ts_ns, fx, fy, cx, cy,
-    T_world_cam, room_id, depth_min, depth_max, min_blob_px, max_blobs,
-):
-    """Extract observations using depth blob segmentation (no semantic labels)."""
-    blobs = extract_depth_blobs(
-        depth, depth_min=depth_min, depth_max=depth_max,
-        min_blob_pixels=min_blob_px, max_blobs=max_blobs,
+    # Compute depth stats for the bbox (in RGB pixel space)
+    depth_stats = compute_depth_stats(
+        depth, x1, y1, x2, y2,
+        depth_min_m=depth_min, depth_max_m=depth_max,
+        scale_x=scale_x, scale_y=scale_y,
     )
-    obs_list = []
-    for i, blob in enumerate(blobs):
-        try:
-            center, extent = blob_to_world_box(blob, fx, fy, cx, cy, T_world_cam)
-        except Exception:
-            continue
+    d_val = depth_stats.get("depth_for_proj")
+    if d_val is None:
+        return None
 
-        sem_class = classify_blob(blob, i)
-        conf = min(0.9, 0.3 + blob["area_px"] / 50000)
+    # Back-project bbox centre from depth-space coordinates
+    u_c = (x1 + x2) / 2.0
+    v_c = (y1 + y2) / 2.0
+    du_c = u_c * scale_x
+    dv_c = v_c * scale_y
 
-        obs = make_observation(
-            frame_idx=fidx, timestamp_ns=ts_ns,
-            semantic_class=sem_class,
-            x=float(center[0]), y=float(center[1]), z=float(center[2]),
-            w=float(extent[0]), h=float(extent[1]), d=float(extent[2]),
-            confidence=conf, room_id=room_id, source="depth_blobs",
-        )
-        obs["_u_min"] = blob["u_min"]; obs["_u_max"] = blob["u_max"]
-        obs["_v_min"] = blob["v_min"]; obs["_v_max"] = blob["v_max"]
-        obs_list.append(obs)
-    return obs_list
+    center = deproject_pixel_to_world(
+        du_c, dv_c, d_val, d_fx, d_fy, d_cx, d_cy, T_world_cam,
+    )
+
+    obs = make_observation(
+        frame_idx=fidx, timestamp_ns=ts_ns,
+        semantic_class=sem_class,
+        label=det.raw_label,              # preserve raw detector output
+        x=float(center[0]), y=float(center[1]), z=float(center[2]),
+        confidence=det.score,
+        room_id=room_id,
+        source=det.source,
+        # V2
+        canonical_class=canonical,
+        bbox_x1=float(x1), bbox_y1=float(y1),
+        bbox_x2=float(x2), bbox_y2=float(y2),
+        bbox_area_px=det.bbox_area_px,
+        detector_backend=det.source,
+        detector_model=det.model_id,
+        detector_prompt=det.prompt,
+        depth_median=depth_stats.get("depth_median"),
+        depth_min=depth_stats.get("depth_min"),
+        depth_max=depth_stats.get("depth_max"),
+        depth_valid_px=depth_stats.get("depth_valid_px"),
+        detector_group=detector_group,
+        detector_pass_id=detector_pass_id,
+    )
+    # Private keys for debug overlay (stripped before CSV write)
+    obs["_u_min"] = int(x1); obs["_u_max"] = int(x2)
+    obs["_v_min"] = int(y1); obs["_v_max"] = int(y2)
+    return obs
+
+
+# ── Metadata helper ───────────────────────────────────────────────────────────
+
+def _write_run_metadata(
+    session, cfg, thr, paths, n_observations,
+    resolved_prompt=None, group_prompts=None,
+):
+    from src.config import PROJECT_ROOT as _PR
+    meta = build_run_metadata(
+        session_id=session,
+        stage="05_build_object_observations",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        pipeline_yaml_path=_PR / "configs" / "pipeline.yaml",
+        thresholds_yaml_path=_PR / "configs" / "thresholds.yaml",
+        extra={
+            "observations_source": cfg.get("observations_source", "grounding_dino"),
+            # resolved_prompt is the actual prompt sent to the detector
+            # (overrides the raw detection_prompt field when vocab is configured)
+            "resolved_prompt": resolved_prompt or cfg.get("detection_prompt"),
+            "grounding_dino_model": cfg.get("grounding_dino_model"),
+            "n_observations": n_observations,
+            "multi_pass": bool(cfg.get("detection_groups")),
+            "detection_groups": list(cfg.get("detection_groups", {}).keys()),
+            # Per-group prompts when multi-pass is active
+            "group_prompts": group_prompts or {},
+        },
+    )
+    path = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]  Run metadata → {path}[/dim]")
 
 
 def _resolve(path_str: str) -> Path:

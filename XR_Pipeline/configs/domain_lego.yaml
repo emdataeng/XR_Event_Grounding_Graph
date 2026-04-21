@@ -1,0 +1,164 @@
+# domain_lego.yaml — Lego brick assembly domain configuration
+# Use this with: domain_config: configs/domain_lego.yaml in pipeline.yaml
+
+domain_name: "lego_assembly"
+domain_version: "1.0"
+description: >
+  Two-color Lego brick assembly workflow.
+  A single operator (hand) picks up, holds, and stacks red and blue Lego bricks
+  on a workbench.  No tools or fixtures are required.
+
+# Object classes present in this domain
+object_classes:
+  - canonical: "red_lego"
+    role: workpiece
+    description: "Red Lego brick (primary workpiece)"
+  - canonical: "blue_lego"
+    role: workpiece
+    description: "Blue Lego brick (secondary workpiece)"
+  - canonical: "hand"
+    role: hand
+    description: "Operator hand performing manipulation"
+
+# Workflow phases relevant to this domain (in rough temporal order)
+workflow_phases:
+  - label: "idle"
+    description: "No manipulation activity"
+  - label: "hold"
+    description: "Operator is holding one or more Lego bricks"
+  - label: "manipulation"
+    description: "Operator is picking up or putting down a brick"
+  - label: "contact"
+    description: "Two bricks are in physical contact (stacking)"
+  - label: "transfer"
+    description: "Brick is moving without a visible hand agent"
+
+# Operations enabled in this domain.
+# Hand recall is currently ~26% in single-pass mode; PICK_UP/PUT_DOWN may be
+# inferred as TRANSFER or CANDIDATE.  Enable multi-pass detection (see
+# detection_groups in pipeline.yaml) to improve hand recall.
+enabled_operations:
+  - HOLD
+  - PICK_UP
+  - PUT_DOWN
+  - PICK_UP_CANDIDATE
+  - PUT_DOWN_CANDIDATE
+  - CONTACT
+  - TRANSFER
+
+# Role interaction rules
+role_pairings:
+  - agent_role: hand
+    patient_role: workpiece
+    valid_operations: [HOLD, PICK_UP, PUT_DOWN]
+  - agent_role: workpiece
+    patient_role: workpiece
+    valid_operations: [CONTACT, TRANSFER]
+
+# Assembly reasoning extensions
+assembly_predicates:
+  - name: present
+    description: Object is tracked in the scene
+  - name: near
+    description: Two objects are within near_threshold
+  - name: holding
+    description: Hand is holding a workpiece
+  - name: in_contact
+    description: Two workpieces are touching
+  - name: placed_on_candidate
+    description: Workpiece placed on surface candidate
+  - name: resting
+    description: Object resting with no active operation
+  - name: carried
+    description: Object being carried by hand
+  - name: co_held
+    description: Two bricks simultaneously held by the same hand (inter-object relation)
+  - name: co_held_started
+    description: Point transition — co_held relation began
+  - name: co_held_ended
+    description: Point transition — co_held relation ended
+
+subtask_templates:
+  - name: pick_up_part
+    trigger_operations: [PICK_UP, PICK_UP_CANDIDATE]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Hand explicitly picks up a Lego brick from a surface
+  - name: hold_part
+    trigger_operations: [HOLD]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Hand maintains a grip on a Lego brick (sustained hold)
+  - name: place_part
+    trigger_operations: [PUT_DOWN, PUT_DOWN_CANDIDATE]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Hand places a Lego brick down
+  - name: contact_parts
+    trigger_operations: [CONTACT]
+    trigger_predicates: [near]
+    agent_role: workpiece
+    patient_role: workpiece
+    description: Two bricks come into contact (stacking)
+  - name: release_part
+    trigger_operations: []
+    trigger_predicates: [carried]
+    agent_role: hand
+    patient_role: workpiece
+    description: Hand releases a Lego brick (inferred from support-state transition)
+  - name: co_held_parts
+    trigger_operations: []
+    trigger_predicates: [co_held]
+    agent_role: workpiece
+    patient_role: workpiece
+    description: Two bricks co-held by the same hand — candidate contact event
+
+subgoal_templates:
+  - name: part_is_picked_up
+    achieved_by: pick_up_part
+    predicate: holding
+    description: A Lego brick was explicitly picked up
+  - name: part_is_held
+    achieved_by: hold_part
+    predicate: holding
+    description: A Lego brick is being held in the hand
+  - name: part_is_placed
+    achieved_by: place_part
+    predicate: resting
+    description: A Lego brick has been placed down
+  - name: parts_contacted
+    achieved_by: contact_parts
+    predicate: in_contact
+    description: Two Lego bricks are in contact
+  - name: part_is_released
+    achieved_by: release_part
+    predicate: released
+    description: A Lego brick was released from the hand
+  - name: parts_co_held
+    achieved_by: co_held_parts
+    predicate: co_held
+    description: Two Lego bricks were co-held by the same hand (candidate stacking event)
+
+dependency_rules: []
+
+# Inter-object relation rules: describe pairwise relations in this domain
+relation_rules:
+  - predicate: co_held
+    subject_role: workpiece
+    object_role: workpiece
+    symmetrical: true
+    description: Two workpieces co-held by same agent — weak contact candidate
+  - predicate: in_contact
+    subject_role: workpiece
+    object_role: workpiece
+    symmetrical: true
+    description: Two workpieces physically in contact
+
+phase_hints:
+  manipulation: [pick_up_part, place_part]
+  hold: [hold_part]
+  contact: [contact_parts, co_held_parts]
+  release: [release_part]

@@ -1,0 +1,241 @@
+# domain_industrial_example.yaml — Example industrial assembly domain
+#
+# This config demonstrates how to adapt the pipeline to an industrial
+# workstation scenario (e.g. fastener assembly, component insertion) using
+# only configuration — no Python code changes.
+#
+# Use with: domain_config: configs/domain_industrial_example.yaml
+
+domain_name: "industrial_assembly_example"
+domain_version: "1.0"
+description: >
+  Example industrial assembly workstation.
+  An operator uses hand tools to assemble components onto a fixture.
+  Demonstrates tool-use, insertion, and alignment detection.
+
+# Object classes for this domain
+object_classes:
+  - canonical: "hand"
+    role: hand
+    description: "Operator hand"
+  - canonical: "screwdriver"
+    role: tool
+    description: "Fastening tool used to drive screws"
+  - canonical: "wrench"
+    role: tool
+    description: "Torque tool for bolts and fittings"
+  - canonical: "component"
+    role: workpiece
+    description: "Assembly component being installed"
+  - canonical: "sub_assembly"
+    role: workpiece
+    description: "Partially assembled subunit"
+  - canonical: "fixture"
+    role: fixture
+    description: "Stationary mounting jig or vice that holds workpieces"
+  - canonical: "tray"
+    role: container
+    description: "Parts tray or bin"
+  - canonical: "machine_frame"
+    role: machine_part
+    description: "Fixed machine structure or chassis"
+
+# Workflow phases for this domain
+workflow_phases:
+  - label: "idle"
+    description: "No active manipulation"
+  - label: "approach"
+    description: "Operator approaching the workpiece or fixture"
+  - label: "manipulation"
+    description: "Active pick-up or placement"
+  - label: "hold"
+    description: "Component held in position"
+  - label: "tool_use"
+    description: "Tool being applied to a workpiece"
+  - label: "placement"
+    description: "Component being placed onto or inserted into fixture"
+  - label: "contact"
+    description: "Two components in physical contact"
+  - label: "transfer"
+    description: "Component moved between locations"
+
+# Operations enabled for this domain
+enabled_operations:
+  - PICK_UP
+  - PUT_DOWN
+  - HOLD
+  - USE_TOOL
+  - CONTACT
+  - TRANSFER
+  - PICK_UP_CANDIDATE
+  - PUT_DOWN_CANDIDATE
+  - APPROACH
+  - PLACE_ONTO_CANDIDATE
+  - INSERT_CANDIDATE
+  - ALIGN_CANDIDATE
+  - ATTACH_CANDIDATE
+
+# Role interaction rules
+role_pairings:
+  - agent_role: hand
+    patient_role: workpiece
+    valid_operations: [HOLD, PICK_UP, PUT_DOWN]
+  - agent_role: tool
+    patient_role: workpiece
+    valid_operations: [USE_TOOL]
+  - agent_role: tool
+    patient_role: machine_part
+    valid_operations: [USE_TOOL]
+  - agent_role: workpiece
+    patient_role: fixture
+    valid_operations: [APPROACH, PLACE_ONTO_CANDIDATE, INSERT_CANDIDATE,
+                       ALIGN_CANDIDATE, ATTACH_CANDIDATE]
+  - agent_role: workpiece
+    patient_role: machine_part
+    valid_operations: [INSERT_CANDIDATE, ATTACH_CANDIDATE]
+  - agent_role: workpiece
+    patient_role: workpiece
+    valid_operations: [CONTACT, TRANSFER]
+  - agent_role: workpiece
+    patient_role: container
+    valid_operations: [PLACE_ONTO_CANDIDATE]
+
+# Assembly reasoning extensions
+assembly_predicates:
+  - name: present
+    description: Object is tracked in the scene
+  - name: near
+    description: Two objects within near_threshold
+  - name: holding
+    description: Hand is holding a component
+  - name: in_contact
+    description: Two components are touching
+  - name: aligned_with_candidate
+    description: Component is aligned to target (pre-insertion)
+  - name: inserted_into_candidate
+    description: Component inserted into target fixture
+  - name: placed_on_candidate
+    description: Component placed onto target surface
+  - name: attached_to_candidate
+    description: Component attached to target
+  - name: used_tool_on
+    description: Tool applied to workpiece
+  - name: resting
+    description: Object resting with no active operation
+  - name: carried
+    description: Object being carried by hand
+
+subtask_templates:
+  - name: pick_up_part
+    trigger_operations: [PICK_UP, HOLD]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Operator picks up or holds a component
+  - name: place_part
+    trigger_operations: [PUT_DOWN, PUT_DOWN_CANDIDATE]
+    trigger_predicates: []
+    agent_role: hand
+    patient_role: workpiece
+    description: Operator places a component down
+  - name: align_part
+    trigger_operations: [ALIGN_CANDIDATE]
+    trigger_predicates: [near]
+    agent_role: workpiece
+    patient_role: fixture
+    description: Component aligned to fixture or target
+  - name: insert_part
+    trigger_operations: [INSERT_CANDIDATE]
+    trigger_predicates: [aligned_with_candidate]
+    agent_role: workpiece
+    patient_role: fixture
+    description: Component inserted into target
+  - name: attach_part
+    trigger_operations: [ATTACH_CANDIDATE]
+    trigger_predicates: [near]
+    agent_role: workpiece
+    patient_role: fixture
+    description: Component attached to target
+  - name: use_tool
+    trigger_operations: [USE_TOOL]
+    trigger_predicates: []
+    agent_role: tool
+    patient_role: workpiece
+    description: Tool applied to a component
+  - name: contact_parts
+    trigger_operations: [CONTACT]
+    trigger_predicates: [near]
+    agent_role: workpiece
+    patient_role: workpiece
+    description: Two components come into contact
+
+subgoal_templates:
+  - name: part_is_held
+    achieved_by: pick_up_part
+    predicate: holding
+    description: Component is held by operator
+  - name: part_is_aligned
+    achieved_by: align_part
+    predicate: aligned_with_candidate
+    description: Component aligned to insertion target
+  - name: part_is_inserted
+    achieved_by: insert_part
+    predicate: inserted_into_candidate
+    description: Component inserted into target
+  - name: part_is_attached
+    achieved_by: attach_part
+    predicate: attached_to_candidate
+    description: Component attached to target
+  - name: tool_applied
+    achieved_by: use_tool
+    predicate: used_tool_on
+    description: Tool has been applied
+
+dependency_rules:
+  - subtask: insert_part
+    requires: align_part
+    description: Component must be aligned before insertion
+  - subtask: attach_part
+    requires: align_part
+    description: Component must be aligned before attachment
+
+phase_hints:
+  approach:    [pick_up_part]
+  manipulation: [pick_up_part, place_part]
+  placement:   [align_part, insert_part, attach_part]
+  tool_use:    [use_tool]
+  contact:     [contact_parts]
+  hold:        [pick_up_part]
+
+# Inter-object relation rules: pairwise assembly-relevant relations
+relation_rules:
+  - predicate: co_held
+    subject_role: workpiece
+    object_role: workpiece
+    symmetrical: true
+    description: Two workpieces co-held by same agent — candidate proximity event
+  - predicate: in_contact
+    subject_role: workpiece
+    object_role: workpiece
+    symmetrical: true
+    description: Two workpieces physically in contact
+  - predicate: aligned_with_candidate
+    subject_role: workpiece
+    object_role: fixture
+    symmetrical: false
+    description: Workpiece aligned to fixture/target for insertion
+  - predicate: inserted_into_candidate
+    subject_role: workpiece
+    object_role: fixture
+    symmetrical: false
+    description: Workpiece inserted into fixture
+  - predicate: attached_to_candidate
+    subject_role: workpiece
+    object_role: machine_part
+    symmetrical: false
+    description: Workpiece attached to machine part
+  - predicate: placed_on_candidate
+    subject_role: workpiece
+    object_role: fixture
+    symmetrical: false
+    description: Workpiece placed onto a surface or fixture

@@ -13,6 +13,8 @@ from rich.table import Table
 
 from src.config import PipelinePaths, load_pipeline_config, load_thresholds
 from src.tracking import link_observations_to_tracks, build_track_summary
+from src.vocabulary import Vocabulary
+from src.run_metadata import build_run_metadata, save_run_metadata
 
 app = typer.Typer()
 console = Console()
@@ -35,6 +37,24 @@ def main(
 
     obs_df = pd.read_csv(paths.object_observations)
     console.print(f"[bold]Loaded {len(obs_df)} observations.[/bold]")
+
+    # Filter out classes flagged ignore_for_object_tracks in object_vocabulary.
+    # Those observations remain in object_observations.csv for downstream use
+    # (e.g. event detection, future verifier), but do not feed into tracking.
+    vocab = Vocabulary.from_config(cfg)
+    if not vocab.is_empty:
+        ignore_classes = {e.canonical for e in vocab._entries if e.ignore_for_object_tracks}
+        if ignore_classes:
+            # Use canonical_class column if present (V2 schema), else semantic_class
+            class_col = "canonical_class" if "canonical_class" in obs_df.columns else "semantic_class"
+            before = len(obs_df)
+            obs_df = obs_df[~obs_df[class_col].isin(ignore_classes)].reset_index(drop=True)
+            dropped = before - len(obs_df)
+            if dropped:
+                console.print(
+                    f"[dim]Excluded {dropped} observations with "
+                    f"ignore_for_object_tracks classes: {sorted(ignore_classes)}[/dim]"
+                )
 
     if obs_df.empty:
         console.print("[yellow]No observations — writing empty tracks.[/yellow]")
@@ -88,6 +108,17 @@ def main(
             )
         tracks_df = tracks_df[tracks_df["track_id"].isin(valid_tids)].reset_index(drop=True)
 
+    # Enrich tracks with object_role from vocabulary taxonomy.
+    # This lets downstream stages (events, operation events, SSP) use
+    # role-based logic instead of hardcoded class-name string matching.
+    if not vocab.is_empty:
+        class_col = "canonical_class" if "canonical_class" in tracks_df.columns else "semantic_class"
+        tracks_df["object_role"] = tracks_df[class_col].map(
+            lambda cls: vocab.object_role(cls)
+        )
+    else:
+        tracks_df["object_role"] = "workpiece"
+
     tracks_df.to_csv(paths.object_tracks, index=False)
     console.print(f"[green]✓ Wrote {len(tracks_df)} track rows → {paths.object_tracks}[/green]")
 
@@ -116,6 +147,17 @@ def main(
     }
     paths.track_debug.write_text(json.dumps(debug, indent=2))
     console.print(f"[green]✓ Debug JSON → {paths.track_debug}[/green]")
+
+    # Write run metadata for staleness detection by downstream stages.
+    meta = build_run_metadata(
+        session_id=session,
+        stage="06_link_object_tracks",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        extra={"n_tracks": len(summary_df), "n_track_rows": len(tracks_df)},
+    )
+    saved = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]Run metadata → {saved}[/dim]")
 
 
 if __name__ == "__main__":
