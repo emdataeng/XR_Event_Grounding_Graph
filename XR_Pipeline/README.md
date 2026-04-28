@@ -47,10 +47,23 @@ The pipeline processes raw Quest 3 captures frame by frame:
 Install Python dependencies:
 
 ```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 ```
 
-Key packages: `transformers`, `torch`, `pandas`, `numpy`, `networkx`, `neo4j`, `typer`, `rich`
+For NVIDIA GPU acceleration, install the CUDA-enabled PyTorch build instead of the CPU build. Use the official selector at [pytorch.org/get-started/locally](https://pytorch.org/get-started/locally/) to choose the right command for your OS and CUDA version. For example:
+
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+```
+
+Then verify what PyTorch can see:
+
+```bash
+python -c "import torch; print(torch.__version__); print('CUDA available:', torch.cuda.is_available())"
+```
+
+Key packages: `transformers`, `torch`, `torchvision`, `pandas`, `numpy`, `networkx`, `neo4j`, `typer`, `rich`
 
 ---
 
@@ -60,11 +73,15 @@ Key packages: `transformers`, `torch`, `pandas`, `numpy`, `networkx`, `neo4j`, `
 git clone <repo-url>
 cd XR_Pipeline
 
+# Install PyTorch first. Use the CPU build below, or replace it with the CUDA
+# command from https://pytorch.org/get-started/locally/ for NVIDIA GPU support.
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 
-# Copy and fill in your Neo4j Aura credentials
+# Copy and fill in your local credentials
 cp .env.example .env
 # Edit .env with your NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD
+# Optional: add HF_TOKEN for Hugging Face model downloads
 
 # Bootstrap output directories
 python scripts/00_bootstrap_repo.py
@@ -76,11 +93,16 @@ python scripts/00_bootstrap_repo.py
 NEO4J_URI=neo4j+s://<instance-id>.databases.neo4j.io
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your-password-here
+
+# Optional, but recommended for Hugging Face rate limits
+HF_TOKEN=hf_your-token-here
 ```
 
 Find these in the [Neo4j Aura console](https://console.neo4j.io) → your instance → **Inspect**.
 
-> `.env` is gitignored. Never commit real credentials.
+For Hugging Face, create a read token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). This avoids warnings such as `You are sending unauthenticated requests to the HF Hub` and gives higher rate limits for model downloads.
+
+> `.env` is gitignored. Never commit real credentials. Keep model names and non-secret settings in `configs/pipeline.yaml`; keep tokens/passwords in environment variables or `.env`.
 
 ---
 
@@ -214,7 +236,7 @@ observations_source: grounding_dino
 detection_prompt: "laptop. mouse. hands. coffee cup. notebook."
 ```
 
-The model is downloaded automatically from HuggingFace on first run (~700 MB). No GPU required but runs faster with one.
+The model is downloaded automatically from HuggingFace on first run (~700 MB). No GPU required but runs faster with one. Set `HF_TOKEN` in your environment or local `.env` file for higher rate limits and fewer download interruptions.
 
 **Tuning tips:**
 - Raise `box_threshold` (e.g. `0.40`) to reduce false positives

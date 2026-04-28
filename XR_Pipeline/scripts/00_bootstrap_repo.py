@@ -67,7 +67,12 @@ def main():
     env_example = project_root / ".env.example"
     if not env_example.exists():
         env_example.write_text(
-            "NEO4J_URI=bolt://localhost:7687\nNEO4J_USER=neo4j\nNEO4J_PASSWORD=\n"
+            "NEO4J_URI=bolt://localhost:7687\n"
+            "NEO4J_USER=neo4j\n"
+            "NEO4J_PASSWORD=\n"
+            "\n"
+            "# Optional Hugging Face token for higher rate limits and faster model downloads\n"
+            "HF_TOKEN=\n"
         )
 
     console.print("\n[bold]Next steps:[/bold]")

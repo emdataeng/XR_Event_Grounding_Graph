@@ -5,10 +5,14 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
+from dotenv import load_dotenv
 
 # Project root = parent of this src/ directory
 _SRC_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = _SRC_DIR.parent
+
+# Load local, gitignored secrets such as HF_TOKEN and NEO4J_PASSWORD.
+load_dotenv(PROJECT_ROOT / ".env")
 
 
 def _load_yaml(path: Path) -> Dict[str, Any]:
