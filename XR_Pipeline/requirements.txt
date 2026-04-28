@@ -19,9 +19,8 @@ neo4j
 ultralytics
 
 # Open-vocabulary detection + VLMs (optional; required for grounding_dino / mm_grounding_dino backends)
+# Install torch/torchvision separately first so you can choose the right CPU or CUDA build.
 transformers>=4.40.0
-torch
-torchvision
 accelerate
 safetensors
 huggingface_hub
