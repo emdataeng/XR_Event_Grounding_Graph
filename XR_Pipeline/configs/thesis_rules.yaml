@@ -1,0 +1,137 @@
+# thesis_rules.yaml - Example thesis Layer 3 rules
+#
+# This file is intentionally editable. Rules use ?x / ?y variables and are
+# evaluated over active predicates from state_facts.csv.
+
+constraint_rules:
+  - rule_id: can_insert_peg_hole
+    antecedents:
+      - name: aligned
+        args: ["?x", "?y"]
+      - name: inside
+        args: ["?x", "?y"]
+      - name: touching
+        args: ["?x", "?y"]
+      - name: isA
+        args: ["?x", "Peg"]
+      - name: isA
+        args: ["?y", "Hole"]
+    consequents:
+      - name: canInsert
+        args: ["?x", "?y"]
+    threshold: 0.6
+    aggregation: min
+
+  - rule_id: requires_alignment_peg_hole
+    antecedents:
+      - name: aligned
+        args: ["?x", "?y"]
+      - name: isA
+        args: ["?x", "Peg"]
+      - name: isA
+        args: ["?y", "Hole"]
+    consequents:
+      - name: requiresAlignment
+        args: ["?x", "?y"]
+    threshold: 0.6
+    aggregation: min
+
+######LEGO Domain-Specific Rules######
+# These rules are specific to the Lego domain and can be used to encode domain knowledge about how Lego pieces can interact. 
+# They can be used to infer new predicates that are relevant for reasoning
+
+#stackability Detect valid vertical connection
+  - rule_id: can_stack_duplo
+    antecedents:
+      - name: aligned
+        args: ["?top", "?bottom"]
+      - name: touching
+        args: ["?top", "?bottom"]
+      - name: above
+        args: ["?top", "?bottom"]
+      - name: isA
+        args: ["?top", "Block"]
+      - name: isA
+        args: ["?bottom", "Block"]
+    consequents:
+      - name: canStack
+        args: ["?top", "?bottom"]
+    threshold: 0.6
+    aggregation: min
+
+#alignment requirement Ensure studs align before stacking
+  - rule_id: requires_alignment_duplo
+    antecedents:
+      - name: near
+        args: ["?top", "?bottom"]
+      - name: isA
+        args: ["?top", "Block"]
+      - name: isA
+        args: ["?bottom", "Block"]
+    consequents:
+      - name: requiresAlignment
+        args: ["?top", "?bottom"]
+    threshold: 0.5
+    aggregation: min
+
+#contact prerequisite Must be touching before stacking
+  - rule_id: blocks_connected
+    antecedents:
+      - name: touching
+        args: ["?top", "?bottom"]
+      - name: stable
+        args: ["?top"]
+      - name: isA
+        args: ["?top", "Block"]
+      - name: isA
+        args: ["?bottom", "Block"]
+    consequents:
+      - name: connected
+        args: ["?top", "?bottom"]
+    threshold: 0.7
+    aggregation: min
+
+
+#Support constraint Top block must be supported by bottom
+
+
+
+#############
+#Compatibility rules can be used to disallow certain interactions between object classes, such as inserting a ball into a plate.
+compatibility_rules:
+  - rule_id: disallow_insert_ball_plate
+    action: insert
+    disallowed_pairs:
+      - ["Ball", "Plate"]
+    output:
+      name: incompatibleAction
+      args: ["?x", "?y", "insert"]
+    confidence: 1.0
+    reason: "Ball cannot be inserted into Plate"
+
+  
+#LEGO domain-specific compatibility rule: Disallow stacking incompatible pieces
+
+#incompatibility (orientation)Reject upside-down insertion
+  - rule_id: invalid_orientation_stack
+    action: stack
+    disallowed_pairs:
+      - ["BlockUpsideDown", "Block"]
+    output:
+      name: incompatibleAction
+      args: ["?top", "?bottom", "stack"]
+    confidence: 1.0
+    reason: "Block cannot be stacked upside down"
+  
+
+  - rule_id: disallow_stack_incompatible
+    action: stack
+    disallowed_pairs:
+      - ["Block", "Plate"]  # Example of incompatible pair
+    output:
+      name: incompatibleAction
+      args: ["?x", "?y", "stack"]
+    confidence: 1.0
+    reason: "Block cannot be stacked on Plate due to lack of studs"
+
+  
