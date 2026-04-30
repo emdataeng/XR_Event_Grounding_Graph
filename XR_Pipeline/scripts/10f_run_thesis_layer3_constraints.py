@@ -115,6 +115,43 @@ def main(
     console.print(f"  Unique rules fired:         {len(fired_rules)}")
     if fired_rules:
         console.print(f"  Rules: {sorted(fired_rules)}")
+
+    diag = result.diagnostics or {}
+    console.print("\n[bold]Predicate source diagnostics[/bold]")
+    console.print(f"  SSP fact instances imported: {diag.get('imported_ssp_predicate_count', 0)}")
+    imported = diag.get("imported_ssp_predicates") or []
+    if imported:
+        console.print(
+            "  Predicate types among imported SSP facts actually applied: "
+            f"{imported}"
+        )
+    available = diag.get("available_predicates") or []
+    if available:
+        console.print(f"  Available predicates:       {available}")
+    missing = diag.get("missing_rule_antecedents") or []
+    if missing:
+        console.print(f"  [red]Missing rule antecedents for {session}:[/red] {missing}")
+
+    ssp_only = diag.get("ssp_only_predicates") or []
+    state_only = diag.get("state_only_predicates") or []
+    if ssp_only:
+        console.print(f"  [yellow]Predicate types absent from state_facts:[/yellow] {ssp_only}")
+    if state_only:
+        console.print(f"  [yellow]Only in state_facts:[/yellow]   {state_only}")
+
+    conf_diffs = diag.get("confidence_discrepancies") or []
+    if conf_diffs:
+        console.print(f"  [yellow]Confidence discrepancies:[/yellow] {len(conf_diffs)}")
+        for item in conf_diffs[:5]:
+            console.print(
+                "    "
+                f"{item['predicate']}{tuple(item['args'])}: "
+                f"state={item['state_conf']} ssp={item['ssp_conf']} "
+                f"delta={item['delta']}"
+            )
+        if len(conf_diffs) > 5:
+            console.print(f"    ... {len(conf_diffs) - 5} more")
+
     console.print(f"[green]constraints.csv -> {constraints_path}[/green]")
     console.print(f"[green]incompatibilities.csv -> {incompatibilities_path}[/green]")
 

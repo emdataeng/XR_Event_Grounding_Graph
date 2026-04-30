@@ -263,6 +263,117 @@ def test_virtual_isa_conditions_use_domain_semantic_type_metadata():
     assert json.loads(row["supporting_predicates"]) == ["fact_near"]
 
 
+def test_ssp_relations_are_imported_as_supplemental_predicates():
+    facts = pd.DataFrame([
+        {
+            "fact_id": "fact_started",
+            "predicate": "started_moving",
+            "subject_id": "trk_blue",
+            "object_id": None,
+            "confidence": 0.7,
+            "start_frame_idx": 3,
+            "end_frame_idx": 5,
+            "evidence_refs": json.dumps(["evt_move"]),
+            "source_stage": "events",
+        },
+        {
+            "fact_id": "fact_near",
+            "predicate": "near",
+            "subject_id": "trk_blue",
+            "object_id": "trk_red",
+            "confidence": 0.7,
+            "start_frame_idx": 3,
+            "end_frame_idx": 5,
+            "evidence_refs": json.dumps(["evt_near"]),
+            "source_stage": "events",
+        },
+    ])
+    ssp = {
+        "entities": [],
+        "relations": [
+            {
+                "relation_id": "rel_move",
+                "predicate": "moving",
+                "arguments": ["trk_blue"],
+                "confidence": 0.8,
+                "source_event_id": "evt_move",
+                "valid_time": {"start": "t1", "end": "t2"},
+            },
+            {
+                "relation_id": "rel_near",
+                "predicate": "near",
+                "arguments": ["trk_blue", "trk_red"],
+                "confidence": 0.95,
+                "source_event_id": "evt_near",
+                "valid_time": {"start": "t1", "end": "t2"},
+            },
+        ],
+    }
+    rules = {
+        "constraint_rules": [
+            {
+                "rule_id": "moving_rule",
+                "antecedents": [
+                    {"name": "moving", "args": ["?x"]},
+                ],
+                "consequents": [
+                    {"name": "isMoving", "args": ["?x"]},
+                ],
+                "threshold": 0.6,
+            }
+        ]
+    }
+
+    result = run_layer3_reasoning(facts, ssp, {}, rules)
+
+    assert len(result.constraints) == 1
+    row = result.constraints.iloc[0]
+    assert row["name"] == "isMoving"
+    assert json.loads(row["args"]) == ["trk_blue"]
+    assert json.loads(row["supporting_predicates"]) == ["ssp_relation:rel_move"]
+    assert result.diagnostics["imported_ssp_predicate_count"] == 1
+    assert result.diagnostics["imported_ssp_predicates"] == ["moving"]
+    assert result.diagnostics["skipped_overlapping_ssp_count"] == 1
+    assert result.diagnostics["confidence_discrepancies"][0]["predicate"] == "near"
+    assert "moving" in result.diagnostics["available_predicates"]
+    assert result.diagnostics["missing_rule_antecedents"] == []
+
+
+def test_rule_diagnostics_report_missing_antecedent_predicates():
+    facts = pd.DataFrame([
+        {
+            "fact_id": "fact_near",
+            "predicate": "near",
+            "subject_id": "trk_blue",
+            "object_id": "trk_red",
+            "confidence": 0.7,
+            "start_frame_idx": 3,
+            "end_frame_idx": 5,
+            "source_stage": "events",
+        },
+    ])
+    rules = {
+        "constraint_rules": [
+            {
+                "rule_id": "missing_touching_rule",
+                "antecedents": [
+                    {"name": "near", "args": ["?x", "?y"]},
+                    {"name": "touching", "args": ["?x", "?y"]},
+                    {"name": "isA", "args": ["?x", "LegoBrick"]},
+                ],
+                "consequents": [
+                    {"name": "candidatePair", "args": ["?x", "?y"]},
+                ],
+            }
+        ]
+    }
+
+    result = run_layer3_reasoning(facts, {}, {}, rules)
+
+    assert result.diagnostics["rule_antecedents"] == ["isA", "near", "touching"]
+    assert result.diagnostics["missing_rule_antecedents"] == ["touching"]
+
+
 def test_disallowed_pair_compatibility_rules_are_supported():
     facts = pd.DataFrame([
         {

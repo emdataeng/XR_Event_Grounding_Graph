@@ -73,6 +73,7 @@ class EntityMeta:
 class ReasoningResult:
     constraints: pd.DataFrame
     incompatibilities: pd.DataFrame
+    diagnostics: Dict[str, Any] = field(default_factory=dict)
 
 
 def load_yaml(path: Path | str) -> Dict[str, Any]:
@@ -97,6 +98,7 @@ def run_layer3_reasoning(
     scene_state_package: Mapping[str, Any] | Path | str | None = None,
     domain_config: Mapping[str, Any] | Path | str | None = None,
     thesis_rules: Mapping[str, Any] | Path | str | None = None,
+    include_ssp_predicates: bool = True,
 ) -> ReasoningResult:
     """Evaluate Layer 3 rules over active state facts.
 
@@ -106,8 +108,9 @@ def run_layer3_reasoning(
         DataFrame or path to ``state_facts.csv``. Rows form the time-scoped
         predicate base used to construct P_t.
     scene_state_package:
-        Dict or path to ``scene_state_package.json``. Used only for metadata
-        such as class labels and entity types.
+        Dict or path to ``scene_state_package.json``. Used for metadata such as
+        class labels and, when ``include_ssp_predicates`` is true, supplemental
+        relations/hypotheses not already represented in ``state_facts``.
     domain_config:
         Dict or path to a domain YAML. Used only for metadata such as object
         roles and optional compatibility defaults.
@@ -126,11 +129,20 @@ def run_layer3_reasoning(
     domain = _load_mapping(domain_config)
     entity_meta = _build_entity_metadata(ssp, domain)
 
-    facts = _normalise_facts(facts_df)
+    state_fact_instances = _normalise_facts(facts_df)
+    ssp_fact_instances = (
+        _normalise_ssp_predicates(ssp, facts_df, state_fact_instances)
+        if include_ssp_predicates else []
+    )
+    facts = _merge_predicate_sources(state_fact_instances, ssp_fact_instances)
+    diagnostics = _build_source_diagnostics(
+        state_fact_instances, ssp_fact_instances, facts, rules_cfg
+    )
     if not facts:
         return ReasoningResult(
             constraints=pd.DataFrame(columns=CONSTRAINT_COLS),
             incompatibilities=pd.DataFrame(columns=INCOMPATIBILITY_COLS),
+            diagnostics=diagnostics,
         )
 
     frames = _frame_domain(facts)
@@ -170,7 +182,11 @@ def run_layer3_reasoning(
 
     constraints_df = _constraints_to_df(closed_constraints)
     incompat_df = _incompatibilities_to_df(closed_incompat)
-    return ReasoningResult(constraints=constraints_df, incompatibilities=incompat_df)
+    return ReasoningResult(
+        constraints=constraints_df,
+        incompatibilities=incompat_df,
+        diagnostics=diagnostics,
+    )
 
 
 def write_layer3_outputs(
@@ -239,6 +255,212 @@ def _normalise_facts(facts_df: pd.DataFrame) -> List[PredicateInstance]:
             source=str(row.get("source_stage", row.get("source", ""))),
         ))
     return out
+
+
+def _normalise_ssp_predicates(
+    ssp: Mapping[str, Any],
+    facts_df: pd.DataFrame,
+    state_facts: Sequence[PredicateInstance],
+) -> List[PredicateInstance]:
+    """Convert SSP relations/hypotheses into Layer 3 predicate instances.
+
+    SSP stores wall-clock validity intervals, while Layer 3 operates on frame
+    indices. Event-backed SSP predicates are aligned through source_event_id and
+    state_facts.evidence_refs. Live geometry snapshots are treated as point facts
+    at the last known state-facts frame.
+    """
+    if not ssp:
+        return []
+
+    event_frames = _event_frame_index(facts_df)
+    last_frame = max((p.end_frame_idx for p in state_facts), default=0)
+
+    out: List[PredicateInstance] = []
+    for section, id_key, source in (
+        ("relations", "relation_id", "ssp_relation"),
+        ("hypotheses", "hypothesis_id", "ssp_hypothesis"),
+    ):
+        for idx, item in enumerate(ssp.get(section, []) or [], start=1):
+            if not isinstance(item, Mapping):
+                continue
+            predicate = str(item.get("predicate", ""))
+            if not predicate:
+                continue
+            args_raw = item.get("arguments", [])
+            if not isinstance(args_raw, list):
+                continue
+            interval = _ssp_frame_interval(item, event_frames, last_frame)
+            if interval is None:
+                continue
+            start_frame, end_frame = interval
+            ssp_id = str(item.get(id_key, f"{section}_{idx:04d}"))
+            out.append(PredicateInstance(
+                fact_id=f"{source}:{ssp_id}",
+                name=predicate,
+                args=tuple(str(v) for v in args_raw if _valid_value(v)),
+                conf=float(item.get("confidence", 0.0)),
+                start_frame_idx=start_frame,
+                end_frame_idx=end_frame,
+                source=source,
+            ))
+    return out
+
+
+def _event_frame_index(facts_df: pd.DataFrame) -> Dict[str, Tuple[int, int]]:
+    if facts_df.empty or "evidence_refs" not in facts_df.columns:
+        return {}
+
+    index: Dict[str, Tuple[int, int]] = {}
+    for _, row in facts_df.iterrows():
+        refs = _parse_evidence_refs(row.get("evidence_refs"))
+        if not refs:
+            continue
+        start = int(row.get("start_frame_idx", 0))
+        end = int(row.get("end_frame_idx", start))
+        for ref in refs:
+            prev = index.get(ref)
+            if prev is None:
+                index[ref] = (start, end)
+            else:
+                index[ref] = (min(prev[0], start), max(prev[1], end))
+    return index
+
+
+def _parse_evidence_refs(value: Any) -> List[str]:
+    if not _valid_value(value):
+        return []
+    if isinstance(value, list):
+        return [str(v) for v in value if _valid_value(v)]
+    try:
+        decoded = json.loads(str(value))
+    except (TypeError, json.JSONDecodeError):
+        return []
+    if not isinstance(decoded, list):
+        return []
+    return [str(v) for v in decoded if _valid_value(v)]
+
+
+def _ssp_frame_interval(
+    item: Mapping[str, Any],
+    event_frames: Mapping[str, Tuple[int, int]],
+    last_frame: int,
+) -> Optional[Tuple[int, int]]:
+    event_id = item.get("source_event_id")
+    if _valid_value(event_id) and str(event_id) in event_frames:
+        return event_frames[str(event_id)]
+
+    valid_time = item.get("valid_time")
+    if isinstance(valid_time, Mapping) and valid_time.get("start") == valid_time.get("end"):
+        return last_frame, last_frame
+    return None
+
+
+def _merge_predicate_sources(
+    state_facts: Sequence[PredicateInstance],
+    ssp_facts: Sequence[PredicateInstance],
+) -> List[PredicateInstance]:
+    merged = list(state_facts)
+    for ssp_fact in ssp_facts:
+        if any(
+            _same_predicate_instance(existing, ssp_fact)
+            and _intervals_overlap(existing, ssp_fact)
+            for existing in state_facts
+        ):
+            continue
+        merged.append(ssp_fact)
+    return merged
+
+
+def _same_predicate_instance(left: PredicateInstance, right: PredicateInstance) -> bool:
+    return left.name == right.name and left.args == right.args
+
+
+def _intervals_overlap(left: PredicateInstance, right: PredicateInstance) -> bool:
+    return left.start_frame_idx <= right.end_frame_idx and right.start_frame_idx <= left.end_frame_idx
+
+
+def _build_source_diagnostics(
+    state_facts: Sequence[PredicateInstance],
+    ssp_facts: Sequence[PredicateInstance],
+    merged_facts: Sequence[PredicateInstance],
+    rules_cfg: Mapping[str, Any],
+) -> Dict[str, Any]:
+    state_preds = {p.name for p in state_facts}
+    ssp_preds = {p.name for p in ssp_facts}
+    imported_ssp = [p for p in merged_facts if p.source in {"ssp_relation", "ssp_hypothesis"}]
+    skipped_overlap = [
+        p for p in ssp_facts
+        if any(
+            _same_predicate_instance(existing, p) and _intervals_overlap(existing, p)
+            for existing in state_facts
+        )
+    ]
+
+    confidence_diffs = []
+    for ssp_fact in skipped_overlap:
+        for state_fact in state_facts:
+            if not _same_predicate_instance(state_fact, ssp_fact):
+                continue
+            if not _intervals_overlap(state_fact, ssp_fact):
+                continue
+            delta = abs(state_fact.conf - ssp_fact.conf)
+            if delta >= 0.2:
+                confidence_diffs.append({
+                    "predicate": ssp_fact.name,
+                    "args": list(ssp_fact.args),
+                    "state_fact_id": state_fact.fact_id,
+                    "ssp_fact_id": ssp_fact.fact_id,
+                    "state_conf": round(state_fact.conf, 3),
+                    "ssp_conf": round(ssp_fact.conf, 3),
+                    "delta": round(delta, 3),
+                })
+            break
+
+    available_preds = {p.name for p in merged_facts}
+    virtual_preds = {"isA"}
+    rule_antecedents = _rule_antecedent_predicates(rules_cfg)
+
+    return {
+        "state_predicates": sorted(state_preds),
+        "ssp_predicates": sorted(ssp_preds),
+        "available_predicates": sorted(available_preds | virtual_preds),
+        "shared_predicates": sorted(state_preds & ssp_preds),
+        "state_only_predicates": sorted(state_preds - ssp_preds),
+        "ssp_only_predicates": sorted(ssp_preds - state_preds),
+        "rule_antecedents": sorted(rule_antecedents),
+        "missing_rule_antecedents": sorted(rule_antecedents - available_preds - virtual_preds),
+        "imported_ssp_predicate_count": len(imported_ssp),
+        "imported_ssp_predicates": sorted({p.name for p in imported_ssp}),
+        "skipped_overlapping_ssp_count": len(skipped_overlap),
+        "confidence_discrepancies": confidence_diffs,
+    }
+
+
+def _rule_antecedent_predicates(rules_cfg: Mapping[str, Any]) -> set:
+    predicates = set()
+    for section in ("constraint_rules", "inference_rules", "rules", "compatibility_rules"):
+        rules = rules_cfg.get(section)
+        if not isinstance(rules, list):
+            continue
+        for rule in rules:
+            if not isinstance(rule, Mapping):
+                continue
+            conditions = rule.get("when", rule.get("conditions", rule.get("antecedents", [])))
+            _collect_condition_predicates(conditions, predicates)
+    return predicates
+
+
+def _collect_condition_predicates(conditions: Any, predicates: set) -> None:
+    if isinstance(conditions, Mapping):
+        if "not" in conditions:
+            _collect_condition_predicates(conditions.get("not"), predicates)
+        pred = conditions.get("predicate", conditions.get("name"))
+        if pred is not None:
+            predicates.add(str(pred))
+        return
+    if isinstance(conditions, list):
+        for condition in conditions:
+            _collect_condition_predicates(condition, predicates)
 
 
 def _frame_domain(facts: Sequence[PredicateInstance]) -> List[int]:
