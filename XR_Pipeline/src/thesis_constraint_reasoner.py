@@ -63,8 +63,10 @@ class OpenInterval:
 @dataclass
 class EntityMeta:
     class_label: str = ""
+    semantic_type: str = ""
     role: str = ""
     entity_type: str = ""
+    existence_confidence: Optional[float] = None
 
 
 @dataclass
@@ -361,6 +363,151 @@ def _evaluate_disallowed_pair_rule(
     return matches
 
 
+def _match_condition(
+    condition: Mapping[str, Any],
+    binding: Mapping[str, str],
+    support: Sequence[PredicateInstance],
+    active: Sequence[PredicateInstance],
+    entity_meta: Mapping[str, EntityMeta],
+) -> Iterable[Tuple[Dict[str, str], List[PredicateInstance]]]:
+    if "not" in condition:
+        inner = condition.get("not")
+        if isinstance(inner, Mapping):
+            has_match = any(_match_condition(inner, binding, support, active, entity_meta))
+            if not has_match:
+                yield dict(binding), list(support)
+        return
+
+    if "predicate" in condition or "name" in condition:
+        pred_name = str(condition.get("predicate", condition.get("name", "")))
+        expected_args = list(condition.get("args", []))
+        if pred_name == "isA":
+            yield from _match_virtual_isa_condition(
+                expected_args, binding, support, active, entity_meta
+            )
+            return
+
+        for pred in active:
+            if pred.name != pred_name:
+                continue
+            new_binding = _bind_args(expected_args, pred.args, binding)
+            if new_binding is not None:
+                yield new_binding, list(support) + [pred]
+        return
+
+    if any(k in condition for k in ("class", "semantic_type", "role", "entity_type")):
+        var = str(condition.get("var", condition.get("entity", condition.get("arg", ""))))
+        entity_id = _resolve_arg(var, binding)
+        if not entity_id:
+            return
+        meta = entity_meta.get(entity_id, EntityMeta())
+        if _metadata_condition_holds(condition, meta):
+            yield dict(binding), list(support)
+        return
+
+    yield dict(binding), list(support)
+
+
+def _match_virtual_isa_condition(
+    expected_args: Sequence[Any],
+    binding: Mapping[str, str],
+    support: Sequence[PredicateInstance],
+    active: Sequence[PredicateInstance],
+    entity_meta: Mapping[str, EntityMeta],
+) -> Iterable[Tuple[Dict[str, str], List[PredicateInstance]]]:
+    for pred in active:
+        if pred.name != "isA":
+            continue
+        new_binding = _bind_args(expected_args, pred.args, binding)
+        if new_binding is not None:
+            yield new_binding, list(support) + [pred]
+
+    if len(expected_args) != 2:
+        return
+
+    # Virtual isA facts come from scene_state_package.entities metadata. This
+    # keeps class identity decoupled from temporal state_facts.csv predicates.
+    # TODO: Include entity existence/class confidence in rule confidence aggregation.
+    entity_token, class_token = [str(v) for v in expected_args]
+    entity_id = _resolve_arg(entity_token, binding)
+    expected_class = _resolve_arg(class_token, binding)
+
+    if entity_id:
+        meta = entity_meta.get(entity_id, EntityMeta())
+        for observed in _isa_observed_pairs(entity_id, meta):
+            new_binding = _bind_args(expected_args, observed, binding)
+            if new_binding is not None:
+                yield new_binding, list(support)
+        return
+
+    for candidate_id, meta in entity_meta.items():
+        if not _entity_matches_type(meta, expected_class):
+            continue
+        for observed in _isa_observed_pairs(candidate_id, meta):
+            new_binding = _bind_args(expected_args, observed, binding)
+            if new_binding is not None:
+                yield new_binding, list(support)
+
+
+def _isa_observed_pairs(entity_id: str, meta: EntityMeta) -> List[Tuple[str, str]]:
+    pairs = []
+    seen = set()
+    for label in (meta.class_label, meta.semantic_type):
+        if not label or label in seen:
+            continue
+        seen.add(label)
+        pairs.append((entity_id, label))
+    return pairs
+
+
+def _entity_matches_type(meta: EntityMeta, expected_type: str) -> bool:
+    if not expected_type:
+        return bool(meta.class_label or meta.semantic_type)
+    return expected_type in {meta.class_label, meta.semantic_type}
+
+
+def _entity_type_labels(meta: EntityMeta) -> List[str]:
+    labels = []
+    seen = set()
+    for label in (meta.class_label, meta.semantic_type):
+        if not label or label in seen:
+            continue
+        seen.add(label)
+        labels.append(label)
+    return labels
+
+
+def _entity_matches_expected(actual_values: Sequence[str], expected: Any) -> bool:
+    if isinstance(expected, list):
+        expected_values = {str(v) for v in expected}
+    else:
+        expected_values = {str(expected)}
+    return bool(set(actual_values) & expected_values)
+
+
+def _bind_entity_metadata(
+    bindings: Dict[str, List[Tuple[str, Optional[PredicateInstance]]]],
+    entity_id: str,
+    meta: EntityMeta,
+) -> None:
+    for label in _entity_type_labels(meta):
+        existing = {eid for eid, _ in bindings.get(label, [])}
+        if entity_id not in existing:
+            bindings.setdefault(label, []).append((entity_id, None))
+
+
+def _metadata_values_for_key(meta: EntityMeta, key: str) -> List[str]:
+    if key == "class":
+        return _entity_type_labels(meta)
+    if key == "semantic_type":
+        return [meta.semantic_type] if meta.semantic_type else []
+    if key == "role":
+        return [meta.role] if meta.role else []
+    if key == "entity_type":
+        return [meta.entity_type] if meta.entity_type else []
+    return []
+
+
 def _active_class_bindings(
     active: Sequence[PredicateInstance],
     entity_meta: Mapping[str, EntityMeta],
@@ -371,10 +518,7 @@ def _active_class_bindings(
             bindings.setdefault(pred.args[1], []).append((pred.args[0], pred))
 
     for entity_id, meta in entity_meta.items():
-        if meta.class_label:
-            existing = {eid for eid, _ in bindings.get(meta.class_label, [])}
-            if entity_id not in existing:
-                bindings.setdefault(meta.class_label, []).append((entity_id, None))
+        _bind_entity_metadata(bindings, entity_id, meta)
     return bindings
 
 
@@ -396,47 +540,8 @@ def _find_bindings(
                 next_states.append((new_binding, new_support))
         states = _dedupe_states(next_states)
         if not states:
-            break
+            return []
     return states
-
-
-def _match_condition(
-    condition: Mapping[str, Any],
-    binding: Mapping[str, str],
-    support: Sequence[PredicateInstance],
-    active: Sequence[PredicateInstance],
-    entity_meta: Mapping[str, EntityMeta],
-) -> Iterable[Tuple[Dict[str, str], List[PredicateInstance]]]:
-    if "not" in condition:
-        inner = condition.get("not")
-        if isinstance(inner, Mapping):
-            has_match = any(_match_condition(inner, binding, support, active, entity_meta))
-            if not has_match:
-                yield dict(binding), list(support)
-        return
-
-    if "predicate" in condition or "name" in condition:
-        pred_name = str(condition.get("predicate", condition.get("name", "")))
-        expected_args = list(condition.get("args", []))
-        for pred in active:
-            if pred.name != pred_name:
-                continue
-            new_binding = _bind_args(expected_args, pred.args, binding)
-            if new_binding is not None:
-                yield new_binding, list(support) + [pred]
-        return
-
-    if any(k in condition for k in ("class", "role", "entity_type")):
-        var = str(condition.get("var", condition.get("entity", condition.get("arg", ""))))
-        entity_id = _resolve_arg(var, binding)
-        if not entity_id:
-            return
-        meta = entity_meta.get(entity_id, EntityMeta())
-        if _metadata_condition_holds(condition, meta):
-            yield dict(binding), list(support)
-        return
-
-    yield dict(binding), list(support)
 
 
 def _bind_args(
@@ -463,19 +568,11 @@ def _bind_args(
 
 
 def _metadata_condition_holds(condition: Mapping[str, Any], meta: EntityMeta) -> bool:
-    checks = {
-        "class": meta.class_label,
-        "role": meta.role,
-        "entity_type": meta.entity_type,
-    }
-    for key, actual in checks.items():
+    for key in ("class", "semantic_type", "role", "entity_type"):
         if key not in condition:
             continue
-        expected = condition[key]
-        if isinstance(expected, list):
-            if actual not in [str(v) for v in expected]:
-                return False
-        elif actual != str(expected):
+        actual_values = _metadata_values_for_key(meta, key)
+        if not _entity_matches_expected(actual_values, condition[key]):
             return False
     return True
 
@@ -489,6 +586,11 @@ def _build_entity_metadata(
         for entry in domain.get("object_classes", []) or []
         if isinstance(entry, Mapping)
     }
+    class_to_semantic_type = {
+        str(entry.get("canonical", "")): str(entry.get("semantic_type", ""))
+        for entry in domain.get("object_classes", []) or []
+        if isinstance(entry, Mapping)
+    }
     meta: Dict[str, EntityMeta] = {}
     for entity in ssp.get("entities", []) or []:
         if not isinstance(entity, Mapping):
@@ -497,10 +599,26 @@ def _build_entity_metadata(
         class_label = str(entity.get("class_label", ""))
         meta[entity_id] = EntityMeta(
             class_label=class_label,
+            semantic_type=class_to_semantic_type.get(class_label, ""),
             role=class_to_role.get(class_label, ""),
             entity_type=str(entity.get("entity_type", "")),
+            existence_confidence=_optional_float(entity.get("existence_confidence")),
         )
     return meta
+
+
+def _optional_float(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except TypeError:
+        pass
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _advance_intervals(

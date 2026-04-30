@@ -201,6 +201,68 @@ def test_thesis_yaml_shape_constraint_rules_are_supported():
     assert row["end_frame_idx"] == 12
 
 
+def test_virtual_isa_conditions_use_domain_semantic_type_metadata():
+    facts = pd.DataFrame([
+        {
+            "fact_id": "fact_near",
+            "predicate": "near",
+            "subject_id": "trk_blue",
+            "object_id": "trk_red",
+            "confidence": 0.7,
+            "start_frame_idx": 3,
+            "end_frame_idx": 4,
+            "source_stage": "test",
+        },
+    ])
+    ssp = {
+        "entities": [
+            {
+                "entity_id": "trk_blue",
+                "entity_type": "object",
+                "class_label": "blue_lego",
+                "existence_confidence": 0.54,
+            },
+            {
+                "entity_id": "trk_red",
+                "entity_type": "object",
+                "class_label": "red_lego",
+                "existence_confidence": 0.53,
+            },
+        ]
+    }
+    domain = {
+        "object_classes": [
+            {"canonical": "blue_lego", "semantic_type": "LegoBrick", "role": "workpiece"},
+            {"canonical": "red_lego", "semantic_type": "LegoBrick", "role": "workpiece"},
+        ]
+    }
+    rules = {
+        "constraint_rules": [
+            {
+                "rule_id": "near_blue_red",
+                "antecedents": [
+                    {"name": "near", "args": ["?x", "?y"]},
+                    {"name": "isA", "args": ["?x", "LegoBrick"]},
+                    {"name": "isA", "args": ["?y", "LegoBrick"]},
+                ],
+                "consequents": [
+                    {"name": "candidatePair", "args": ["?x", "?y"]},
+                ],
+                "threshold": 0.6,
+            }
+        ]
+    }
+
+    result = run_layer3_reasoning(facts, ssp, domain, rules)
+
+    assert len(result.constraints) == 1
+    row = result.constraints.iloc[0]
+    assert row["name"] == "candidatePair"
+    assert json.loads(row["args"]) == ["trk_blue", "trk_red"]
+    assert row["conf"] == 0.7
+    assert json.loads(row["supporting_predicates"]) == ["fact_near"]
+
+
 def test_disallowed_pair_compatibility_rules_are_supported():
     facts = pd.DataFrame([
         {

@@ -11,12 +11,15 @@ description: >
 # Object classes present in this domain
 object_classes:
   - canonical: "red_lego"
+    semantic_type: "LegoBrick"
     role: workpiece
     description: "Red Lego brick (primary workpiece)"
   - canonical: "blue_lego"
+    semantic_type: "LegoBrick"
     role: workpiece
     description: "Blue Lego brick (secondary workpiece)"
   - canonical: "hand"
+    semantic_type: "Hand"
     role: hand
     description: "Operator hand performing manipulation"
 

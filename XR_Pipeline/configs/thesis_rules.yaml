@@ -50,9 +50,9 @@ constraint_rules:
       - name: above
         args: ["?top", "?bottom"]
       - name: isA
-        args: ["?top", "Block"]
+        args: ["?top", "LegoBrick"]
       - name: isA
-        args: ["?bottom", "Block"]
+        args: ["?bottom", "LegoBrick"]
     consequents:
       - name: canStack
         args: ["?top", "?bottom"]
@@ -65,9 +65,9 @@ constraint_rules:
       - name: near
         args: ["?top", "?bottom"]
       - name: isA
-        args: ["?top", "Block"]
+        args: ["?top", "LegoBrick"]
       - name: isA
-        args: ["?bottom", "Block"]
+        args: ["?bottom", "LegoBrick"]
     consequents:
       - name: requiresAlignment
         args: ["?top", "?bottom"]
@@ -82,9 +82,9 @@ constraint_rules:
       - name: stable
         args: ["?top"]
       - name: isA
-        args: ["?top", "Block"]
+        args: ["?top", "LegoBrick"]
       - name: isA
-        args: ["?bottom", "Block"]
+        args: ["?bottom", "LegoBrick"]
     consequents:
       - name: connected
         args: ["?top", "?bottom"]
@@ -116,22 +116,22 @@ compatibility_rules:
   - rule_id: invalid_orientation_stack
     action: stack
     disallowed_pairs:
-      - ["BlockUpsideDown", "Block"]
+      - ["LegoBrickUpsideDown", "LegoBrick"]
     output:
       name: incompatibleAction
       args: ["?top", "?bottom", "stack"]
     confidence: 1.0
-    reason: "Block cannot be stacked upside down"
+    reason: "LegoBrick cannot be stacked upside down"
   
 
   - rule_id: disallow_stack_incompatible
     action: stack
     disallowed_pairs:
-      - ["Block", "Plate"]  # Example of incompatible pair
+      - ["LegoBrick", "Plate"]  # Example of incompatible pair
     output:
       name: incompatibleAction
       args: ["?x", "?y", "stack"]
     confidence: 1.0
-    reason: "Block cannot be stacked on Plate due to lack of studs"
+    reason: "LegoBrick cannot be stacked on Plate due to lack of studs"
 
   
