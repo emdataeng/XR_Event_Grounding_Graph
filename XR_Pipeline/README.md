@@ -126,6 +126,18 @@ For Hugging Face, create a read token at [huggingface.co/settings/tokens](https:
    python scripts/run_pipeline.py --session session_002
    ```
 
+   > **Important order note:** `scripts/run_pipeline.py` uses the
+   > dependency-safe execution order. This intentionally differs from the
+   > manual assembly sequence currently shown in the repository root
+   > `README.md`: stage `10b` must rebuild `operation_events.csv` and
+   > `support_state_transitions.csv` before `09c` builds `state_facts.csv`,
+   > and `10e` must rebuild `assembly_graph.json` before `09d` consumes it
+   > as an optional enrichment input. The assembly order used by the runner is:
+   >
+   > ```text
+   > 09b -> 10b -> 09c -> 10c -> 10d -> 10e -> 09d -> 10f -> 11op -> 11b -> 12
+   > ```
+
    To see the exact stages before running:
    ```bash
    python scripts/run_pipeline.py --session session_002 --dry-run

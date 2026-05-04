@@ -51,6 +51,7 @@ class Stage:
 
 
 STAGES: List[Stage] = [
+    # Base pipeline order from the root README "Running a Session" section.
     Stage("01", "01_build_frame_manifest.py", "Build frame manifest"),
     Stage("02", "02_validate_manifest.py", "Validate manifest"),
     Stage("03", "03_visualize_rgb_depth_pose.py", "Visual sanity checks", optional_group="visuals"),
@@ -60,21 +61,24 @@ STAGES: List[Stage] = [
     Stage("07", "07_build_event_windows.py", "Build event windows", accepts_force=True),
     Stage("08", "08_generate_event_summaries.py", "Generate event summaries", accepts_force=True),
     Stage("09", "09_build_egg_graph.py", "Build EGG graph", accepts_force=True),
-    Stage("09b", "09b_build_scene_state_package.py", "Build scene state package", accepts_force=True),
-    Stage("09c", "09c_build_state_facts.py", "Build state facts"),
-    Stage("09d", "09d_build_assembly_state_package.py", "Build assembly state package"),
     Stage("10", "10_prune_egg_graph.py", "Prune graph for a query", accepts_force=True),
+    Stage("11", "11_export_neo4j_csv.py", "Export Neo4j CSV files"),
+    Stage("14", "14_import_neo4j.py", "Import into Neo4j", optional_group="neo4j"),
+    # Dependency-safe assembly reasoning order. This intentionally differs from
+    # the older root README order: 10b must produce operations before 09c builds
+    # state facts, and 10e must rebuild the graph before 09d consumes it.
+    Stage("09b", "09b_build_scene_state_package.py", "Build scene state package", accepts_force=True),
     Stage("10b", "10b_build_operation_events.py", "Build operation events", accepts_force=True),
+    Stage("09c", "09c_build_state_facts.py", "Build state facts"),
     Stage("10c", "10c_build_workflow_timeline.py", "Build workflow timeline", accepts_force=True),
     Stage("10d", "10d_build_subtask_events.py", "Build subtask events"),
     Stage("10e", "10e_build_assembly_graph.py", "Build assembly graph"),
+    Stage("09d", "09d_build_assembly_state_package.py", "Build assembly state package"),
     Stage("10f", "10f_run_thesis_layer3_constraints.py", "Run thesis Layer 3 constraints"),
-    Stage("11", "11_export_neo4j_csv.py", "Export Neo4j CSV files"),
     Stage("11op", "11_build_operation_review.py", "Build operation review", accepts_force=True),
     Stage("11b", "11b_build_assembly_review.py", "Build assembly review"),
     Stage("12", "12_demo_queries.py", "Run demo graph queries"),
     Stage("13", "13_visualize_3d_debug.py", "3D debug visualizations", optional_group="visuals"),
-    Stage("14", "14_import_neo4j.py", "Import into Neo4j", optional_group="neo4j"),
 ]
 
 

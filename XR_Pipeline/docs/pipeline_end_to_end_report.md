@@ -1,10 +1,10 @@
 # XR Pipeline End-to-End Report
 
-First draft. Built from the current script code, path definitions, and orchestrator order, not from README prose.
+Built from the root `README.md` execution order, current script code, path definitions, and artifact dependencies.
 
 ## Executive Summary
 
-The pipeline is a staged artifact builder. Most stages read CSV/JSON artifacts from `data/processed/<session_id>/`, transform them, and write new artifacts back into the same session folder. The orchestrator is `scripts/run_pipeline.py`, which runs a fixed stage list and optionally includes visual, legacy, and Neo4j stages.
+The pipeline is a staged artifact builder. Most stages read CSV/JSON artifacts from `data/processed/<session_id>/`, transform them, and write new artifacts back into the same session folder. The canonical execution order is documented in the root `README.md` under "Running a Session", and `scripts/run_pipeline.py` now follows that order for the base pipeline and assembly reasoning layer.
 
 The core data path is:
 
@@ -20,12 +20,12 @@ raw Quest capture
   -> operation_events.csv + support_state_transitions.csv
   -> workflow_timeline.json/csv
   -> subtask_events.csv + subtask_sequence.json
-  -> assembly_graph.json
   -> assembly_state_package.json
+  -> assembly_graph.json
   -> reviews / queries / exports
 ```
 
-Current architecture caveat: the orchestrator order does not perfectly match this conceptual dependency chain. In particular, `09d_build_assembly_state_package.py` runs before `10d_build_subtask_events.py` and `10e_build_assembly_graph.py`, even though `09d` optionally consumes `subtask_events.csv` and `assembly_graph.json`. This means a clean full run can produce an assembly state package that lacks freshly generated subtask and assembly-graph content unless `09d` is rerun after `10e`.
+The README execution order intentionally separates the base EGG pipeline from the assembly reasoning layer. The assembly layer is run after the base graph exists, in this order: `09b`, `09c`, `10b`, `10c`, `10d`, `09d`, `10e`, `11b`. This lets operation events and workflow/subtask artifacts exist before the assembly state package and assembly graph are generated.
 
 ## Important Paths
 
@@ -44,6 +44,38 @@ Defined in `src/config.py` through `PipelinePaths`.
 | `reviews_dir` | `reviews/operations/` | Operation review bundles |
 | `assembly_reviews_dir` | `reviews/assembly/` | Assembly review outputs |
 
+## Execution Order
+
+The root `README.md` gives this canonical manual order for a new session.
+
+Base pipeline:
+
+```text
+01 -> 02 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11 -> 14
+```
+
+Assembly reasoning layer, run after the base pipeline:
+
+```text
+09b -> 09c -> 10b -> 10c -> 10d -> 09d -> 10e -> 11b
+```
+
+Demo queries are run after the relevant base and/or assembly artifacts exist:
+
+```text
+12
+```
+
+Optional diagnostic or alternate-input stages:
+
+```text
+03 optional visual sanity checks
+04 optional legacy spatialobjects ingest
+11op optional operation review
+13 optional 3D debug visualizations
+10f optional thesis Layer 3 constraint/incompatibility reasoning
+```
+
 ## Orchestrator Behavior
 
 The orchestrator is `scripts/run_pipeline.py`.
@@ -60,12 +92,14 @@ The orchestrator is `scripts/run_pipeline.py`.
 | `--wipe-session` | Deletes `data/processed/<session_id>/` before running |
 | `--dry-run` | Prints commands only |
 
-Stage order in code:
+Current `run_pipeline.py` default stage order:
 
 ```text
-01, 02, [03 optional], [04 optional], 05, 06, 07, 08, 09, 09b, 09c, 09d,
-10, 10b, 10c, 10d, 10e, 10f, 11, 11op, 11b, 12, [13 optional], [14 optional]
+01, 02, 05, 06, 07, 08, 09, 10, 11,
+09b, 09c, 10b, 10c, 10d, 09d, 10e, 10f, 11op, 11b, 12
 ```
+
+Optional stages are inserted around that order: `03`/`13` with `--include-visuals`, `04` with `--include-legacy`, and `14` with `--include-neo4j-import`. Stage `14` is placed after `11`, matching the README's base pipeline import position.
 
 ## Main Stage Table
 
@@ -83,13 +117,13 @@ Stage order in code:
 | 09 | `09_build_egg_graph.py` | Build Event-Grounded Graph JSON | `objects/object_tracks.csv`; `events/events.csv`; `events/event_object_roles.csv` | `graphs/egg_graph.json`; `logs/run_metadata_09_build_egg_graph.json` | Base graph layer for primitive objects/events/rooms |
 | 09b | `09b_build_scene_state_package.py` | Build Scene State Package (SSP) | `object_tracks.csv`; `object_observations.csv`; `event_windows.csv`; `event_object_roles.csv`; optional `events.csv`; optional `objects/operation_events.csv` | `graphs/scene_state_package.json`; `logs/run_metadata_09b_build_scene_state_package.json` | Relation-centric state package; operation events are optional, so SSP content depends on whether 10b already ran |
 | 09c | `09c_build_state_facts.py` | Convert tracks/events/operations/support state into formal facts | optional `object_tracks.csv`; `event_windows.csv` or `events.csv`; optional `objects/operation_events.csv`; optional `support_state_transitions.csv`; domain config | `graphs/state_facts.csv`; `graphs/state_facts.json`; `logs/run_metadata_09c_build_state_facts.json` | Facts are used by subtask, assembly, and thesis reasoning layers |
-| 09d | `09d_build_assembly_state_package.py` | Consolidate facts/subtasks/assembly graph/timeline into reasoning package | `state_facts.csv`; optional `objects/subtask_events.csv`; optional `graphs/assembly_graph.json`; optional `workflow_timeline.json`; domain config | `graphs/assembly_state_package.json`; `logs/run_metadata_09d_build_assembly_state_package.json` | Current orchestrator runs this before 10d/10e, so outputs can be incomplete unless rerun after 10e |
+| 09d | `09d_build_assembly_state_package.py` | Consolidate facts/subtasks/timeline into reasoning package | `state_facts.csv`; optional `objects/subtask_events.csv`; optional `graphs/workflow_timeline.json`; optional `graphs/assembly_graph.json`; domain config | `graphs/assembly_state_package.json`; `logs/run_metadata_09d_build_assembly_state_package.json` | README order runs this after 10d, so fresh subtasks and timeline are available. If run before 10e, assembly graph content is naturally absent unless 09d is rerun later |
 | 10 | `10_prune_egg_graph.py` | Query-driven graph pruning | `graphs/egg_graph.json`; query string | `queries/pruned_subgraph.json`; `queries/query_answer.json`; `logs/run_metadata_10_prune_egg_graph.json` | Independent query/demo layer over EGG |
 | 10b | `10b_build_operation_events.py` | Infer operation-level events and support-state windows | `objects/object_tracks.csv`; `events/event_windows.csv`; domain config; thresholds operation settings | `objects/operation_events.csv`; `objects/support_state_transitions.csv`; `graphs/operation_event_overlays/*.png`; `logs/run_metadata_10b_build_operation_events.json` | Domain config can override enabled operations at runtime. Metadata now hashes raw thresholds, not the mutated effective dict |
 | 10c | `10c_build_workflow_timeline.py` | Group operations into workflow phases | `objects/operation_events.csv`; domain config; thresholds workflow settings | `graphs/workflow_timeline.json`; `graphs/workflow_timeline.csv`; `logs/run_metadata_10c_build_workflow_timeline.json` | Staleness-checks `10b` |
 | 10d | `10d_build_subtask_events.py` | Infer subtask/step events | `object_tracks.csv`; `graphs/state_facts.csv`; `objects/operation_events.csv`; `objects/support_state_transitions.csv`; domain config | `objects/subtask_events.csv`; `graphs/subtask_sequence.json`; `logs/run_metadata_10d_build_subtask_events.json` | Does not read SSP. Subtask logic is partly domain-driven and partly hardcoded |
 | 10e | `10e_build_assembly_graph.py` | Build assembly-aware graph | optional `object_tracks.csv`; `state_facts.csv`; `subtask_events.csv`; optional `egg_graph.json`; optional `workflow_timeline.json`; domain config | `graphs/assembly_graph.json`; `logs/run_metadata_10e_build_assembly_graph.json` | Combines multiple layers into one derived graph |
-| 10f | `10f_run_thesis_layer3_constraints.py` | Run thesis Layer 3 constraints/incompatibility reasoning | `graphs/state_facts.csv`; `graphs/scene_state_package.json`; domain YAML; `configs/thesis_rules.yaml` | `constraints.csv`; `incompatibilities.csv` | Uses `src/thesis_constraint_reasoner.py`; does not currently write run metadata |
+| 10f | `10f_run_thesis_layer3_constraints.py` | Run thesis Layer 3 constraints/incompatibility reasoning | `graphs/state_facts.csv`; `graphs/scene_state_package.json`; domain YAML; `configs/thesis_rules.yaml` | `constraints.csv`; `incompatibilities.csv`; `logs/run_metadata_10f_run_thesis_layer3_constraints.json` | Optional thesis analysis stage using `src/thesis_constraint_reasoner.py` |
 | 11 | `11_export_neo4j_csv.py` | Export EGG graph to Neo4j import CSVs | `graphs/egg_graph.json` | `neo4j/nodes_rooms.csv`; `nodes_objects.csv`; `nodes_events.csv`; `edges_room_object.csv`; `edges_event_object.csv`; `edges_before.csv`; `neo4j/import.cypher` | Exports only the EGG graph layer, not full assembly graph |
 | 11op | `11_build_operation_review.py` | Human-readable operation review package | `objects/operation_events.csv`; `object_tracks.csv`; `event_windows.csv`; optional SSP; optional `track_motion_debug.csv`; optional workflow timeline; debug boxes | `reviews/operations/session_review.json`; `.md`; per-operation `.json`; `.md`; copied overlay PNGs; run metadata | Review/reporting layer for operation events |
 | 11b | `11b_build_assembly_review.py` | Human-readable assembly review | `graphs/assembly_state_package.json`; optional `graphs/assembly_graph.json` | `reviews/assembly/assembly_review.json`; `assembly_review.md`; run metadata | Uses `src/assembly_reasoner.py` |
@@ -118,7 +152,7 @@ The dependency graph implied by code is not strictly linear. This is the practic
 | `graphs/workflow_timeline.json/csv` | 10c | 09d optional, 10e optional, 11op optional, 12 |
 | `objects/subtask_events.csv` | 10d | 09d optional, 10e |
 | `graphs/subtask_sequence.json` | 10d | Mostly human/debug downstream |
-| `graphs/assembly_graph.json` | 10e | 09d optional, 11b, 12 |
+| `graphs/assembly_graph.json` | 10e | 09d optional if rerun after 10e, 11b, 12 |
 | `graphs/assembly_state_package.json` | 09d | 11b, 12 |
 | `constraints.csv`, `incompatibilities.csv` | 10f | Human inspection / thesis analysis |
 | `neo4j/*.csv` | 11 | 14 |
@@ -179,11 +213,9 @@ Stage-specific cleaning is based on the `_stage_owned_outputs` map in `run_pipel
 
 | Issue | Why it matters |
 |---|---|
-| `09d` runs before `10d` and `10e` in orchestrator order | `assembly_state_package.json` can miss fresh subtasks and assembly graph unless rerun later |
 | `09b` optionally reads `operation_events.csv`, but runs before `10b` by default | SSP can contain or omit operation-layer content depending on prior artifacts |
 | `10d.trigger_predicates` semantics are misleading | YAML suggests fact-driven triggers, code often uses them as supporting evidence |
 | Stage 04 and stage 05 can both write `object_observations.csv` | Legacy ingest and detector-derived observations share the same target |
-| `10f` writes important artifacts but no run metadata | Harder to audit or staleness-check thesis constraint outputs |
 | Review/query stages mix many optional inputs | Outputs can silently become less rich depending on which optional upstream artifacts exist |
 | EGG graph export is not assembly graph export | Stage 11 exports `egg_graph.json`, not `assembly_graph.json` |
 
@@ -194,14 +226,16 @@ Think of the pipeline as four layers:
 | Layer | Stages | Main artifacts |
 |---|---|---|
 | Capture/object layer | 01-06 | Manifest, observations, tracks |
-| Primitive event/EGG layer | 07-09b | Event windows, event summaries, EGG graph, SSP |
-| Assembly reasoning layer | 09c, 10b-10f, 09d/10e | State facts, operation events, support transitions, workflow timeline, subtasks, assembly graph/package, constraints |
+| Primitive event/EGG layer | 07-09 | Event windows, event summaries, EGG graph |
+| Assembly reasoning layer | 09b, 09c, 10b-10d, 09d, 10e, optional 10f | SSP, state facts, operation events, support transitions, workflow timeline, subtasks, assembly state package, assembly graph, constraints |
 | Human/export layer | 10, 11, 11op, 11b, 12, 14 | Query outputs, reviews, Neo4j CSV/import |
 
-The clean dependency order for assembly-heavy work should probably be reviewed. A more coherent order may be:
+The README-backed order to use for a full manual run is:
 
 ```text
-01 -> 02 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10b -> 09b -> 09c -> 10c -> 10d -> 10e -> 09d -> 10f -> 11b/12
+01 -> 02 -> 05 -> 06 -> 07 -> 08 -> 09 -> 10 -> 11 -> 14
+09b -> 09c -> 10b -> 10c -> 10d -> 09d -> 10e -> 11b
+12
 ```
 
-That order would let SSP see operations, state facts see operations/support transitions, subtasks see state facts and operations, assembly graph see subtasks, and assembly state package see the assembly graph.
+Optional stages can be inserted when needed: `03`/`13` for visuals, `04` for legacy spatialobjects ingest instead of detector-derived observations, `11op` for operation review, and `10f` after `09b`/`09c` when thesis Layer 3 constraint outputs are needed.

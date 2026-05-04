@@ -10,6 +10,7 @@ Outputs
   incompatibilities.csv
 """
 import sys
+import hashlib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -17,7 +18,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import typer
 from rich.console import Console
 
-from src.config import PipelinePaths, load_pipeline_config
+from src.config import PipelinePaths, load_pipeline_config, load_thresholds
+from src.run_metadata import build_run_metadata, save_run_metadata
 from src.thesis_constraint_reasoner import (
     run_layer3_reasoning,
     write_layer3_outputs,
@@ -52,6 +54,12 @@ def _resolve_domain_yaml(cfg: dict) -> Path:
     return path
 
 
+def _hash_file(path: Path) -> str:
+    h = hashlib.sha256()
+    h.update(path.read_bytes())
+    return h.hexdigest()[:16]
+
+
 @app.command()
 def main(
     session: str = typer.Option("session_001", help="Session ID"),
@@ -70,6 +78,7 @@ def main(
         raise typer.Exit(1)
 
     cfg = load_pipeline_config(config_path)
+    thr = load_thresholds()
     paths = PipelinePaths(session, cfg)
     paths.ensure_dirs()
 
@@ -154,6 +163,29 @@ def main(
 
     console.print(f"[green]constraints.csv -> {constraints_path}[/green]")
     console.print(f"[green]incompatibilities.csv -> {incompatibilities_path}[/green]")
+
+    meta = build_run_metadata(
+        session_id=session,
+        stage="10f_run_thesis_layer3_constraints",
+        pipeline_cfg=cfg,
+        thresholds_cfg=thr,
+        pipeline_yaml_path=config_path,
+        extra={
+            "n_constraints": len(result.constraints),
+            "n_incompatibilities": len(result.incompatibilities),
+            "n_unique_rules_fired": len(fired_rules),
+            "rules_fired": sorted(fired_rules),
+            "domain_config_path": str(domain_yaml_path),
+            "domain_config_hash": _hash_file(domain_yaml_path),
+            "thesis_rules_path": str(rules_path),
+            "thesis_rules_hash": _hash_file(rules_path),
+            "input_state_facts": str(state_facts_path),
+            "input_scene_state_package": str(scene_state_package_path),
+            "diagnostics": diag,
+        },
+    )
+    saved = save_run_metadata(paths.processed_root, meta)
+    console.print(f"[dim]Run metadata -> {saved}[/dim]")
 
 
 if __name__ == "__main__":
