@@ -121,6 +121,12 @@ def main(
         console.print(f"[red]{e}[/red]")
         raise typer.Exit(1)
 
+    effective_thresholds = _build_effective_threshold_metadata(
+        detector=detector,
+        group_passes=group_passes,
+        min_observation=conf_min,
+    )
+
     # Trigger model loading now (before the progress bar) so load time is visible
     if obs_source in ("grounding_dino", "yolo"):
         try:
@@ -289,7 +295,8 @@ def main(
         console.print("  Check detection_prompt and thresholds in pipeline.yaml / thresholds.yaml.")
         pd.DataFrame(columns=OBSERVATION_COLUMNS).to_csv(paths.object_observations, index=False)
         _write_run_metadata(session, cfg, thr, paths, n_observations=0,
-                            resolved_prompt=_actual_prompt, group_prompts=_group_prompts)
+                            resolved_prompt=_actual_prompt, group_prompts=_group_prompts,
+                            effective_thresholds=effective_thresholds)
         return
 
     # Strip private keys (prefixed _) used internally during processing
@@ -308,7 +315,8 @@ def main(
         console.print(f"  Canonical classes: {obs_df['canonical_class'].value_counts().to_dict()}")
 
     _write_run_metadata(session, cfg, thr, paths, n_observations=len(obs_df),
-                        resolved_prompt=_actual_prompt, group_prompts=_group_prompts)
+                        resolved_prompt=_actual_prompt, group_prompts=_group_prompts,
+                        effective_thresholds=effective_thresholds)
 
 
 # ── Depth backprojection ──────────────────────────────────────────────────────
@@ -432,7 +440,7 @@ def _detection_to_observation(
 
 def _write_run_metadata(
     session, cfg, thr, paths, n_observations,
-    resolved_prompt=None, group_prompts=None,
+    resolved_prompt=None, group_prompts=None, effective_thresholds=None,
 ):
     from src.config import PROJECT_ROOT as _PR
     meta = build_run_metadata(
@@ -453,10 +461,41 @@ def _write_run_metadata(
             "detection_groups": list(cfg.get("detection_groups", {}).keys()),
             # Per-group prompts when multi-pass is active
             "group_prompts": group_prompts or {},
+            # Concrete values applied by stage 05. These complement the config
+            # hashes above and make runs auditable without re-opening YAML.
+            "effective_thresholds": effective_thresholds or {},
         },
     )
     path = save_run_metadata(paths.processed_root, meta)
     console.print(f"[dim]  Run metadata → {path}[/dim]")
+
+
+def _build_effective_threshold_metadata(detector, group_passes, min_observation):
+    """Return the concrete stage-05 thresholds that will be applied."""
+    default_box = getattr(detector, "box_threshold", None)
+    default_text = getattr(detector, "text_threshold", None)
+
+    group_thresholds = {}
+    for gp in group_passes:
+        group_thresholds[gp.group.name] = {
+            "pass_id": gp.group.pass_id,
+            "prompt": gp.prompt,
+            "configured_box_threshold": gp.box_threshold,
+            "configured_text_threshold": gp.text_threshold,
+            "effective_box_threshold": gp.box_threshold if gp.box_threshold is not None else default_box,
+            "effective_text_threshold": gp.text_threshold if gp.text_threshold is not None else default_text,
+        }
+
+    return {
+        "confidence": {
+            "min_observation": float(min_observation),
+        },
+        "detector_defaults": {
+            "box_threshold": default_box,
+            "text_threshold": default_text,
+        },
+        "detection_groups": group_thresholds,
+    }
 
 
 def _resolve(path_str: str) -> Path:

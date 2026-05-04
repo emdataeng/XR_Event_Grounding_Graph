@@ -64,6 +64,7 @@ class PipelinePaths:
         self.graphs_dir = processed_root / "graphs"
         self.queries_dir = processed_root / "queries"
         self.neo4j_dir = processed_root / "neo4j"
+        self.logs_dir = processed_root / "logs"
         self.debug_pc_dir = self.graphs_dir / "debug_pointclouds"
         self.debug_box_dir = self.graphs_dir / "debug_boxes"
         self.reviews_dir = processed_root / "reviews" / "operations"
@@ -103,7 +104,7 @@ class PipelinePaths:
         for d in [
             self.manifests_dir, self.sample_vis_dir, self.objects_dir,
             self.events_dir, self.graphs_dir, self.queries_dir,
-            self.neo4j_dir, self.debug_pc_dir, self.debug_box_dir,
+            self.neo4j_dir, self.logs_dir, self.debug_pc_dir, self.debug_box_dir,
             self.reviews_dir, self.assembly_reviews_dir,
         ]:
             d.mkdir(parents=True, exist_ok=True)

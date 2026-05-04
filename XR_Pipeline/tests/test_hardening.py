@@ -9,6 +9,7 @@ Covers the 6 issues identified in the hardening pass:
   6. apply_vocab=False prevents vocabulary from rejecting depth_blobs/yolo labels
 """
 import sys
+import json
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -149,10 +150,27 @@ def test_run_metadata_save_load_roundtrip(tmp_path):
     path = save_run_metadata(tmp_path, meta)
     loaded = load_run_metadata(tmp_path, "01_build_frame_manifest")
 
+    assert path.parent == tmp_path / "logs"
+    assert path.name == "run_metadata_01_build_frame_manifest.json"
     assert loaded is not None
     assert loaded["session_id"] == "test_session"
     assert loaded["n_frames"] == 42
     assert loaded["pipeline_config_hash"] == meta["pipeline_config_hash"]
+
+
+def test_run_metadata_loads_legacy_root_file(tmp_path):
+    from src.run_metadata import build_run_metadata, load_run_metadata
+
+    cfg = {"session_id": "test"}
+    thr = {}
+    meta = build_run_metadata("test_session", "01_build_frame_manifest", cfg, thr)
+    legacy_path = tmp_path / "run_metadata_01_build_frame_manifest.json"
+    legacy_path.write_text(json.dumps(meta))
+
+    loaded = load_run_metadata(tmp_path, "01_build_frame_manifest")
+
+    assert loaded is not None
+    assert loaded["session_id"] == "test_session"
 
 
 def test_staleness_detected_on_config_change(tmp_path):

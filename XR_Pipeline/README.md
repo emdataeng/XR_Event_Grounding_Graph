@@ -121,7 +121,46 @@ For Hugging Face, create a read token at [huggingface.co/settings/tokens](https:
    detection_prompt: "laptop. mouse. hands. cup."   # objects in your scene
    ```
 
-3. Run all pipeline scripts with your session ID:
+3. Run the pipeline with your session ID:
+   ```bash
+   python scripts/run_pipeline.py --session session_002
+   ```
+
+   To see the exact stages before running:
+   ```bash
+   python scripts/run_pipeline.py --session session_002 --dry-run
+   ```
+
+   Optional visual/debug stages and Neo4j import are opt-in:
+   ```bash
+   python scripts/run_pipeline.py --session session_002 --include-visuals
+   python scripts/run_pipeline.py --session session_002 --include-neo4j-import
+   ```
+
+   You can also resume partway through:
+   ```bash
+   python scripts/run_pipeline.py --session session_002 --from-stage 07
+   python scripts/run_pipeline.py --session session_002 --from-stage 05 --to-stage 07
+   ```
+
+   Cleanup controls are explicit:
+   ```bash
+   # Ignore staleness warnings only; deletes nothing
+   python scripts/run_pipeline.py --session session_002 --force
+
+   # Before each selected stage runs, delete that stage's owned outputs
+   python scripts/run_pipeline.py --session session_002 --from-stage 05 --clean
+
+   # Delete the whole processed session folder before running
+   python scripts/run_pipeline.py --session session_002 --wipe-session
+   ```
+
+   `--clean` is stage-scoped: it removes outputs owned by the stages being
+   rerun, such as stage 05's `object_observations.csv` and `debug_boxes/`
+   images, but it does not wipe unrelated stage outputs. `--wipe-session`
+   removes `data/processed/<session_id>/` and rebuilds from scratch.
+
+   Or run stages manually if you need fine-grained control:
    ```bash
    python scripts/01_build_frame_manifest.py      --session session_002
    python scripts/02_validate_manifest.py         --session session_002

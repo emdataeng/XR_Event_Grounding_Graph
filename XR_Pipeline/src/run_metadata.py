@@ -1,8 +1,9 @@
 """run_metadata.py — Config hashing, run provenance, and staleness detection.
 
-Each pipeline stage writes a run_metadata.json to the session's processed root
-after it completes. Downstream stages call check_staleness() to warn when their
-inputs were produced under a different config than the current one.
+Each pipeline stage writes a run_metadata_<stage>.json file to the session's
+processed logs directory after it completes. Downstream stages call
+check_staleness() to warn when their inputs were produced under a different
+config than the current one.
 
 No automatic rebuilding — we warn loudly and require --force to continue.
 """
@@ -92,12 +93,24 @@ def build_run_metadata(
 
 # ── Persist / load ────────────────────────────────────────────────────────────
 
+def _logs_dir(processed_root: Path) -> Path:
+    return processed_root / "logs"
+
+
 def _metadata_path(processed_root: Path, stage: str) -> Path:
+    return _logs_dir(processed_root) / f"run_metadata_{stage}.json"
+
+
+def _legacy_metadata_path(processed_root: Path, stage: str) -> Path:
     return processed_root / f"run_metadata_{stage}.json"
 
 
 def save_run_metadata(processed_root: Path, meta: Dict[str, Any]) -> Path:
-    """Write run_metadata_<stage>.json under processed_root."""
+    """Write run_metadata_<stage>.json under processed_root/logs.
+
+    The file name is stable for each stage, so rerunning a stage overwrites its
+    previous metadata instead of accumulating timestamped copies.
+    """
     path = _metadata_path(processed_root, meta["stage"])
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(meta, indent=2, default=str))
@@ -107,6 +120,8 @@ def save_run_metadata(processed_root: Path, meta: Dict[str, Any]) -> Path:
 def load_run_metadata(processed_root: Path, stage: str) -> Optional[Dict[str, Any]]:
     """Load a previously saved run_metadata for a stage, or None if not found."""
     path = _metadata_path(processed_root, stage)
+    if not path.exists():
+        path = _legacy_metadata_path(processed_root, stage)
     if not path.exists():
         return None
     try:

@@ -23,6 +23,7 @@ Usage
 """
 import sys
 import json
+import copy
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -56,12 +57,13 @@ def main(
 ):
     """Derive operation-level events and export event overlay frames."""
     cfg = load_pipeline_config(Path(config) if config else None)
-    thr = load_thresholds()
+    thresholds_cfg = load_thresholds()
+    thr = copy.deepcopy(thresholds_cfg)
     paths = PipelinePaths(session, cfg)
     paths.ensure_dirs()
 
     # ── Staleness guard ───────────────────────────────────────────────────────
-    warnings = check_staleness(paths.processed_root, "07_build_event_windows", cfg, thr)
+    warnings = check_staleness(paths.processed_root, "07_build_event_windows", cfg, thresholds_cfg)
     if not emit_staleness_warnings(warnings, console=console, force=force):
         raise typer.Exit(1)
 
@@ -154,7 +156,10 @@ def main(
         session_id=session,
         stage="10b_build_operation_events",
         pipeline_cfg=cfg,
-        thresholds_cfg=thr,
+        # Hash the raw thresholds.yaml content. Runtime domain overrides are
+        # logged below, but should not make downstream staleness checks compare
+        # against a mutated in-memory thresholds dict.
+        thresholds_cfg=thresholds_cfg,
         extra={
             "n_operations": len(ops_df),
             "domain_config": domain_name,

@@ -1,5 +1,6 @@
 """Tests for detection_groups.py — Phase 1 multi-pass detection."""
 import sys
+import importlib.util
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -275,3 +276,37 @@ def test_per_group_thresholds_independent_across_groups():
     wp_pass   = next(p for p in passes if p.group.name == "workpieces")
     assert hand_pass.box_threshold == pytest.approx(0.20)
     assert wp_pass.box_threshold   == pytest.approx(0.25)
+
+
+def test_effective_threshold_metadata_records_group_overrides():
+    module_path = Path(__file__).resolve().parent.parent / "scripts" / "05_build_object_observations.py"
+    spec = importlib.util.spec_from_file_location("build_object_observations", module_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+
+    class Detector:
+        box_threshold = 0.25
+        text_threshold = 0.25
+
+    vocab = _make_vocab()
+    cfg = {"detection_groups": {
+        "hands":      {"enabled": True, "classes": ["hand"],
+                       "box_threshold": 0.20, "text_threshold": 0.20},
+        "workpieces": {"enabled": True, "classes": ["red_lego", "blue_lego"]},
+    }}
+    passes = parse_detection_groups(cfg, vocab)
+
+    meta = module._build_effective_threshold_metadata(
+        detector=Detector(),
+        group_passes=passes,
+        min_observation=0.3,
+    )
+
+    assert meta["confidence"]["min_observation"] == pytest.approx(0.3)
+    assert meta["detector_defaults"]["box_threshold"] == pytest.approx(0.25)
+    assert meta["detector_defaults"]["text_threshold"] == pytest.approx(0.25)
+    assert meta["detection_groups"]["hands"]["configured_box_threshold"] == pytest.approx(0.20)
+    assert meta["detection_groups"]["hands"]["effective_box_threshold"] == pytest.approx(0.20)
+    assert meta["detection_groups"]["workpieces"]["configured_box_threshold"] is None
+    assert meta["detection_groups"]["workpieces"]["effective_box_threshold"] == pytest.approx(0.25)
