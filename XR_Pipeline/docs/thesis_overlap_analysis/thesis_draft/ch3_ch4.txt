@@ -1,0 +1,909 @@
+\chapter{Methodology}
+\label{cha:methodology}
+
+This thesis investigates how explicit procedural models can be constructed from XR-based observations of expert task execution without assuming the availability of CAD models or complete prior documentation. XR platforms provide spatio-temporal recordings of operator actions and interactions, which are commonly used to generate descriptive or sequential instructions through data-driven methods. In contrast, this work transforms such observations into explicit procedural representations that encode steps, conditions, and effects.
+
+These representations serve as the input for rule evaluation, step validation, and trace generation. The objective is to enable a system to determine not only which action may follow, but under which conditions a candidate step is valid or invalid given uncertain spatial and semantic evidence.
+
+\section{The Reasoning Pipeline}
+\label{sec:method-reasoning-pipeline}
+
+The proposed methodology is structured as a layered reasoning pipeline in which perception outputs are mapped into symbolic predicates through explicit geometric and semantic abstraction steps and subsequently evaluated through rule-based inference and procedural validation. Each layer defines a transformation with explicitly specified input structures and output representations, enabling traceability and reproducibility.
+
+The pipeline separates perception-driven abstraction from reasoning-driven interpretation. Early layers compute spatial predicates and semantic hypotheses from geometric and semantic representations derived from XR data, while later layers operate on symbolic predicates, inferred constraints, and procedural hypotheses.
+
+
+
+\subsection{Definitions and notation for reasoning elements}
+\label{subsec:method-reasoning-definition}
+
+An object is defined as a detected entity represented by a geometric primitive and a set of semantic hypotheses. A site refers to a localized region on an object that is relevant for interaction, such as a surface, hole, or edge, consistent with interaction regions used in prior assembly reasoning approaches \citet{WangEtAl2018}.
+
+To ensure consistency across layers, the reasoning mechanism distinguishes between predicates, inference rules, compatibility rules, constraints, and incompatibility relations.
+
+Predicates represent perceptual evidence derived from Layer 2. These include unary semantic relations, such as $isA(o, T)$, and binary spatial relations, such as $aligned(o_1,o_2)$. Predicates are associated with confidence values and provenance information and form the input to the reasoning process.
+
+Inference rules define how assembly-relevant conditions are derived from predicates. Each rule is expressed as a conjunction of predicate conditions that produce one or more inferred constraints when satisfied. These constraints represent qualitative assembly conditions, such as feasibility or alignment requirements, and are associated with confidence values derived
+from supporting predicates.
+
+Compatibility rules define whether a given action is semantically admissible for a pair of object types. These rules operate over semantic predicates and produce incompatibility relations of the form $incompatibleAction(o_i, o_j, a)$ when an action is not valid for the corresponding object types. Unlike inference rules, compatibility rules do not produce supporting constraints and do not rely on confidence aggregation.
+
+Constraints represent inferred assembly-relevant conditions produced by inference rules. They contribute positive evidence toward candidate actions without acting as hard validity conditions.
+
+Incompatibility relations represent semantically invalid action-object combinations produced by compatibility rules. These relations act as hard conditions during procedural validation and override supporting evidence when violated.
+
+This distinction ensures that perceptual evidence, inferred assembly conditions, and semantic admissibility are treated as separate elements within the reasoning process.
+
+
+\section{Methodological overview and module boundaries}
+\label{sec:method-overview}
+
+The system is divided into a front-end and a backend. The front-end transforms raw perception data into structured symbolic representations, while the backend performs reasoning over these representations to infer assembly constraints and evaluate candidate procedural steps.
+
+
+\begin{itemize}
+
+  \item Layer 1: Perception inputs
+    \begin{itemize}
+      \item Acquisition and processing of RGB-D data
+      \item Object detection and tracking in space
+      \item Coarse pose estimation
+      \item Semantic labeling using vision-language models, producing label hypotheses with confidence
+    \end{itemize}
+
+  \item Layer 2: Scene abstraction
+    \begin{itemize}
+      \item Primitive reconstruction and geometric fitting
+      \item Assignment of geometric and semantic attributes to objects
+      \item Identification of candidate sites on objects
+      \item Generation of candidate site relations between objects
+      \item Computation of qualitative spatial predicates from geometric representations \citet{Haesler_2025}
+      \item Maintenance of multiple semantic and spatial hypotheses with associated confidence and temporal references
+    \end{itemize}
+
+  \item Layer 3: Rule-based assembly inference
+    \begin{itemize}
+      \item Evaluation of ontology constraints over unary and binary relations
+      \item Rule-based inference of assembly-relevant constraints, such as feasibility and qualitative interaction requirements
+      \item Aggregation of confidence values and propagation of uncertainty
+      \item Traceable linking of inferred constraints to supporting relations
+    \end{itemize}
+
+  \item Layer 4: Procedural validation and decision logic
+  \begin{itemize}
+    \item Evaluation of candidate step hypotheses against predicates and inferred constraints
+    \item Assessment of expected effects based on observed state transitions
+    \item Inference of supporting preconditions from predicates and constraints
+    \item Classification of step hypotheses into accepted, uncertain, or rejected
+    \item Generation of explanation traces linking decisions to supporting evidence
+    \item Construction of a simplified procedural graph from validated step hypotheses
+  \end{itemize}
+
+\end{itemize}
+
+Layers 1 and 2 constitute the front-end of the system, responsible for constructing a structured and uncertainty-aware representation of the scene. Layers 3 and 4 form the backend, where symbolic reasoning and decision-making are carried out using rules evaluation. This separation allows perception and reasoning to evolve independently while maintaining a consistent interface between them.
+
+\subsection{Pre-perception preparation}
+\label{sec:pre-perception}
+
+This section defines the assumptions, design choices, and conventions established prior to the perception and reasoning pipeline. The goal is to ensure that all downstream modules operate on well-defined inputs, vocabularies, and interfaces, enabling traceability and reproducibility.
+
+\subsubsection{Scope and operational assumptions}
+\label{sec:scope-assumptions}
+This work focuses on manual assembly tasks involving small to medium-sized components, such as pegs, holes, and brackets. The objective is to infer assembly-relevant conditions and validate procedural steps based on observed spatial relations. Tools, hands, and detailed operator modeling are considered out of scope, except when these influence object motion or occlusion. The system assumes moderate levels of occlusion and viewpoint variation, and relies on qualitative spatial relations rather than precise geometric measurements as the minimum evidence for reasoning.
+
+
+\subsubsection{Entity universe, identifiers, and predicate vocabulary}
+\label{sec:entities-vocabulary}
+The pipeline operates over a domain-configurable set of entity roles representing assembly-relevant components. Rather than fixing a specific set of parts, the system defines a generic entity schema that can be instantiated for different application domains, such as toy assemblies or industrial components.
+
+Each detected object is assigned a stable identifier that persists across time, enabling temporal indexing of observations and consistent identification of entities across frames. Object identities are not assumed a priori, but are inferred as semantic label hypotheses produced by vision-language models (e.g., ``peg'', ``screw'', ``plate with hole'') and subsequently mapped to their corresponding ontology roles through consistency with spatial relations and rule constraints.
+
+Spatial relations are expressed using a fixed predicate vocabulary in subject--predicate--object form. This vocabulary is domain-independent and includes qualitative predicates such as \textit{aligned}, \textit{inside}, \textit{touching}, and \textit{near}, which are derived from geometric abstraction. The separation between a fixed predicate vocabulary and a configurable entity set allows the system to generalize across different assembly scenarios while maintaining a consistent reasoning interface.
+
+
+\subsubsection{Execution ontology and schema for layer interfaces}
+\label{sec:ontology-schemas}
+
+A minimal execution ontology is defined to structure the data exchanged between pipeline layers. The ontology defines the vocabulary and structure of the domain, including entity types (e.g., Peg, Hole) and admissible relations, and distinguishes between unary relations, which describe properties of individual entities, and binary relations, which describe spatial relationships between pairs of entities. In addition, it encodes admissible and inadmissible action-object combinations through compatibility rules, enabling the system to evaluate whether a candidate action is semantically defined for the involved entity types independently of the observed spatial configuration.
+
+Unary relations are used to represent semantic hypotheses about object identity, for example $isA(o, Peg)$, derived from vision-language model outputs and associated with confidence values. These relations are treated as probabilistic and may include multiple competing hypotheses per entity.
+
+Binary relations are used to represent qualitative spatial relationships between entities, following a subject--predicate--object convention. Examples include $aligned(o_1,o_2)$, $inside(o_1,o_2)$, and $touching(o_1,o_2)$, which are derived from geometric abstraction of oriented bounding boxes \citep{Haesler_2025}. Each relation is associated with a confidence value and provenance information, including timestamps and the originating computation module.
+
+Layer 2 produces a fact base consisting of both unary and binary relations, which together form the set of predicates used for reasoning. Layer 3 consumes these predicates through rules defined over the ontology, combining semantic and spatial evidence to infer higher-level assembly-relevant constraints, such as qualitative fit conditions used later for procedural validation. Each inferred constraint includes explicit references to the supporting relations and propagates uncertainty using a defined aggregation policy, ensuring that all reasoning outcomes remain traceable to their underlying evidence.
+
+The reasoning process therefore follows a structured progression in which the ontology provides the framework, predicates provide the evidence, rules define the reasoning logic, and constraints represent the inferred conclusions used for decision-making. A simplified procedural graph is derived in Layer 4 from validated step hypotheses, using predicates and inferred constraints from Layers 2 and 3 as supporting evidence. This graph provides a structured representation of the inferred procedure, capturing relations between steps without introducing execution semantics or temporal hypothesis tracking.
+
+All schema include stable entity identifiers, temporal indices, and versioning metadata to support reproducibility and traceability. This enables a consistent interface between the perception, abstraction, and reasoning layers while remaining flexible with respect to the specific domain and entity set.
+
+
+\subsubsection{Notation and mapping to related formulations}
+\label{sec:notation-mapping}
+
+To clarify the relation between the proposed architecture and prior formulations such as \citet{Zhao2025VideoToBT}, a lightweight notation is introduced to describe the elements used across layers.
+
+The input to the system consists of a set of observed entities and their relations derived from perception. 
+
+Let $\mathcal{O}$ denote the set of objects present in the scene.
+
+\begin{itemize}
+  \item $\mathcal{P}$: a set of unary and binary predicates representing perceptual evidence
+
+  \item $\mathcal{C}$: a set of inferred constraints representing assembly-relevant conditions
+
+  \item $\mathcal{A}$: a set of abstract action types
+
+  \item $\mathcal{H}$: a set of candidate step hypotheses, where each hypothesis $h \in \mathcal{H}$ corresponds to an instantiated action
+\end{itemize}
+
+At each time step $t$, the system operates on a symbolic snapshot defined by $\mathcal{P}_t$ and $\mathcal{C}_t$.
+
+In this context, procedural reasoning is formulated as the evaluation of step hypotheses $h \in H$ against the available predicates $P_t$ and constraints $C_t$, rather than as the execution of a predefined plan or the evolution of a global state.
+
+
+\subsubsection{Rule set authoring and constraint semantics}
+\label{sec:rule-authoring}
+
+Given the definitions introduced in \cref{subsec:method-reasoning-definition}, this section describes how rules are specified and how their outputs are interpreted within the reasoning process.
+Inference rules are defined as conjunctions of qualitative predicates and semantic conditions, independent of low-level geometry. Their role is to map perceptual evidence into higher-level assembly conditions expressed as constraints. These constraints are qualitative in nature and are interpreted operationally within the reasoning context rather than as fixed numeric thresholds.
+
+When multiple inference rules are applicable, their outputs may coexist and are associated with confidence values derived from supporting predicates. This allows the system to maintain multiple plausible interpretations of the same scene without committing to a single deterministic outcome.
+
+Compatibility rules are defined separately and operate over semantic predicates to determine whether a given action is admissible for a pair of object types. Unlike inference rules, they do not contribute supporting constraints, but instead produce incompatibility relations that are enforced during procedural validation.
+
+In this work, the term \textit{hypothesis} refers to candidate interpretations at different levels of abstraction, including semantic labels, spatial relations, inferred constraints, and procedural steps. These hypotheses are not treated as ground truth, but as uncertainty-bearing representations that may coexist and be evaluated or refined across layers.
+
+
+\subsubsection{Data collection protocol and labeling plan}
+\label{sec:data-protocol}
+The dataset consists of XR recordings of controlled assembly scenarios, including both successful and faulty executions. Scenarios are defined to capture variability in object placement, alignment, and interaction patterns where predicate confidence and conflicting interpretations are systematically varied. Annotation focuses on step boundaries and outcome labels (success or failure), without requiring detailed geometric ground truth. Data is split across sessions and operators to reduce leakage, and consistency checks are applied to ensure annotation quality.
+
+\subsubsection{Time and reference-frame conventions}
+\label{sec:time-frames}
+All observations are expressed within a consistent world coordinate system. Temporal data is represented as a sequence of time-indexed frames, with optional aggregation over a fixed temporal window of k frames to improve stability of spatial relations and semantic hypotheses. Reference frame conventions, including axis orientation and origin definition, are fixed across all modules to ensure consistent interpretation of spatial predicates.
+
+\subsubsection{Tooling, logging, reproducibility, and governance}
+\label{sec:tooling-logging}
+All intermediate facts, hypotheses, and inference results are logged in structured formats that include timestamps, identifiers, confidence values, and provenance information. Each experiment is associated with a configuration snapshot to ensure reproducibility. Evaluation metrics are defined at both module and system levels, including predicate accuracy, constraint inference correctness, and step validation performance. Failure cases are recorded with detailed traces linking decisions to the underlying evidence. Data handling follows standard privacy and access control practices for recorded XR sessions.
+
+
+
+
+\section{Layer 1 methodology: perception inputs and scene state abstraction}
+\label{sec:layer1-method}
+Layer 1 defines the perception to reasoning interface without committing to a specific recognition model. The output of Layer 1 is a time-indexed set of entity hypotheses with stable identifiers, geometric representations, and semantic label candidates. Each entity is represented using a coarse pose and extent description, such as an oriented bounding box, together with one or more short semantic descriptions (for example, ``peg'', ``screw'', ``plate with hole'') produced by a vision-language model and associated confidence scores.
+
+This representation choice is aligned with pipelines that operate on compact geometric abstractions rather than meshes, enabling downstream symbolic predicate computation \citep{Haesler_2025}. The semantic labels are treated as hypotheses rather than ground truth and are carried forward with associated uncertainty. Layer 1 therefore specifies what must be available to downstream modules, including a consistent reference frame, timestamps, geometric attributes, and semantic label candidates with confidence. The specific sensing, tracking, and classification methods are outside the scope of this thesis and are addressed in the complementary IE thesis.
+
+\section{Layer 2 methodology: qualitative spatial and semantic fact construction}
+\label{sec:layer2-method}
+Layer 2 transforms Layer 1 entity hypotheses into a symbolic fact base composed of qualitative spatial relations and semantic identity hypotheses. For each identified candidate procedural step, the layer constructs a symbolic fact base consisting of unary semantic hypotheses and binary spatial relations. Candidate steps are treated as externally provided inputs derived from observed state transitions across recordings; the extraction process itself is outside the scope of this thesis and is addressed in the complementary IE thesis.
+
+Concretely, Layer 2 consumes oriented bounding boxes and uses a geometric-to-symbolic mapping to derive qualitative spatial relations such as \textit{aligned}, \textit{inside}, and \textit{touching}, following a compact spatial abstraction based on oriented bounding boxes rather than full meshes \citep{Haesler_2025}. In parallel, semantic label hypotheses produced upstream by a vision-language model are represented as unary relations, for example $isA(o, Peg)$, each with an associated confidence value.
+
+Both spatial and semantic relations are treated as uncertain hypotheses rather than fixed facts. Therefore, Layer 2 maintains confidence, provenance, and temporal references for each relation. Spatial relations are used to increase or decrease the confidence of competing semantic hypotheses based on consistency with geometric evidence; such semantic hypotheses can constrain which spatial interpretations are plausible. This enables joint refinement of spatial and semantic interpretations over time without committing to a single deterministic state at each frame.
+
+
+Refer to the Example Rule 1 \cref{sec:example-rule1} pipeline, in which Layer 2 yields a set of time-indexed relations such as $aligned(o_1,o_2)$, $inside(o_1,o_2)$, $touching(o_1,o_3)$, and semantic relations such as $isA(o_1, Peg)$ and $isA(o_2, Hole)$, all with associated confidence values. These relations form the traceable input fact base for Layer 3.
+
+The resulting representation combines geometric and semantic sources of evidence to support the construction of an implicit topological interpretation of the scene. Geometric relations derived from oriented bounding boxes provide bottom-up cues about spatial configuration, such as proximity, alignment, and containment, while semantic hypotheses from the vision-language model contribute high-level relational interpretations, such as attachment or insertion compatibility. Together, these sources enable the system to form probabilistic hypotheses about which entities are likely to be functionally connected.
+
+If upstream geometry is unstable, Layer 2 could optionally be preceded by a representation or reconstruction stage that improves local geometric consistency before relation extraction, for example by reconstructing scenes from primitive-level elements \citep{Mazur_2024}.
+
+
+Following the multi-hypothesis interpretation strategy of \citet{WangEtAl2018}, Layer 2 maintains multiple competing semantic, spatial, and candidate site-relation hypotheses, whose plausibility is updated over time using combined evidence from semantic labeling, geometric consistency, and temporal tracking.
+
+
+\section{Layer 3 methodology: rule-based assembly inference}
+\label{sec:layer3-method}
+
+Layer 3 performs rule-based inference over the symbolic fact base produced in Layer 2 to derive assembly-relevant relations and qualitative constraints. Its role is to map geometric and semantic predicates into assembly-relevant constraints through rule evaluation and feasibility conditions that can support procedural validation.
+
+\subsection{Conceptual design}
+
+The input to Layer 3 consists of unary predicates representing semantic hypotheses (e.g., $isA(o, Peg)$) and binary predicates representing qualitative spatial relations (e.g., $aligned(o_1,o_2)$), each associated with confidence and provenance.
+
+From a representation perspective, Layer 3 defines the transition from perceptual abstraction to assembly interpretation by mapping predicates into higher-level constraints that encode interaction feasibility and qualitative requirements. While Layer 2 provides a geometric and semantic description of the scene, Layer 3 interprets these observations in terms of assembly-relevant structure. In particular, it infers relations that capture interactions between components, such as engagement, coupling, or insertion, as well as qualitative constraints that describe conditions of fit or alignment.
+
+A key distinction in this layer is between predicates and constraints. Predicates correspond to directly observed or derived relations grounded in perception, whereas constraints represent higher-level assembly conditions inferred from combinations of predicates. These constraints are not directly observable and represent domain knowledge derived from combinations of spatial and semantic evidence.
+
+In addition to inference rules that derive constraints from spatial and semantic predicates, Layer 3 evaluates a set of semantic compatibility rules. These rules operate over semantic predicates of the form $isA(o, T)$ and encode general interaction knowledge about object categories.
+While inference rules produce constraints that support the plausibility of an action, compatibility rules produce incompatibility relations of the form $incompatibleAction(o_i, o_j, a)$ when an action is not semantically valid for the corresponding object types.
+
+For example, while geometric predicates may suggest proximity or alignment between two objects, a compatibility rule may specify that an action such as insertion is not meaningful for their corresponding types. In such cases, the corresponding incompatibility relation is generated and propagated to Layer 4. When such a rule is violated, the corresponding action is marked as inadmissible.
+
+Rules are defined as conjunctions of unary and binary predicates. When the conditions of a rule are satisfied, the system infers one or more higher-level relations or constraints. Each inferred output is associated with a confidence value derived from the supporting predicates, and with provenance information linking it to the evidence that triggered the rule.
+
+
+For objects $O_1$ and $O_2$, let $\mathcal{P}$ denote the set of predicates:
+\[
+\mathcal{P} = \{aligned,\, inside,\, touching,\, isA(\cdot,\text{Peg}),\, isA(\cdot,\text{Hole})\}.
+\]
+
+Instantiated over $(O_1,O_2)$, $\mathcal{P}$ yields an evidence set $\mathbf{p} \subseteq \mathcal{P}$. 
+Given sufficient confidence, a rule $r : \mathcal{P} \rightarrow \mathcal{C}$ maps $\mathbf{p}$ to inferred constraints 
+$\mathbf{c} = r(\mathbf{p}) \subseteq \mathcal{C}$, such as $inserted(O_1,O_2)$ and alignment conditions.
+
+The rule is activated when all predicates in $\mathbf{p}$ satisfy a minimum confidence threshold.
+\[
+\min_{p \in \mathbf{p}} \text{conf}(p) \geq \tau
+\]
+
+\Cref{fig:layer3_diagram-1} illustrates the rule-based inference process, where spatial and semantic predicates are combined with compatibility rules to produce assembly constraints and action admissibility conditions, with uncertainty propagated through confidence aggregation.
+
+\begin{figure}[t]
+  \begin{center}
+    %\vspace*{1em}
+    \includegraphics[width=0.9\linewidth]{Figures/Layer_3_with3objects.png}
+    %\vspace*{1em}
+  \end{center}
+  \caption{Rule-based assembly inference in Layer 3. Spatial and semantic predicates are combined with
+semantic compatibility rules to infer higher-level assembly constraints and action admissibility
+conditions, with uncertainty propagated through confidence-based aggregation.}
+  \label{fig:layer3_diagram-1}
+\end{figure}
+
+
+\subsection{Design decisions and alternatives}
+\label{sub:layer3-method-design-decisions}
+
+\subsubsection{Rule-based inference vs learned inference}
+An alternative approach would be to train a model to directly infer assembly relations or constraints from symbolic inputs. While such methods may offer greater flexibility, they require labeled datasets and typically provide limited interpretability.
+
+In this work, a rule-based approach is adopted. This allows domain knowledge to be explicitly encoded, ensures that reasoning steps are transparent, and supports traceability of inferred relations. This choice ensures that each inferred relation can be traced to explicit predicates and rules, with the need to operate under limited data conditions.
+
+The trade-off is that rule coverage must be manually defined, and generalization to unseen configurations might be limited, depending on how generic are the rules created.
+
+\subsubsection{Predicate-to-constraint abstraction}
+
+Another design choice concerns whether to reason directly on predicates or to introduce an intermediate constraint layer.
+
+A direct approach would operate solely on spatial and semantic predicates. However, this would make it difficult to express higher-level assembly conditions such as compatibility or precision requirements.
+
+In this work, an explicit constraint layer is introduced. Constraints capture qualitative assembly conditions inferred from combinations of predicates and provide a more suitable interface for procedural validation in Layer 4.
+
+The trade-off is the introduction of additional modeling complexity and the need to define constraint semantics.
+
+\subsubsection{Uncertainty representation and aggregation}
+
+A further decision concerns how uncertainty is represented and propagated.
+
+A fully probabilistic approach could model uncertainty using distributions and perform inference using probabilistic reasoning frameworks. While expressive, such approaches are complex and often reduce interpretability<CITATION MISSING HERE>.
+
+In this work, uncertainty is represented as scalar confidence values attached to predicates and propagated through rule evaluation using minimum aggregation. This ensures that uncertainty in perception is reflected in inferred relations and constraints while maintaining the transparency of the reasoning process.
+
+The trade-off is that this approach does not capture complex dependencies between predicates and may be sensitive to the choice of aggregation function.
+
+\subsubsection{Handling of multiple interpretations}
+
+In ambiguous situations, multiple interpretations of the same scene may be plausible. These ambiguities arise both at the predicate level, for example in competing semantic labels or spatial relations, and at the constraint level, where different rule applications may yield alternative assembly interpretations.
+
+A fully expressive approach would maintain and update complete distributions over competing hypotheses across time, as in inference-tree formulations. While such approaches enable rich temporal reasoning, they introduce significant computational and modeling complexity.
+
+In this work, a simplified multi-hypothesis approach is adopted, in which multiple candidate interpretations at the predicate and constraint level may coexist with associated confidence values within a single evaluation step. These hypotheses are not organized into global structures or explicitly tracked over time. Instead, they are evaluated locally based on the available evidence, and conflicting interpretations may persist until resolved by subsequent reasoning stages.
+
+The trade-off is that the system does not model full probabilistic dependencies or temporal evolution of hypotheses, and therefore relies on downstream mechanisms to resolve ambiguities when necessary.
+
+
+\subsubsection{Representation granularity}
+
+Another design decision concerns the level of granularity at which interactions are represented.
+
+Assembly interactions can be modeled at the object level or at a finer site level, where specific contact regions are explicitly represented, for example, with a spatial predicate such as: $touching(O_1,S_1,O_2,S_0)$. Although site-level modeling provides greater precision, it requires more detailed geometric information and more complex rule definitions.
+
+In this work, the primary representation is at the object level, with optional extension to site-level relations when such information is available. This allows the system to remain applicable under limited geometric detail while supporting more refined reasoning when data permits.
+
+\subsection{Implementation scope and delimitation}
+
+While the conceptual design supports rich constraint inference and multi-hypothesis reasoning, the implemented prototype focuses on a simplified subset of this functionality.
+
+Specifically, the implementation evaluates a predefined set of rules over Layer 2 predicates, infers a limited set of assembly relations and qualitative constraints, propagates uncertainty using a fixed aggregation policy and, records provenance links between inferred outputs and supporting predicates.
+
+The implementation performs local hypothesis evaluation and does not maintain explicit multi-hypothesis structures over time. This design choice reduces computational complexity and allows the focus to remain on the core contribution of the work, namely the inference of assembly constraints and their role in supporting procedural validation under uncertainty. Within each evaluation step, multiple candidate inferences may coexist with associated confidence values. Resolution of competing interpretations is deferred to Layer 4.
+
+More advanced capabilities, including temporal hypothesis tracking, dynamic revision of interpretations, large-scale rule sets, and fine-grained site-level reasoning, are not implemented and are left for future work.
+
+\subsection{Relation to assembly knowledge representation}
+
+The progression from predicates to constraints in Layer 3 is consistent with hierarchical assembly knowledge representations in which higher-level assembly conditions are derived from lower-level structural relations \citep{Zhu_2022}. In contrast to approaches where topology is predefined, the present work induces assembly-relevant structure from perceptual evidence under uncertainty, enabling flexible interpretation of partially observed configurations.
+
+
+\section{Layer 4 methodology: procedural hypothesis validation and decision logic}
+\label{sec:layer4-method}
+
+Layer 4 evaluates candidate procedural steps as hypotheses that explain observed transitions in the symbolic state. Rather than assuming a predefined procedure, each step is assessed for consistency with predicates from Layer 2 and constraints inferred in Layer 3 under uncertainty. The objective is to determine whether a candidate step provides a valid explanation of the observed state change
+
+\subsection{Conceptual design}
+
+The input to Layer 4 consists of three components: (i) candidate procedural steps, (ii) unary and binary predicates representing semantic and spatial hypotheses from Layer 2, and (iii) higher-level relations and constraints inferred in Layer 3. Each of these elements is associated with confidence and provenance information.
+
+Candidate steps may originate from different sources, including automated interpretation (e.g., vision-language models) or manual annotations. Regardless of their origin, steps are treated uniformly as hypotheses rather than validated facts. This distinction is essential, as even human-provided descriptions may omit implicit conditions, conflict with geometric evidence, or violate domain constraints.
+
+Each candidate step is represented by an action and its arguments, together with an expected effect corresponding to a change between consecutive predicate sets $P_t$ and $P_{t+1}$. For example, a step of the form $Insert(o_1, o_2)$ is associated with an expected effect such as $inserted(o_1, o_2)$. Rather than being predefined, the preconditions of the step are inferred from the predicates and constraints that support the plausibility of this transition, combining bottom-up perceptual evidence with top-down assembly knowledge.
+
+Each candidate step is evaluated according to three criteria:
+\begin{itemize}
+  \item whether the expected effect is supported by observed changes in the symbolic state.
+  \item whether available predicates provide sufficient evidence for the inferred preconditions.
+  \item whether inferred constraints and compatibility rules permit the action. 
+\end{itemize}
+
+
+A decision policy is defined to classify each hypothesis based on the available evidence. Let $\tau_{acc}$ denote the acceptance threshold and $\tau_{unc}$ a lower bound for partial support. For a given hypothesis $h$, let $S_p$ and $S_c$ denote the supporting predicates and constraints, respectively.
+
+A hypothesis is classified as:
+\begin{itemize}
+  \item Accepted if the expected effect is supported, no incompatibility relation is present, and the aggregated confidence of $S_p \cup S_c$ exceeds $\tau_{acc}$.
+  \item Uncertain if partial support exists, with aggregated confidence above $\tau_{unc}$ but below $\tau_{acc}$.
+  \item Rejected otherwise, or if an incompatibility relation is present.
+\end{itemize}
+
+
+
+
+\begin{figure}[t]
+  \begin{center}
+    %\vspace*{1em}
+    \includegraphics[width=0.9\linewidth]{Figures/Layer_4_simple_admisability_check.png}
+    %\vspace*{1em}
+  \end{center}
+  \caption{Layer 4 procedural validation. Candidate step hypotheses are evaluated against observed
+predicates and constraints inferred in Layer 3, including incompatibility relations derived from semantic compatibility rules,
+producing explainable outcomes under uncertainty.}
+  \label{fig:layer4_diagram-1}
+\end{figure}
+
+
+Given the presence of uncertainty, multiple candidate steps may be plausible at a given point, therefore, Layer 4 maintains competing step hypotheses rather than committing to a single interpretation. Each hypothesis is associated with a confidence value derived from supporting predicates and constraints, which is used as part of the classification process.
+
+\Cref{fig:layer4_diagram-1} illustrates this decision process, where candidate step hypotheses are evaluated against predicates and inferred constraints and classified according to the decision policy defined above.
+
+
+Each decision is accompanied by an explanation trace that explicitly links the outcome to the supporting predicates, inferred constraints, and any missing or conflicting evidence. This ensures that the reasoning process remains transparent and that the influence of uncertainty can be determined.
+
+
+\Cref{fig:layer4_diagram-2} illustrates the construction of the procedural graph, where accepted and plausible step hypotheses are represented as nodes, and edges encode temporal adjacency relations inferred from consecutive symbolic state transitions, indicating that one step is observed to follow another. When multiple hypotheses correspond to the same observed transition, they are represented as alternative nodes in the graph, sharing the same incoming and outgoing temporal relations.
+
+
+\begin{figure}
+  \begin{center}
+    %\vspace*{1em}
+    \includegraphics[width=0.9\linewidth]{Figures/Layer_4_procedural_graph_construction.png}
+    %\vspace*{1em}
+  \end{center}
+  \caption{Procedural graph construction from validated step hypotheses. Accepted and plausible step hypotheses are represented as nodes uncertain hypotheses may be retained as alternative nodes, whereas rejected hypotheses are discarded.}
+  \label{fig:layer4_diagram-2}
+\end{figure}
+
+
+\Cref{fig:procedural_graph_example} illustrates the resulting procedural graph, where accepted and uncertain step hypotheses are represented as nodes, including alternative interpretations of the same transition, and edges encode temporal adjacency between steps.
+
+
+%%%
+\FloatBarrier
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+    >=Latex,
+    node distance=14mm and 20mm,
+    acceptedcolor/.style={
+        circle,
+        draw=black,
+        fill={rgb,255:red,213; green,232; blue,212},
+        minimum size=12mm,
+        align=center,
+        font=\small
+    },
+    uncertaincolor/.style={
+        circle,
+        draw=black,
+        dashed,
+        fill={rgb,255:red,255; green,242; blue,204},
+        minimum size=12mm,
+        align=center,
+        font=\small
+    },
+    neutral/.style={
+        circle,
+        draw=black,
+        minimum size=10mm,
+        align=center,
+        font=\small
+    },
+    edge/.style={
+        ->,
+        thick
+    },
+    lab/.style={
+        font=\scriptsize
+    }
+]
+
+% Nodes
+\node[neutral] (start) {Start};
+\node[acceptedcolor, below=of start] (pick) {Pick\\0.85};
+
+\node[acceptedcolor, below left=of pick] (insert) {Insert\\0.70};
+\node[uncertaincolor, below right=of pick] (align) {Align\\0.55};
+
+\node[acceptedcolor, below=22mm of pick] (secure) {Secure\\0.80};
+
+% Edges
+\draw[edge] (start) -- (pick);
+\draw[edge] (pick) -- (insert);
+\draw[edge] (pick) -- (align);
+\draw[edge] (insert) -- (secure);
+\draw[edge] (align) -- (secure);
+
+% Hypothesis labels
+\node[lab, left=2mm of insert] {$h_1$};
+\node[lab, right=2mm of align] {$h_2$};
+
+% Status labels
+\node[lab, above=1mm of insert] {accepted};
+\node[lab, above=1mm of align] {uncertain};
+
+% Time labels (layer-based)
+\node[lab, above=2mm of start] {$t_0$};
+\node[lab, above=2mm of pick] {$t_1$};
+\node[lab, above=2mm of secure] {$t_2$};
+
+\end{tikzpicture}
+\caption{Procedural graph constructed from validated step hypotheses. Nodes represent accepted and uncertain hypotheses. The nodes $h_1$ and $h_2$ correspond to alternative interpretations of the same observed transition. Edges encode temporal adjacency only and do not represent causal or executable dependencies.}
+\label{fig:procedural_graph_circle}
+\end{figure}
+
+%%%
+
+\subsection{Design decisions and alternatives}
+\label{sub:layer4-method-design-decisions}
+
+\subsubsection{Generation of candidate procedure steps}
+
+A key design decision concerns the role of Layer 4 with respect to step generation. One alternative would be to infer procedural steps directly within this layer by analyzing symbolic state transitions. While conceptually appealing, this approach introduces additional ambiguity and complexity, particularly under noisy or incomplete observations. In this work, the generation of candidate step hypotheses is treated externally as described in \cref{sec:layer2-method}, while Layer 4 focuses exclusively on their validation. This separation simplifies the reasoning process, enables controlled evaluation, and allows the layer to concentrate on consistency, uncertainty handling, and explainability.
+
+\subsubsection{Representation of procedural knowledge}
+Alternatives such as behavior trees or finite state machines provide structured representations that integrate planning and execution, as seen in frameworks such as \citep{Zhao2025VideoToBT}. However, these approaches introduce control-oriented semantics that are not required in the present context. In this work, each step is represented in terms of its action, arguments, inferred preconditions, and expected effects. This representation focuses on the semantic interpretation of the step rather than its execution, and aligns naturally with the predicate-based reasoning established in Layers 2 and 3. The trade-off is that execution strategies and control flow are not explicitly modeled.
+
+\subsubsection{Handling of uncertainty}
+
+A purely threshold-based approach would reduce reasoning to binary decisions and discard alternative interpretations, while a fully probabilistic approach would require modeling complex dependencies between predicates and constraints. The approach adopted here combines elements of both.
+
+A more expressive alternative would consist of maintaining and updating multiple competing hypotheses over time, as in inference-tree formulations such as \citet{WangEtAl2018}. While this approach enables richer temporal reasoning, it introduces significant computational and modeling complexity. In this work, a simplified local reasoning design (hypotheses are evaluated independently at each time step, without maintaining explicit hypothesis trajectories over time) is adopted, with focus on uncertainty propagation and explainability.
+
+Inspired by the multi-hypothesis reasoning perspective of \citet{WangEtAl2018}, this work allows multiple candidate step hypotheses to be evaluated in parallel, each supported by different subsets of predicates and constraints. In contrast to full inference-tree formulations, these hypotheses are not organized into global state structures or updated across time.
+
+Confidence values are used to assess the plausibility of each hypothesis and to classify it into accepted, uncertain, or rejected categories, rather than eliminating alternatives prematurely. This design preserves ambiguity while maintaining interpretability and tractability.
+
+
+\subsubsection{Consistency-checking mechanism independent of the source}
+A further decision concerns the independence of the validation process from the source of candidate steps. Whether steps are produced by automated perception models or by manual annotation, they are treated uniformly as hypotheses that require validation. This ensures that the reasoning process is robust not only to model errors, but also to incomplete or inconsistent human descriptions.
+
+\subsubsection{Decoupling between perception and reasoning}
+In tightly integrated systems such as \citep{Zhao2025VideoToBT}, planning, perception, and execution are combined in a closed loop. In contrast, the present work adopts a layered architecture in which Layer 4 operates exclusively on symbolic inputs from Layers 2 and 3. This separation improves modularity, allows independent evaluation of reasoning components, and facilitates controlled experimentation using synthetic inputs. The trade-off is that real-time feedback and dynamic re-planning are not addressed within this layer.
+
+\subsubsection{Procedural graph construction vs execution-oriented representations}
+
+A design decision concerns how validated procedural knowledge should be represented after step-level reasoning.
+
+One alternative is to adopt execution-oriented representations such as behavior trees or finite state machines, as used in frameworks such as \citep{Zhao2025VideoToBT}. These representations provide explicit control flow, reactivity, and support for execution in robotic systems. However, they also introduce additional semantics related to scheduling, control, and recovery that are not required for the purposes of this work. Moreover, they typically assume a well-defined and consistent procedural structure, which may not hold under uncertain and partially observed conditions.
+
+In this work, a simplified procedural graph is adopted, in which nodes correspond to validated step hypotheses and edges capture inferred relations between steps, such as ordering or dependency. This representation is derived after step validation and does not encode execution semantics. Instead, it serves as a structured and interpretable summary of the inferred procedure, grounded in the symbolic evidence and constraints derived in previous layers.
+
+The choice of a graph-based representation allows the system to capture partial ordering, ambiguity, and alternative interpretations without committing to a single linear sequence. At the same time, it remains compatible with the local hypothesis evaluation approach adopted in this work, as it does not require maintaining or updating global hypothesis structures over time.
+
+The trade-off is that the resulting representation cannot be directly executed or used for control without further transformation. However, this limitation is consistent with the scope of the thesis, which focuses on reasoning, validation, and explainability rather than execution. The procedural graph may therefore be interpreted as an intermediate artifact that could, in future work, be compiled into execution-oriented representations such as behavior trees if required.
+
+\subsection{Implementation scope and delimitations}
+
+While the conceptual design supports the validation of multiple competing procedural hypotheses under uncertainty, the implemented prototype focuses on a simplified subset of this functionality. In particular, it assumes that candidate steps are provided as input and evaluates each candidate step hypothesis independently, without maintaining a global multi-hypothesis state over time.
+
+The implementation checks whether the expected effect of a step is supported by observed relations and whether sufficient evidence exists for its inferred preconditions based on predicates and constraints. Confidence values are propagated from supporting evidence, and each step is assigned one of three qualitative outcomes: accepted, uncertain, or rejected. For each decision, an explanation trace is recorded linking the outcome to the relevant predicates and constraints, i.e.: predicates and constraints matching the action arguments of the hypothesis.
+
+The implementation does not include long-horizon reasoning, global ordering constraints, or dynamic refinement of procedural structures over extended sequences. It also does not integrate with execution or guidance systems. These aspects are left for future work.
+
+\subsection{Relation to assembly reasoning}
+
+In this framework, procedural reasoning is formulated as the validation of candidate step hypotheses against an evolving symbolic representation of the assembly. Layer 2 provides a perception-grounded description of objects and their relations, while Layer 3 infers assembly-relevant constraints from these observations. Layer 4 then evaluates whether proposed steps are consistent explanations of the observed state transitions.
+
+This perspective differs from approaches that rely on predefined procedural templates or explicit state machines \citep{Stanescu_2022,Stanescu_2023,Stanescu_2024}. Instead, procedural knowledge is treated as a set of validated hypotheses grounded in observed interactions and inferred constraints. As a result, the system can reason about assembly processes even when the underlying procedure is uncertain or partially specified, while maintaining explicit traceability of its decisions.
+
+
+
+\section{Example Rule 1 with semantic and spatial hypotheses}
+\label{sec:example-rule1}
+
+The following example illustrates how semantic labeling, spatial reasoning, and procedural validation interact across Layers 2, 3, and 4.
+
+\subsection{Layer 1: entity and semantic hypotheses}
+
+At time step $t$, Layer 1 produces a set of entity hypotheses with geometric attributes and semantic label candidates:
+
+\begin{itemize}
+\item Object $o_1$:
+\begin{itemize}
+\item Geometry: oriented bounding box
+\item Label hypotheses: Peg (0.68), Screw (0.22)
+\end{itemize}
+\item Object $o_2$:
+\begin{itemize}
+\item Geometry: oriented bounding box
+\item Label hypotheses: Hole (0.74), Slot (0.18)
+\end{itemize}
+\item Object $o_3$:
+\begin{itemize}
+\item Geometry: oriented bounding box
+\item Label hypotheses: Bracket (0.81)
+\end{itemize}
+\end{itemize}
+
+These semantic labels are treated as uncertain hypotheses rather than fixed classifications.
+
+\subsection{Layer 2: spatial, semantic, and step hypotheses}
+
+Using geometric abstraction, Layer 2 derives qualitative spatial relations:
+
+\begin{itemize}
+\item $aligned(o_1, o_2)$ with confidence 0.72
+\item $inside(o_1, o_2)$ with confidence 0.65
+\item $touching(o_1, o_3)$ with confidence 0.83
+\end{itemize}
+
+In parallel, semantic hypotheses are represented as unary relations:
+
+\begin{itemize}
+\item $isA(o_1, Peg)$ with confidence 0.68
+\item $isA(o_1, Screw)$ with confidence 0.22
+\item $isA(o_2, Hole)$ with confidence 0.74
+\item $isA(o_3, Bracket)$ with confidence 0.81
+\end{itemize}
+
+Assume that between time steps $t$ and $t+1$, the relation $inserted(o_1, o_2)$ is newly observed with confidence 0.70. Based on this transition, Layer 2 proposes two candidate procedural steps:
+
+\begin{itemize}
+\item Step hypothesis: $Insert(o_1, o_2)$ with confidence 0.70
+\item Step hypothesis: $Align(o_1, o_2)$ with confidence 0.55
+\end{itemize}
+
+These hypotheses represent alternative interpretations of the observed interaction and are evaluated independently in Layer 4.
+
+
+\subsection{Layer 3: rule-based constraint inference}
+
+Layer 3 evaluates rules over the predicates produced in Layer 2. Example Rule 1 combines spatial and semantic conditions:
+
+\begin{align*}
+&aligned(x,y) \land inside(x,y) \land touching(x,z) \\
+&\land\ isA(x,\text{Peg}) \land isA(y,\text{Hole}) \land isA(z,\text{Bracket}) \\
+&\Rightarrow\ \{\, canInsert(x,y),\ requiresAlignment(x,y) \,\}
+\end{align*}
+
+
+In addition, the system evaluates semantic compatibility rules defined independently of the current observation, for example:
+
+\begin{align*}
+&isA(x, \text{Peg}) \land isA(y, \text{Bracket}) \Rightarrow\  incompatibleAction(x, y, Insert)
+\end{align*}
+
+Such rules do not produce supporting constraints, but instead generate incompatibility relations that explicitly indicate that a given action is not admissible for the corresponding object types. These relations are evaluated alongside inferred constraints and are enforced during procedural validation.
+
+
+For the instance $(o_1, o_2, o_3)$, the rule is activated. The confidence of the inferred relations is computed using a conservative aggregation policy:
+
+\begin{equation*}
+confidence = \min(0.72,\ 0.65,\ 0.83,\ 0.68,\ 0.74,\ 0.81) = 0.65
+\end{equation*}
+
+Layer 3 therefore infers the following constraints:
+
+\begin{itemize}
+\item $canInsert(o_1, o_2)$ with confidence 0.65
+\item $requiresAlignment(o_1, o_2)$ with confidence 0.65
+\end{itemize}
+
+These inferred relations capture assembly-relevant feasibility and qualitative requirements derived from spatial and semantic evidence, independently of any procedural interpretation. And as seen in \Cref{fig:layer3_diagram-1}, such constraints represent necessary conditions for the plausibility of an action, whereas spatial predicates from Layer 2 act as supporting evidence that may strengthen or weaken a hypothesis without being strictly required.
+
+
+\subsection{Layer 4: procedural hypothesis validation}
+
+Layer 4 evaluates each candidate step as a hypothesis explaining the observed transition.
+
+For the hypothesis $Insert(o_1, o_2)$, the expected effect $inserted(o_1, o_2)$ is directly supported by observation with confidence 0.70. The predicates $aligned(o_1, o_2)$ and $inside(o_1, o_2)$ provide strong supporting evidence, and the semantic hypotheses $isA(o_1, Peg)$ and $isA(o_2, Hole)$ reinforce the interpretation. In addition, the inferred constraints $canInsert(o_1, o_2)$ and $requiresAlignment(o_1, o_2)$ are satisfied with confidence 0.65. Based on this consistent evidence, the step is classified as \textit{accepted}.
+
+As for the alternative hypothesis $Align(o_1, o_2)$, although the predicate $aligned(o_1, o_2)$ provides support, the inferred constraints primarily support insertion more than adjustment. As a result, the hypothesis is classified as \textit{uncertain}.
+
+These outcomes illustrate how multiple candidate interpretations may be evaluated in parallel, with decisions based on the consistency between observed effects, supporting predicates, and inferred constraints.
+
+
+\subsection{Explanation trace}
+
+The decision is recorded together with an explanation trace linking the outcome to its supporting evidence:
+
+\begin{itemize}
+\item Observed effect: $inserted(o_1, o_2)$ (0.70)
+\item Spatial evidence: $aligned$, $inside$, $touching$
+\item Semantic evidence: Peg, Hole, Bracket hypotheses
+\item Inferred constraints: $canInsert(o_1, o_2)$ (0.65) and $requiresAlignment(o_1, o_2)$ (0.65)
+\item Aggregation method: minimum confidence
+\end{itemize}
+
+This trace makes explicit how both perceptual uncertainty and constraint-level reasoning contribute to the final procedural assessment.
+
+
+\section{Example Rule 2: connector placement and securing}
+
+To illustrate the generality of the proposed approach, consider a scenario inspired by electrical transformer assembly, where a connector must be placed and secured onto a terminal.
+
+At a given time step, Layer 2 produces predicates such as:
+
+\begin{itemize}
+\item $isA(o_4, Connector)$ with confidence 0.82
+\item $isA(o_5, Terminal)$ with confidence 0.78
+\item $aligned(o_4, o_5)$ with confidence 0.75
+\item $touching(o_4, o_5)$ with confidence 0.80
+\end{itemize}
+
+Based on these predicates, Layer 3 evaluates a rule of the form:
+
+\begin{align*}
+&aligned(x,y) \land touching(x,y) \\
+&\land\ isA(x,\text{Connector}) \land isA(y,\text{Terminal}) \\
+&\Rightarrow\ \{\, canAttach(x,y),\ requiresContact(x,y) \,\}
+\end{align*}
+
+The inferred constraints capture assembly-relevant conditions indicating that the connector can be attached to the terminal and that proper contact must be maintained.
+
+Assume that a candidate step hypothesis is provided:
+
+\begin{itemize}
+\item $Attach(o_4, o_5)$
+\end{itemize}
+
+Layer 4 evaluates this hypothesis by checking:
+
+\begin{itemize}
+\item whether an attachment effect is supported (e.g., sustained contact),
+\item whether spatial predicates provide sufficient evidence,
+\item whether inferred constraints such as $canAttach$ are satisfied.
+\end{itemize}
+
+If the evidence is consistent but not fully conclusive, the hypothesis may be classified as \textit{uncertain}, illustrating how the same reasoning mechanism applies across domains while preserving uncertainty and explainability.
+
+This example highlights that the proposed framework does not rely on domain-specific geometry or predefined procedures, but instead operates through generic predicates and rules that can be instantiated for different assembly contexts.
+
+
+
+\chapter{Design}
+\label{cha:design}
+
+\section{Design overview}
+
+The design translates the layered methodology presented in \cref{cha:methodology} into a concrete and implementable architecture. The system operates over symbolic representations derived from perception, structured according to the notation introduced in \cref{sec:notation-mapping}.
+
+Let $P_t$ denote the set of predicates at time $t$, $C_t$ the set of inferred constraints, and $H_t$ the set of candidate step hypotheses. The design focuses on the transformation and interaction of these sets across Layers 2, 3, and 4, while treating Layer 1 as an external interface.
+
+The implementation follows four principles. First, modularity is enforced by defining clear interfaces between layers. Second, traceability is ensured by linking all inferred elements to their supporting evidence. Third, uncertainty is preserved through confidence values propagated across layers. Fourth, extensibility is supported by maintaining a minimal and explicit schema that can be expanded without modifying the interfaces.
+
+\section{System architecture}
+
+The system is decomposed into four modules corresponding to the abstraction, inference, validation, and graph construction stages.
+
+Layer 2 constructs the symbolic predicates $P_t$ from perception outputs. Layer 3 evaluates inference and compatibility rules over $P_t$ to produce inferred constraints and incompatibility relations in $C_t$. Layer 4 evaluates candidate step hypotheses $H_t$ using both $P_t$ and $C_t$. Finally, validated hypotheses are organized into a procedural graph representation.
+
+Each module operates independently over well-defined inputs and outputs, ensuring that perception, reasoning, and procedural modeling remain decoupled.
+
+\section{Execution ontology and data schema}
+
+As stated in \cref{sec:ontology-schemas}, a minimal execution ontology is used to structure the representations exchanged between modules. This ontology does not implement a full reasoning framework, but defines the vocabulary and schema required for consistent data exchange.
+
+Objects are represented as entities with stable identifiers and geometric attributes. Predicates correspond to unary and binary relations over these entities. Constraints represent inferred assembly-relevant conditions. Step hypotheses encode candidate procedural interpretations.
+
+Formally, predicates are defined as elements of $P_t$ of the form
+\[
+p = (name, args, conf, t, source),
+\]
+where $name$ identifies the relation, $args$ are object identifiers, $conf \in [0,1]$ is the confidence value, $t$ is the timestamp, and $source$ indicates the originating module.
+
+Constraints are defined as elements of $C_t$:
+\[
+c = (name, args, conf, r, S),
+\]
+where $r$ denotes the rule that produced the constraint and $S \subseteq P_t$ is the set of supporting predicates.
+
+Step hypotheses are defined as elements of $H_t$:
+\[
+h = (a, args, e, conf),
+\]
+where $a$ is the action type, $args$ are object identifiers, and $e$ is the expected effect expressed as a predicate.
+
+All elements include implicit provenance through references to supporting predicates and rules, enabling detailed traceability.
+
+In addition to constraints, the schema includes incompatibility relations of the form 
+\[
+incompatibleAction(o_i, o_j, a)
+\]
+which represent semantically inadmissible action-object combinations derived from compatibility rules. Unlike constraints, these relations do not provide supporting evidence but act as hard conditions during procedural validation.
+
+
+\section{Rule representation and inference mechanism}
+
+The reasoning mechanism in Layer 3 distinguishes between two types of rules: inference rules and
+compatibility rules. Inference rules are defined as conjunctions of predicate conditions that produce one or
+more constraints when satisfied. Each inference rule r is defined as
+\[
+r: \{p_1, \dots, p_k\} \rightarrow \{c_1, \dots, c_m\},
+\]
+with an associated activation threshold $\tau$.
+
+Compatibility rules operate over semantic predicates and define whether a given action is admissible for a pair of object types. These rules do not produce constraints but generate incompatibility relations of the form 
+\[
+incompatibleAction(o_i, o_j, a)
+\]
+
+Given a set of predicates $P_t$, rule evaluation consists of identifying bindings of rule variables that satisfy the antecedent conditions. For each valid binding, the confidence of inferred constraints is computed using a conservative aggregation function:
+\[
+conf_r = \min_{p \in S} conf(p),
+\]
+where $S$ is the set of supporting predicates.
+
+If $conf_r \geq \tau$, the corresponding constraints are instantiated and added to $C_t$, together with references to the supporting predicates. The rule evaluation logic is presented in \cref{lst:alg_rule_evaluation}.
+
+
+
+%\subsection*{Algorithm 1: Rule evaluation in Layer 3}
+\begin{listing*}
+\begin{Code}
+Input: P_t, inference rules R, compatibility rules R_c
+Output: C_t
+
+C_t = empty set
+
+# Inference rules
+for each rule r in R:
+    matches = FindBindings(r.antecedents, P_t)
+
+    for each binding b in matches:
+        S = supporting predicates
+        conf = min confidence in S
+
+        if conf >= threshold:
+            add inferred constraints to C_t
+
+# Compatibility rules
+for each rule r_c in R_c:
+    matches = FindBindings(r_c.antecedents, P_t)
+
+    for each binding b in matches:
+        add incompatibleAction(b) to C_t
+
+return C_t
+\end{Code}
+\caption{Algorithm for implementation of rule evaluation as defined in \cref{sec:layer3-method}.}
+\label{lst:alg_rule_evaluation}
+\end{listing*}
+
+
+
+\section{Procedural hypothesis validation}
+
+Layer 4 evaluates each hypothesis $h \in H_t$ as a candidate explanation of an observed state transition. Considering four aspects: whether the expected effect is supported by $P_t$, whether sufficient predicate-level evidence exists, whether inferred constraints in $C_t$ support the proposed action, and whether any incompatibility relations explicitly invalidate it.
+
+The outcome of the evaluation is a classification into accepted, uncertain, or rejected, together with an explanation trace linking the decision to the supporting evidence. The logic is presented in \cref{lst:alg_step_validation}.
+
+\section{Explanation trace}
+
+Each decision is recorded together with an explanation trace linking the outcome to its supporting evidence. The trace is defined as:
+
+\begin{itemize}
+\item Expected effect: $h.e$
+\item Supporting predicates: $S_p \subseteq P_t$
+\item Supporting constraints: $S_c \subseteq C_t$
+\item Incompatibility relations (if any): $S_{inc} \subseteq C_t$
+\item Aggregated confidence: $\min_{x \in S_p \cup S_c} \text{conf}(x)$
+\item Decision outcome: $\{\text{accepted}, \text{uncertain}, \text{rejected}\}$
+\end{itemize}
+
+This structure makes explicit how both perceptual evidence (predicates) and inferred assembly conditions (constraints) contribute to the final decision, and how uncertainty is propagated through confidence aggregation.
+
+%\subsection*{Algorithm 2: LAyer 4 - Step validation with compatibility enforcement}
+\begin{listing*}
+\begin{Code}
+Input: h, P_t, C_t
+Output: decision, trace
+
+effect_supported = check whether the expected effect of h is in P_t
+S_p = predicates from P_t matching h.args
+S_c = constraints and incompatibility relations from C_t matching h.args
+
+if there exists an incompatibility relation matching h.action and h.args:
+    decision = rejected
+    trace = record(S_p, S_c, "incompatible action")
+    return decision, trace
+
+conf = minimum confidence value in S_p union S_c
+
+if effect_supported and sufficient constraint support:
+    decision = accepted
+else if partial support:
+    decision = uncertain
+else:
+    decision = rejected
+
+trace = record(S_p, S_c, decision)
+
+return decision, trace
+\end{Code}
+\caption{Algorithm for Step validation with compatibility enforcement and explanation trace generation (local reasoning as described in \cref{sub:layer4-method-design-decisions}).}
+\label{lst:alg_step_validation}
+\end{listing*}
+
+
+
+
+\section{Procedural graph representation}
+
+Following validation, the system constructs a procedural graph representing the inferred structure of the procedure, defined over hypotheses. Let $H^{+} \subseteq H_t$ denote the subset of accepted and uncertain hypotheses. The procedural graph is defined as
+\[
+G = (H^{+}, E),
+\]
+where nodes correspond to validated hypotheses and edges represent temporal adjacency between steps inferred from consecutive state transitions.
+
+Alternative hypotheses for the same transition are represented as parallel nodes with identical temporal connections while rejected hypotheses are excluded from the graph. The logic is presented in \cref{lst:alg_graph_construction}.
+
+This formulation ensures consistency with the methodological definition of $H$ as the set of procedural hypotheses, while restricting the graph to the subset that remains plausible after validation.
+
+%\subsection*{Algorithm 3: Graph construction}
+\begin{listing*}
+\begin{Code}
+Input: validated hypotheses H_valid
+Output: graph G
+
+H_plus = accepted and uncertain hypotheses from H_valid
+E = empty set
+
+for each pair (h_i, h_j) in H_plus:
+    if h_j is observed to follow h_i in consecutive state transitions:
+        add edge (h_i -> h_j) to E
+
+G = (H_plus, E)
+
+return G
+\end{Code}
+\caption{Algorithm for Procedural Graph construction, captures partial ordering and alternative interpretations without introducing execution semantics, as discussed in \cref{sec:layer4-method}).}
+\label{lst:alg_graph_construction}
+\end{listing*}
+
+
+
+\section{Graph persistence in Neo4j}
+
+For persistence and querying, the procedural graph is stored in a graph database. Nodes correspond to hypotheses, constraints, and predicates, while relationships encode support and dependency.
+
+Each step hypothesis is stored as a node with attributes including action type, arguments, and confidence. Constraints and predicates are also stored as nodes, linked through relationships that reflect the reasoning trace.
+
+For example, a step node may be connected to supporting constraints via a \texttt{SUPPORTED\_BY} relation, and to subsequent steps via a \texttt{NEXT} relation.
+
+This representation enables querying of explanation traces and reconstruction of reasoning paths directly from the stored graph.
+
+\section{Tooling, logging, and reproducibility}
+
+All intermediate representations, including predicates, constraints, and step hypotheses, are logged in structured formats. Each record includes timestamps, identifiers, confidence values, and provenance references.
+
+Each experiment is associated with a configuration snapshot specifying the rule set, thresholds, and input data. This ensures that results can be reproduced and that differences between runs can be systematically processed.
+
+Failure cases are explicitly recorded, including the predicates and constraints that led to rejected hypotheses, enabling detailed analysis of reasoning behavior under uncertainty.
+
+\section{Governance and scope constraints}
+
+The implementation adheres to the scope defined in \cref{sub:layer3-method-design-decisions,sub:layer4-method-design-decisions}. In particular, it does not implement temporal hypothesis tracking, probabilistic graphical models, or large-scale ontology reasoning.
+
+All reasoning steps are deterministic given the input predicates and rule definitions. No implicit state updates or hidden dependencies are introduced.
+
+This design prioritizes interpretability, traceability, and controlled evaluation over completeness, ensuring alignment with the research objectives of explainability and robustness under uncertainty.
+
+\section{Extensibility}
+
+The modular structure of the system allows future extensions without modification of the core interfaces. Possible extensions include temporal hypothesis tracking, probabilistic reasoning mechanisms, site-level representations, and integration with execution-oriented models.
+
+These extensions can be incorporated by extending the representations of $P_t$, $C_t$, and $H_t$, while preserving the separation between perception, reasoning, and procedural validation.
