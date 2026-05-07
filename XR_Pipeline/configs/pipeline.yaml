@@ -108,14 +108,14 @@ detection_groups:
   hands:
     enabled: true
     classes: ["hand"]
-    box_threshold: 0.20      # lower than default; hand is a complex deformable object
-    text_threshold: 0.20
+    box_threshold: 0.45      # lower than default; hand is a complex deformable object
+    text_threshold: 0.45
     # Isolated prompt → ~85% recall vs ~26% when mixed with lego vocabulary
   workpieces:
     enabled: true
     classes: ["red_lego", "blue_lego"]
-    box_threshold: 0.25      # tuned via sweep (session_003)
-    text_threshold: 0.25
+    box_threshold: 0.40      # tuned via sweep (session_003)
+    text_threshold: 0.40
   tools:
     enabled: false
     classes: []

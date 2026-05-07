@@ -36,7 +36,16 @@ detection:
   depth_cluster_tolerance_m: 0.1  # depth difference within a blob (depth_blobs backend)
   max_detections_per_class_per_frame: 1  # keep only top-confidence detection per class per frame (suppresses Grounding DINO duplicates)
   # V2 post-processing controls
-  min_bbox_area_px: 100         # drop detections whose pixel-space bbox area is below this
+  min_bbox_area_px: 100         # drop tiny detections whose pixel-space bbox area is below this
+  max_bbox_area_px_by_class:    # drop class-specific boxes that are physically too large for the object
+    red_lego: 12000            # reject table-sized false positives labelled as red_lego
+    blue_lego: 12000           # reject table-sized false positives labelled as blue_lego
+  roi:                         # optional normalized image region-of-interest filter
+    enabled: true              # true = keep only detections whose bbox center falls inside this ROI
+    x_min: 0.15                # left ROI boundary as fraction of RGB width (0.15 = ignore outer 15%)
+    x_max: 0.85                # right ROI boundary as fraction of RGB width
+    y_min: 0.10                # top ROI boundary as fraction of RGB height
+    y_max: 0.90                # bottom ROI boundary as fraction of RGB height
   nms_iou_threshold: 0.5        # IoU threshold for class-aware 2D NMS (0 = disabled)
 
 # Grounding DINO detection thresholds

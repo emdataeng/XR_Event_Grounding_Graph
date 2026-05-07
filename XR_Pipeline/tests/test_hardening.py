@@ -238,6 +238,39 @@ def test_vocabulary_build_prompt_matches_expected():
     assert "a blue lego brick" in prompt
 
 
+def test_postprocess_rejects_class_specific_oversized_bbox():
+    v = _lego_vocab()
+    detections = [
+        _det("red lego", score=0.8, x1=0, y1=0, x2=200, y2=100),
+        _det("blue lego", score=0.8, x1=10, y1=10, x2=60, y2=60),
+    ]
+
+    kept = postprocess_detections(
+        detections,
+        vocab=v,
+        max_area_px_by_class={"red_lego": 12000, "blue_lego": 12000},
+    )
+
+    assert [d.metadata["canonical_class"] for d in kept] == ["blue_lego"]
+
+
+def test_postprocess_rejects_bbox_center_outside_roi():
+    v = _lego_vocab()
+    detections = [
+        _det("red lego", score=0.8, x1=0, y1=20, x2=20, y2=60),
+        _det("blue lego", score=0.8, x1=260, y1=90, x2=340, y2=150),
+    ]
+
+    kept = postprocess_detections(
+        detections,
+        vocab=v,
+        roi={"enabled": True, "x_min": 0.15, "x_max": 0.85, "y_min": 0.10, "y_max": 0.90},
+        image_size=(640, 240),
+    )
+
+    assert [d.metadata["canonical_class"] for d in kept] == ["blue_lego"]
+
+
 # ── Fix 5: ignore_for_object_tracks filters before tracking ──────────────────
 
 def test_ignore_for_object_tracks_filtering():

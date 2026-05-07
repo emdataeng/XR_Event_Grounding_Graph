@@ -4,15 +4,17 @@ Applied after the detector backend, before depth backprojection:
   1. Vocabulary canonicalization — maps raw labels to canonical class names.
      Detections with no mapping (when vocabulary is non-empty) are dropped.
   2. Confidence filtering — drop detections below min confidence.
-  3. Area filtering — drop detections with bbox area below min_area_px.
-  4. Class-aware 2D NMS — within each class, suppress lower-score boxes
+  3. Area filtering — drop detections below min_area_px or above class max area.
+  4. ROI filtering — optionally keep only detections centered in a configured
+     normalized image region.
+  5. Class-aware 2D NMS — within each class, suppress lower-score boxes
      whose IoU with a higher-score box exceeds the threshold.
 
 The canonical_class is stored in det.metadata['canonical_class'] so that
 script 05 can populate the V2 column without re-running vocabulary lookup.
 """
 from __future__ import annotations
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -25,6 +27,9 @@ def postprocess_detections(
     vocab: Vocabulary,
     conf_min: float = 0.0,
     min_area_px: float = 0.0,
+    max_area_px_by_class: Optional[Dict[str, float]] = None,
+    roi: Optional[Dict[str, Any]] = None,
+    image_size: Optional[Tuple[int, int]] = None,
     nms_iou_threshold: float = 0.5,
     apply_vocab: bool = True,
 ) -> List[DetectionResult]:
@@ -35,6 +40,12 @@ def postprocess_detections(
         vocab:             Vocabulary instance (may be empty / permissive).
         conf_min:          Drop detections with score < conf_min.
         min_area_px:       Drop detections with bbox area < min_area_px pixels.
+        max_area_px_by_class:
+                           Optional canonical-class -> max pixel bbox area map.
+        roi:               Optional normalized ROI config. When enabled, bbox
+                           centers outside [x_min,x_max] x [y_min,y_max] are
+                           dropped.
+        image_size:        RGB image size as (width, height), required for ROI.
         nms_iou_threshold: IoU threshold for class-aware NMS (0 = disabled).
         apply_vocab:       Whether to apply vocabulary canonicalization and
                            rejection.  Set False for fixed-class backends
@@ -63,17 +74,54 @@ def postprocess_detections(
         if det.score < conf_min:
             continue
 
-        # 3. Area filter
-        if min_area_px > 0 and det.bbox_area_px < min_area_px:
+        # 3. Area filters
+        area_px = det.bbox_area_px
+        if min_area_px > 0 and area_px < min_area_px:
+            continue
+
+        if max_area_px_by_class:
+            max_area = max_area_px_by_class.get(canonical)
+            if max_area is not None and max_area > 0 and area_px > max_area:
+                continue
+
+        # 4. Optional normalized ROI center filter
+        if not _bbox_center_in_roi(det.bbox_xyxy, roi, image_size):
             continue
 
         out.append(det)
 
-    # 4. Class-aware NMS
+    # 5. Class-aware NMS
     if nms_iou_threshold > 0 and len(out) > 1:
         out = _class_aware_nms(out, iou_threshold=nms_iou_threshold)
 
     return out
+
+
+def _bbox_center_in_roi(
+    bbox_xyxy: Tuple[float, float, float, float],
+    roi: Optional[Dict[str, Any]],
+    image_size: Optional[Tuple[int, int]],
+) -> bool:
+    """Return True when bbox center is inside the configured normalized ROI."""
+    if not roi or not bool(roi.get("enabled", False)):
+        return True
+    if image_size is None:
+        return True
+
+    img_w, img_h = image_size
+    if img_w <= 0 or img_h <= 0:
+        return True
+
+    x1, y1, x2, y2 = bbox_xyxy
+    cx = ((x1 + x2) / 2.0) / float(img_w)
+    cy = ((y1 + y2) / 2.0) / float(img_h)
+
+    x_min = float(roi.get("x_min", 0.0))
+    x_max = float(roi.get("x_max", 1.0))
+    y_min = float(roi.get("y_min", 0.0))
+    y_max = float(roi.get("y_max", 1.0))
+
+    return x_min <= cx <= x_max and y_min <= cy <= y_max
 
 
 # ── IoU helpers ───────────────────────────────────────────────────────────────

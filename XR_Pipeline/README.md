@@ -271,6 +271,10 @@ Frames without a matching `_depth.npy` are processed for detection but skipped d
 | `tracking.class_must_match` | `true` | Only link observations of the same semantic class |
 | `events.min_move_distance_m` | `0.05` | Minimum displacement to register as a MOVE event |
 | `events.near_threshold_m` | `0.5` | Distance threshold for CO_LOCATE / INTERACTION events |
+| `detection.min_bbox_area_px` | `100` | Drop detections whose 2D bbox is too small to trust |
+| `detection.max_bbox_area_px_by_class` | _(class map)_ | Drop class-specific boxes that are physically too large, e.g. table-sized Lego false positives |
+| `detection.roi.enabled` | `true` | Keep only detections whose bbox center falls inside the configured central image region |
+| `detection.roi.x_min/x_max/y_min/y_max` | `0.15/0.85/0.10/0.90` | Normalized ROI boundaries as fractions of RGB image width/height |
 | `grounding_dino.box_threshold` | `0.30` | Objectness score cutoff — lower = more detections, more noise |
 | `grounding_dino.text_threshold` | `0.25` | Label match score cutoff — lower = looser semantic matching |
 
@@ -293,6 +297,8 @@ The model is downloaded automatically from HuggingFace on first run (~700 MB). N
 - Raise `box_threshold` (e.g. `0.40`) to reduce false positives
 - Lower `text_threshold` (e.g. `0.20`) to pick up objects the model is less confident naming
 - Add specific labels for objects in your scene — the prompt is your vocabulary
+- Use `detection.roi` to ignore detections whose bbox center is outside the central work area
+- Use `detection.max_bbox_area_px_by_class` to reject impossible large boxes, such as a table-sized box labelled as a Lego piece
 
 Detection overlays (bounding boxes + confidence scores per frame) are saved to:
 ```

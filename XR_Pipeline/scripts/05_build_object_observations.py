@@ -87,6 +87,11 @@ def main(
     vocab = Vocabulary.from_config(cfg)
     conf_min = float(thr.get("confidence", {}).get("min_observation", 0.3))
     min_area_px = float(det_cfg.get("min_bbox_area_px", 0))
+    max_area_px_by_class = {
+        str(k): float(v)
+        for k, v in det_cfg.get("max_bbox_area_px_by_class", {}).items()
+    }
+    roi_cfg = det_cfg.get("roi", {})
     nms_iou_thr = float(det_cfg.get("nms_iou_threshold", 0.5))
 
     # Resolve detection prompt: use vocabulary prompt when vocab is configured,
@@ -225,6 +230,9 @@ def main(
                         vocab=gp.vocab,
                         conf_min=conf_min,
                         min_area_px=min_area_px,
+                        max_area_px_by_class=max_area_px_by_class,
+                        roi=roi_cfg,
+                        image_size=(rgb_w, rgb_h),
                         nms_iou_threshold=nms_iou_thr,
                         apply_vocab=True,
                     )
@@ -260,6 +268,9 @@ def main(
                     vocab=vocab,
                     conf_min=conf_min,
                     min_area_px=min_area_px,
+                    max_area_px_by_class=max_area_px_by_class,
+                    roi=roi_cfg,
+                    image_size=(rgb_w, rgb_h),
                     nms_iou_threshold=nms_iou_thr,
                     apply_vocab=apply_vocab,
                 )
