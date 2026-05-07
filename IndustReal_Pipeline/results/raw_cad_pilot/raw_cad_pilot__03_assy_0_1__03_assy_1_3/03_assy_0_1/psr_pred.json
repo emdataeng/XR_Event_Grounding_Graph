@@ -1,0 +1,14 @@
+[
+  {
+    "frame": 1187,
+    "id": 3,
+    "description": "Install front chassis",
+    "conf": 1.0
+  },
+  {
+    "frame": 1187,
+    "id": 6,
+    "description": "Install front chassis pin",
+    "conf": 1.0
+  }
+]

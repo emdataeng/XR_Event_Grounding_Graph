@@ -1,0 +1,60 @@
+{
+  "final_state_index": 22,
+  "goal_name": "Reach final CAD assembly state",
+  "phases": [
+    {
+      "key": "initial_setup",
+      "name": "Initial setup",
+      "configured_order": 10,
+      "components": ["base"]
+    },
+    {
+      "key": "chassis_assembly",
+      "name": "Chassis assembly",
+      "configured_order": 20,
+      "components": ["front chassis", "rear chassis", "short rear chassis"]
+    },
+    {
+      "key": "connector_installation",
+      "name": "Connector installation",
+      "configured_order": 30,
+      "components": [
+        "front chassis pin",
+        "front rear chassis pin",
+        "rear rear chassis pin",
+        "front bracket screw"
+      ]
+    },
+    {
+      "key": "bracket_assembly",
+      "name": "Bracket assembly",
+      "configured_order": 40,
+      "components": ["front bracket"]
+    },
+    {
+      "key": "wheel_assembly",
+      "name": "Wheel assembly",
+      "configured_order": 50,
+      "components": ["front wheel assy", "rear wheel assy"]
+    },
+    {
+      "key": "correction_handling",
+      "name": "Correction handling",
+      "configured_order": 60,
+      "components": [],
+      "event_types": ["ERROR", "REMOVE", "CORRECT"]
+    },
+    {
+      "key": "other",
+      "name": "Other",
+      "configured_order": 999,
+      "components": []
+    }
+  ],
+  "default_phase_key": "other",
+  "event_type_overrides": {
+    "ERROR": "correction_handling",
+    "REMOVE": "correction_handling",
+    "CORRECT": "correction_handling"
+  }
+}

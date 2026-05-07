@@ -1,0 +1,26 @@
+{
+  "clip": "03_assy_1_3",
+  "n_rows": 502,
+  "required_metadata": {
+    "pose.csv": true,
+    "gaze.csv": true,
+    "hands.csv": true,
+    "OD_labels.json": true,
+    "PSR_labels.csv": true,
+    "PSR_labels_with_errors.csv": true,
+    "PSR_labels_raw.csv": false,
+    "AR_labels.csv": false
+  },
+  "checks": {
+    "timestamps_monotonic": true,
+    "pose_valid_rows": 502,
+    "rgb_path_missing": 0,
+    "depth_path_missing": 0,
+    "stereo_left_path_missing": 0,
+    "stereo_right_path_missing": 0
+  },
+  "warnings": [
+    "missing metadata files: PSR_labels_raw.csv, AR_labels.csv"
+  ],
+  "errors": []
+}

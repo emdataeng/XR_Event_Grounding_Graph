@@ -1,0 +1,26 @@
+[
+  {
+    "frame": 558,
+    "id": 9,
+    "description": "Install rear chassis",
+    "conf": 1.0
+  },
+  {
+    "frame": 558,
+    "id": 15,
+    "description": "Install front rear chassis pin",
+    "conf": 1.0
+  },
+  {
+    "frame": 1195,
+    "id": 3,
+    "description": "Install front chassis",
+    "conf": 1.0
+  },
+  {
+    "frame": 1195,
+    "id": 6,
+    "description": "Install front chassis pin",
+    "conf": 1.0
+  }
+]

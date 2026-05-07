@@ -1,0 +1,9 @@
+{
+  "slice_id": "raw_cad_pilot__03_assy_0_1__03_assy_1_3",
+  "slice_dir": "/tmp/industreal_pilot/slices/raw_cad_pilot__03_assy_0_1__03_assy_1_3",
+  "selected_clips": [
+    "03_assy_0_1",
+    "03_assy_1_3"
+  ],
+  "summary_path": "/workspaces/XR_EGG-Claude/IndustReal_Pipeline/results/raw_cad_pilot/raw_cad_pilot__03_assy_0_1__03_assy_1_3/slice_summary.json"
+}
