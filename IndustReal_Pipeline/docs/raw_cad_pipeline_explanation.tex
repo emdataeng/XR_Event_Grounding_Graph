@@ -1,0 +1,925 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue
+}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible
+}
+
+\title{Raw CAD-Grounded IndustReal Pipeline: Plain-Language Explanation}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Short Summary}
+
+This document explains the IndustReal pipeline that was added to the repository. It is written for a reader who does not already know the IndustReal dataset or the pipeline.
+
+The short version is:
+
+\begin{quote}
+We built a separate IndustReal pipeline that reads raw IndustReal recordings, uses the dataset's own assembly-state labels as trusted input, applies CAD-informed assembly rules, converts states into procedure steps, creates graph outputs, and evaluates the results on real IndustReal test clips.
+\end{quote}
+
+This is not yet a pipeline that detects every object directly from raw images by itself. The current version is intentionally \textbf{oracle-first}. That means it uses trusted labels that already come with the dataset. The goal is to test the reasoning part of the pipeline:
+
+\begin{quote}
+If the dataset already tells us the assembly state, can our CAD-informed pipeline turn those states into useful procedure understanding?
+\end{quote}
+
+\section{Why This Pipeline Exists}
+
+The original XR pipeline was built around the author's own Quest captures, especially \texttt{session\_003}. That workflow uses captured XR data and produces structured outputs such as manifests, object reasoning, procedure steps, and graph-like assembly understanding.
+
+The IndustReal work has a different purpose:
+
+\begin{itemize}[leftmargin=*]
+    \item Test whether the same general assembly-understanding idea can transfer to an external industrial dataset.
+    \item Avoid depending only on the author's own Quest recordings.
+    \item Use IndustReal's assembly labels and CAD-related knowledge to produce procedure understanding.
+    \item Run on more data than the small pilot, while respecting storage limits.
+\end{itemize}
+
+The thesis idea behind this branch is:
+
+\begin{quote}
+Reliable assembly-state labels plus CAD-informed rules can be transformed into higher-level procedure understanding, including steps, errors, and graph outputs.
+\end{quote}
+
+\section{Important Terms}
+
+\begin{longtable}{p{0.23\linewidth} p{0.67\linewidth}}
+\toprule
+\textbf{Term} & \textbf{Simple meaning} \\
+\midrule
+\endhead
+Clip & One recorded assembly attempt from IndustReal. Think of it as one video recording with metadata. \\
+Frame & One moment inside a clip. The dataset is treated as 10 frames per second. \\
+RGB & The normal color image stream. \\
+Depth & A depth-looking image stream. In this pipeline it is preserved and visualized, but not treated as reliable metric 3D. \\
+Stereo left/right & Two additional camera image streams from left and right sensors. \\
+Pose & The estimated camera or headset position and orientation at a frame. \\
+OD labels & IndustReal labels that describe assembly states. These are used as trusted oracle state labels. \\
+PSR labels & Procedure Step Recognition labels. These describe assembly actions such as installing, removing, or incorrectly installing a part. \\
+CAD & Computer-Aided Design. In this branch it is used as symbolic assembly knowledge, not as 3D alignment in the camera image. \\
+Oracle & A trusted source of information from the dataset. Here it mainly means using \texttt{OD\_labels.json}. \\
+State & The current assembly condition, for example which parts are already installed. \\
+Step & A procedure action inferred from a state change, for example installing the front chassis. \\
+Assembly graph & A graph-style representation of the predicted procedure. \\
+\bottomrule
+\end{longtable}
+
+\section{What CAD Means In This Pipeline}
+
+The IndustReal repository includes real CAD files. In this workspace, those CAD assets are stored in:
+
+\begin{lstlisting}
+IndustReal_Pipeline/data/part_geometries.zip
+\end{lstlisting}
+
+That archive contains CAD-related assets such as \texttt{.fbx} files, \texttt{.3mf} files, and an overview PDF.
+
+However, the current pipeline does \textbf{not} use those CAD models by placing them into the RGB-D camera frames. That kind of approach would require trustworthy camera calibration, especially exact camera intrinsics. Camera intrinsics explain how image pixels relate to rays in real 3D space. Without them, metric CAD alignment would be unreliable.
+
+So, in the current branch, CAD is used \textbf{symbolically}. In simple terms, CAD is used like a rulebook.
+
+\begin{longtable}{p{0.30\linewidth} p{0.60\linewidth}}
+\toprule
+\textbf{CAD-informed element} & \textbf{Easy explanation} \\
+\midrule
+\endhead
+Part vocabulary & The official list of parts/components that the pipeline should reason about. \\
+Component names & Stable names such as \texttt{base}, \texttt{front chassis}, and \texttt{rear wheel assembly}. \\
+Legal assembly states & Valid combinations of installed parts during the assembly. \\
+Legal transitions & Valid changes from one assembly state to another. \\
+Detector phrases & Fixed part phrases that could later be used by an image detector. \\
+\bottomrule
+\end{longtable}
+
+Therefore, the current CAD contribution is:
+
+\begin{quote}
+These are the parts, these are the valid states, and these are the valid transitions between states.
+\end{quote}
+
+It is not yet:
+
+\begin{quote}
+This exact 3D CAD model has been fitted into this RGB-D frame with a measured 3D pose.
+\end{quote}
+
+\section{Why The Pipeline Uses An Oracle First}
+
+At one point, the plan included using an image detector such as Grounding DINO to detect parts from RGB frames. That is still possible as future work.
+
+However, the current thesis focus is not to prove the best possible detector. The more relevant question is:
+
+\begin{quote}
+Given trustworthy assembly-state labels, can the pipeline reason from those labels into steps, errors, and graphs?
+\end{quote}
+
+That is why the current reported path uses \texttt{oracle\_od}.
+
+\texttt{oracle\_od} means:
+
+\begin{quote}
+Use the labels that already come with IndustReal instead of detecting the state from images.
+\end{quote}
+
+This keeps the project focused on assembly reasoning instead of detector tuning.
+
+\section{The Two Oracle Modes}
+
+The full-dataset runner processes every clip in two modes.
+
+\subsection{Mode 1: \texttt{od\_only}}
+
+This mode uses only:
+
+\begin{lstlisting}
+OD_labels.json
+\end{lstlisting}
+
+It answers:
+
+\begin{quote}
+How much can we recover from IndustReal assembly-state labels alone?
+\end{quote}
+
+This is the cleaner baseline because it does not use explicit procedure error hints.
+
+\subsection{Mode 2: \texttt{od\_plus\_psr\_error\_hints}}
+
+This mode uses:
+
+\begin{lstlisting}
+OD_labels.json
+PSR_labels_with_errors.csv
+\end{lstlisting}
+
+It answers:
+
+\begin{quote}
+What improves if the pipeline also knows the labeled error moments?
+\end{quote}
+
+This is the stronger thesis-facing mode because it better handles error clips.
+
+\section{IndustReal Dataset Structure Used By The Pipeline}
+
+The real IndustReal dataset is large. The pipeline therefore reads the test archives and extracts one clip at a time into temporary storage.
+
+The relevant test archives are:
+
+\begin{lstlisting}
+test_p1.zip
+test_p2.zip
+test_p3.zip
+\end{lstlisting}
+
+Inside each archive there are clip folders. A typical clip looks like this:
+
+\begin{lstlisting}
+03_assy_0_1/
+  rgb/
+    000000.jpg
+    000001.jpg
+    ...
+  depth/
+    000000.jpg
+    000001.jpg
+    ...
+  stereo_left/
+    000000.jpg
+    000001.jpg
+    ...
+  stereo_right/
+    000000.jpg
+    000001.jpg
+    ...
+  pose.csv
+  gaze.csv
+  hands.csv
+  OD_labels.json
+  PSR_labels.csv
+  PSR_labels_with_errors.csv
+  PSR_labels_raw.csv
+  AR_labels.csv
+\end{lstlisting}
+
+The real full run confirmed that all 19 processed test clips had the expected four image streams and the expected metadata files.
+
+\section{What Each Dataset File Is Used For}
+
+\begin{longtable}{p{0.25\linewidth} p{0.30\linewidth} p{0.35\linewidth}}
+\toprule
+\textbf{File or folder} & \textbf{What it contains} & \textbf{How the pipeline uses it} \\
+\midrule
+\endhead
+\texttt{rgb/} & Color images & Used for manifests and debug visuals. Not the main oracle signal. \\
+\texttt{depth/} & Depth-like JPG images & Preserved and visualized, but marked as non-metric. \\
+\texttt{stereo\_left/} & Left stereo images & Preserved and visualized for inspection. \\
+\texttt{stereo\_right/} & Right stereo images & Preserved and visualized for inspection. \\
+\texttt{pose.csv} & Camera/headset pose vectors & Converted into 4x4 pose matrices in the manifest. \\
+\texttt{gaze.csv} & Eye gaze data & Added to the manifest when available. \\
+\texttt{hands.csv} & Hand-tracking information & Used to mark whether hand data exists. \\
+\texttt{OD\_labels.json} & Assembly-state labels & Main oracle input for state reasoning. \\
+\texttt{PSR\_labels.csv} & Procedure step labels & Used as ground truth for step evaluation. \\
+\texttt{PSR\_labels\_with\_errors.csv} & Procedure labels including mistakes & Used for error hints in the stronger oracle mode and for error evaluation. \\
+\texttt{PSR\_labels\_raw.csv} & Raw procedure labels & Preserved as metadata. \\
+\texttt{AR\_labels.csv} & Additional annotation metadata & Preserved as metadata. \\
+\bottomrule
+\end{longtable}
+
+\section{Real Full-Dataset Scope}
+
+The latest real batch run processed all configured test clips from:
+
+\begin{lstlisting}
+test_p1
+test_p2
+test_p3
+\end{lstlisting}
+
+The run covered 19 clips:
+
+\begin{longtable}{p{0.20\linewidth} p{0.70\linewidth}}
+\toprule
+\textbf{Archive} & \textbf{Clips} \\
+\midrule
+\endhead
+\texttt{test\_p1} & \texttt{03\_assy\_0\_1}, \texttt{03\_assy\_1\_3}, \texttt{08\_assy\_0\_1}, \texttt{08\_assy\_2\_4}, \texttt{09\_assy\_0\_1}, \texttt{09\_assy\_3\_1} \\
+\texttt{test\_p2} & \texttt{10\_assy\_0\_1}, \texttt{10\_assy\_3\_2}, \texttt{12\_assy\_0\_1}, \texttt{12\_assy\_3\_4}, \texttt{13\_assy\_0\_1} \\
+\texttt{test\_p3} & \texttt{17\_assy\_0\_1}, \texttt{17\_assy\_1\_5}, \texttt{18\_assy\_0\_1}, \texttt{18\_assy\_2\_5}, \texttt{19\_assy\_0\_1}, \texttt{19\_assy\_3\_5}, \texttt{23\_assy\_0\_1}, \texttt{23\_assy\_1\_2} \\
+\bottomrule
+\end{longtable}
+
+The run processed:
+
+\begin{lstlisting}
+65,838 total frames
+38 clip/mode jobs
+0 failures
+\end{lstlisting}
+
+There are 38 jobs because each of the 19 clips was processed in 2 modes.
+
+\section{Storage Strategy}
+
+The dataset is too large to keep everything inside the repository. The pipeline therefore separates temporary heavy data from durable lightweight reports.
+
+\subsection{Temporary data}
+
+Full per-clip outputs and extracted working data go under:
+
+\begin{lstlisting}
+/tmp/industreal_pilot/
+\end{lstlisting}
+
+The \texttt{/tmp} folder is temporary. It is useful while the codespace is alive, but it may be deleted if the codespace is closed or cleaned.
+
+\subsection{Durable reports}
+
+Small summaries and reports are saved inside the repository:
+
+\begin{lstlisting}
+IndustReal_Pipeline/results/raw_cad_dataset_reports/raw_cad_dataset__all_test_clips/
+\end{lstlisting}
+
+This folder contains:
+
+\begin{lstlisting}
+summary.csv
+mode_comparison.csv
+run_manifest.json
+clip_inventory.csv
+failure_log.json
+\end{lstlisting}
+
+\subsection{Preserved result bundle}
+
+A compressed copy of the full temporary result outputs was preserved here:
+
+\begin{lstlisting}
+IndustReal_Pipeline/results/preserved_tmp/raw_cad_dataset__all_test_clips.tar.gz
+\end{lstlisting}
+
+This helps recover the detailed outputs if \texttt{/tmp} is cleaned.
+
+\section{Main Configuration Files}
+
+\subsection{\texttt{raw\_cad\_pilot.json}}
+
+Path:
+
+\begin{lstlisting}
+IndustReal_Pipeline/configs/raw_cad_pilot.json
+\end{lstlisting}
+
+This is for the smaller pilot workflow. It uses selected clips and event-centered slices.
+
+\subsection{\texttt{raw\_cad\_dataset.json}}
+
+Path:
+
+\begin{lstlisting}
+IndustReal_Pipeline/configs/raw_cad_dataset.json
+\end{lstlisting}
+
+This is the main config for the full real-data batch run. It defines:
+
+\begin{itemize}[leftmargin=*]
+    \item Which archives to process.
+    \item Whether missing archives may be downloaded.
+    \item Which oracle modes to run.
+    \item Where temporary outputs go.
+    \item Where durable reports go.
+    \item Whether resume mode is enabled.
+\end{itemize}
+
+\section{Main Scripts}
+
+\subsection{\texttt{scripts/01\_run\_demo.py}}
+
+This is the older demo path. It uses precomputed ASD/PSR-style results rather than the new raw IndustReal batch path. It was intentionally left unchanged so the old baseline remains available.
+
+\subsection{\texttt{scripts/02\_prepare\_raw\_pilot.py}}
+
+This prepares a small pilot slice. The pilot slice is useful for debugging because it extracts only selected windows around important events.
+
+\subsection{\texttt{scripts/03\_build\_raw\_manifest.py}}
+
+This builds a manifest for the small pilot. A manifest is a table where each row describes one frame and points to its RGB, depth, stereo, pose, gaze, and hand data.
+
+\subsection{\texttt{scripts/04\_validate\_raw\_manifest.py}}
+
+This validates the raw manifest. It checks that the expected frame files and metadata are present and consistent.
+
+\subsection{\texttt{scripts/05\_visualize\_raw\_recording.py}}
+
+This creates debug images for the pilot. It helps verify that frames and labels line up correctly.
+
+\subsection{\texttt{scripts/06\_build\_cad\_catalog.py}}
+
+This builds the CAD-informed part catalog and state catalog.
+
+\subsection{\texttt{scripts/07\_run\_detector.py}}
+
+This runs the detector or oracle evidence stage for the pilot. In the current branch, the important path is oracle-based.
+
+\subsection{\texttt{scripts/08\_reason\_states.py}}
+
+This infers assembly states using CAD-informed rules and evidence.
+
+\subsection{\texttt{scripts/09\_export\_psr\_egg.py}}
+
+This converts inferred states into procedure steps and graph outputs.
+
+\subsection{\texttt{scripts/10\_evaluate\_raw\_cad.py}}
+
+This evaluates the pilot outputs.
+
+\subsection{\texttt{scripts/11\_run\_oracle\_dataset\_batch.py}}
+
+This is the main full-dataset entrypoint. It runs the real IndustReal test set clip by clip.
+
+It performs:
+
+\begin{enumerate}[leftmargin=*]
+    \item Archive discovery.
+    \item Clip inventory creation.
+    \item Clip extraction into \texttt{/tmp}.
+    \item Raw manifest creation.
+    \item Oracle evidence creation.
+    \item State sequence creation.
+    \item Direct state-to-step conversion.
+    \item Graph export.
+    \item Evaluation.
+    \item Aggregate report generation.
+\end{enumerate}
+
+\section{Main Source Modules}
+
+\subsection{\texttt{src/dataset\_batch.py}}
+
+This is the orchestrator for the full dataset. It finds archives, lists clips, extracts clips, runs both oracle modes, writes per-clip outputs, updates the run ledger, and creates aggregate reports.
+
+\subsection{\texttt{src/raw\_loader.py}}
+
+This reads raw IndustReal clip folders. It discovers RGB frames, depth frames, stereo frames, pose rows, gaze rows, hand rows, OD labels, and PSR labels.
+
+\subsection{\texttt{src/hl2\_pose.py}}
+
+This converts HoloLens-style pose data into 4x4 pose matrices. It uses fields such as \texttt{forward}, \texttt{position}, and \texttt{up}. One real clip had three all-zero pose rows, so the code reuses the nearest valid pose instead of crashing.
+
+\subsection{\texttt{src/raw\_manifest.py}}
+
+This builds \texttt{raw\_manifest.csv}. Each row represents one frame.
+
+Important columns include:
+
+\begin{lstlisting}
+clip
+slice_order
+frame_idx
+frame_name
+timestamp_ns
+rgb_path
+depth_path
+stereo_left_path
+stereo_right_path
+gaze_x
+gaze_y
+has_hands
+source_archive
+split
+notes
+pose_00 ... pose_15
+\end{lstlisting}
+
+The timestamp is created as:
+
+\begin{lstlisting}
+timestamp_ns = frame_idx * 100,000,000
+\end{lstlisting}
+
+This means the pipeline treats the recording as 10 frames per second.
+
+\subsection{\texttt{src/raw\_viz.py}}
+
+This creates debug visualizations such as RGB samples, RGB-depth previews, stereo previews, gaze overlays, and camera trajectory plots.
+
+\subsection{\texttt{src/cad\_catalog.py}}
+
+This creates:
+
+\begin{lstlisting}
+cad_part_catalog.json
+cad_state_catalog.json
+\end{lstlisting}
+
+The part catalog defines canonical components and vocabulary. The state catalog defines legal assembly states and legal transitions.
+
+\subsection{\texttt{src/detector\_rgb.py}}
+
+Despite the name, the important current path is not a real RGB detector. The main path is \texttt{oracle\_od}, which reads \texttt{OD\_labels.json} and converts it into evidence for the rest of the pipeline.
+
+\subsection{\texttt{src/track2d.py}}
+
+This smooths frame evidence over time. In a real detection setup it would help link detections between adjacent frames. In the oracle setup it mainly keeps the same interface.
+
+\subsection{\texttt{src/cad\_reasoner.py}}
+
+This creates the frame-by-frame state timeline and converts state changes into procedure steps.
+
+Important behavior:
+
+\begin{itemize}[leftmargin=*]
+    \item Before the first observed label, the timeline is seeded with the first known state.
+    \item Between labels, the previous state is carried forward.
+    \item When a later label changes state, the transition is placed at that later labeled frame.
+    \item Error hints can inject explicit \texttt{error\_state} moments.
+    \item It avoids inventing install steps for parts that were already present before the current timeline began.
+\end{itemize}
+
+\subsection{\texttt{src/eval\_raw\_cad.py}}
+
+This evaluates state accuracy, step precision, step recall, median step delay, error-window recall, and legal-state rate.
+
+\subsection{\texttt{src/psr.py}}
+
+This contains older Procedure Step Recognition logic. The current oracle-first path keeps the older output as a diagnostic comparison file:
+
+\begin{lstlisting}
+psr_pred_b3_diagnostic.json
+\end{lstlisting}
+
+The main output is now:
+
+\begin{lstlisting}
+psr_pred.json
+\end{lstlisting}
+
+\subsection{\texttt{src/egg\_builder.py}}
+
+This builds graph-style assembly outputs from predicted procedure steps:
+
+\begin{lstlisting}
+assembly_graph.json
+\end{lstlisting}
+
+This is the current IndustReal graph or knowledge-graph-like output.
+
+\section{Pipeline Flow}
+
+The full pipeline can be summarized like this:
+
+\begin{lstlisting}
+IndustReal test archive
+  -> find clip folders
+  -> extract one clip into /tmp
+  -> build raw_manifest.csv
+  -> read OD_labels.json and PSR labels
+  -> create oracle evidence
+  -> create state_sequence.csv
+  -> convert state changes into procedure steps
+  -> build assembly_graph.json
+  -> compute metrics.json
+  -> add one row to summary.csv
+\end{lstlisting}
+
+The same clip is processed twice:
+
+\begin{lstlisting}
+mode 1: od_only
+mode 2: od_plus_psr_error_hints
+\end{lstlisting}
+
+\section{Per-Clip Output Files}
+
+For each clip and mode, the runner writes outputs under \texttt{/tmp}. A typical output folder contains:
+
+\begin{lstlisting}
+raw_manifest.csv
+frame_evidence.jsonl
+smoothed_frame_evidence.jsonl
+state_sequence.csv
+psr_pred.json
+psr_pred_b3_diagnostic.json
+gt_steps.json
+assembly_graph.json
+metrics.json
+debug_visuals/
+\end{lstlisting}
+
+\subsection{\texttt{raw\_manifest.csv}}
+
+This is the frame index. It records image paths, frame numbers, timestamps, gaze, hand information, and pose matrices.
+
+\subsection{\texttt{frame\_evidence.jsonl}}
+
+This is the first evidence file. In the oracle path, it contains evidence created from dataset labels.
+
+\subsection{\texttt{smoothed\_frame\_evidence.jsonl}}
+
+This is the cleaned evidence file used by the state reasoner.
+
+\subsection{\texttt{state\_sequence.csv}}
+
+This is the frame-by-frame assembly-state timeline. It says which state the assembly is in at each frame.
+
+\subsection{\texttt{psr\_pred.json}}
+
+This is the main predicted procedure-step output. It is built directly from state transitions.
+
+\subsection{\texttt{psr\_pred\_b3\_diagnostic.json}}
+
+This is the older PSR-style diagnostic output. It is kept for comparison, not as the main result.
+
+\subsection{\texttt{gt\_steps.json}}
+
+This is the ground-truth step list for the full clip.
+
+\subsection{\texttt{assembly\_graph.json}}
+
+This is the graph representation of the predicted procedure. It is the current knowledge-graph-like output.
+
+\subsection{\texttt{metrics.json}}
+
+This stores the evaluation metrics for one clip and one mode.
+
+\section{Durable Report Files}
+
+The most important durable reports are stored here:
+
+\begin{lstlisting}
+IndustReal_Pipeline/results/raw_cad_dataset_reports/raw_cad_dataset__all_test_clips/
+\end{lstlisting}
+
+\subsection{\texttt{summary.csv}}
+
+This has one row per clip per mode. Since there are 19 clips and 2 modes, it has 38 rows.
+
+It includes:
+
+\begin{itemize}[leftmargin=*]
+    \item Archive name.
+    \item Clip name.
+    \item Mode name.
+    \item Number of frames.
+    \item State accuracy.
+    \item Predicted step count.
+    \item Ground-truth step count.
+    \item Step precision.
+    \item Step recall.
+    \item Median step delay.
+    \item Error-window recall.
+    \item Legal-state rate.
+\end{itemize}
+
+\subsection{\texttt{mode\_comparison.csv}}
+
+This compares \texttt{od\_only} and \texttt{od\_plus\_psr\_error\_hints}. It is the easiest result file for explaining how much the error hints help.
+
+\subsection{\texttt{run\_manifest.json}}
+
+This is the run ledger. It records which clip/mode jobs completed.
+
+\subsection{\texttt{clip\_inventory.csv}}
+
+This lists the clips found in the archives and confirms that expected streams and metadata exist.
+
+\subsection{\texttt{failure\_log.json}}
+
+This records failures. The latest real full run had zero failures.
+
+\section{Final Real-Data Results}
+
+The full test batch processed:
+
+\begin{lstlisting}
+19 clips
+2 oracle modes per clip
+38 total clip/mode jobs
+65,838 total frames
+0 failures
+\end{lstlisting}
+
+\begin{longtable}{p{0.40\linewidth} r r}
+\toprule
+\textbf{Metric} & \textbf{\texttt{od\_only}} & \textbf{\texttt{od\_plus\_psr\_error\_hints}} \\
+\midrule
+\endhead
+Mean step recall & 0.794 & 0.981 \\
+Mean step precision & 0.373 & 0.437 \\
+Total predicted steps & 313 & 346 \\
+Total ground-truth steps & 187 & 187 \\
+Clips with perfect step recall & 5 / 19 & 16 / 19 \\
+Error clips successfully handled & 0 / 11 & 11 / 11 \\
+Failures & 0 & 0 \\
+\bottomrule
+\end{longtable}
+
+\subsection{What Step Recall Means}
+
+Step recall answers:
+
+\begin{quote}
+Of the real assembly steps that happened, how many did the pipeline recover?
+\end{quote}
+
+A recall of 1.0 means the pipeline found all ground-truth steps for that clip.
+
+The stronger mode had mean recall around 0.981. That means it recovered almost all labeled steps across the real test clips.
+
+\subsection{What Step Precision Means}
+
+Step precision answers:
+
+\begin{quote}
+Of the steps the pipeline predicted, how many matched real labeled steps?
+\end{quote}
+
+Precision is lower than recall in both modes. This means the pipeline tends to predict extra steps.
+
+In simple language:
+
+\begin{quote}
+The pipeline is very good at not missing important steps, especially in the stronger mode, but it still sometimes says that extra steps happened.
+\end{quote}
+
+\subsection{What Error-Window Recall Means}
+
+Error-window recall answers:
+
+\begin{quote}
+When the dataset says an error happened, did the pipeline catch an error around that moment?
+\end{quote}
+
+There were 11 clips with explicit error windows. In the stronger mode, all 11 were caught.
+
+So among clips that actually contain labeled error windows:
+
+\begin{lstlisting}
+11 / 11 error clips were caught
+\end{lstlisting}
+
+One nuance is important. The overall row in \texttt{mode\_comparison.csv} reports an error-window value around 0.579 because it averages over all 19 clips, including clips without error windows. For explanation, the clearest statement is:
+
+\begin{quote}
+Among the 11 clips that contained labeled errors, the stronger mode caught all 11.
+\end{quote}
+
+\section{What The Results Mean}
+
+The most important conclusion is:
+
+\begin{quote}
+The pipeline now works end to end on real IndustReal test data.
+\end{quote}
+
+It can:
+
+\begin{itemize}[leftmargin=*]
+    \item Read real IndustReal clips.
+    \item Build frame manifests.
+    \item Use IndustReal state labels as oracle input.
+    \item Apply CAD-informed state and transition rules.
+    \item Convert state changes into procedure steps.
+    \item Inject and recover labeled error moments in the stronger mode.
+    \item Build graph outputs.
+    \item Evaluate results across the full configured test set.
+    \item Produce durable summary reports.
+\end{itemize}
+
+This is meaningful because it shows that the idea is not limited to the author's own XR captures.
+
+\section{What The Results Do Not Prove Yet}
+
+The current results do not prove fully automatic image-based detection.
+
+Reason:
+
+\begin{quote}
+The thesis-facing path uses dataset labels as oracle input.
+\end{quote}
+
+The current results also do not prove metric 3D CAD alignment.
+
+Reason:
+
+\begin{quote}
+The pipeline does not place 3D CAD models into the camera frames.
+\end{quote}
+
+The current CAD contribution is symbolic:
+
+\begin{itemize}[leftmargin=*]
+    \item Part names.
+    \item Legal states.
+    \item Legal transitions.
+    \item Assembly rules.
+    \item Vocabulary.
+\end{itemize}
+
+That is useful, but it is different from full 3D CAD tracking.
+
+\section{Are We Creating A Knowledge Graph?}
+
+Yes, in a practical sense.
+
+The file:
+
+\begin{lstlisting}
+assembly_graph.json
+\end{lstlisting}
+
+is the current graph output. It represents the predicted assembly procedure as structured graph data.
+
+It is not yet a large formal semantic knowledge graph with RDF, SPARQL, or an ontology. The safest explanation is:
+
+\begin{quote}
+The pipeline creates assembly graph outputs from IndustReal procedure predictions. These are knowledge-graph-like outputs, but not yet a formal RDF or ontology knowledge graph.
+\end{quote}
+
+\section{How To Rerun The Full Dataset Batch}
+
+From the repository root:
+
+\begin{lstlisting}[language=bash]
+python IndustReal_Pipeline/scripts/11_run_oracle_dataset_batch.py \
+  --config IndustReal_Pipeline/configs/raw_cad_dataset.json
+\end{lstlisting}
+
+If the archives are missing and downloading is allowed:
+
+\begin{lstlisting}[language=bash]
+python IndustReal_Pipeline/scripts/11_run_oracle_dataset_batch.py \
+  --config IndustReal_Pipeline/configs/raw_cad_dataset.json \
+  --download-missing
+\end{lstlisting}
+
+To rerun a specific archive and clip:
+
+\begin{lstlisting}[language=bash]
+python IndustReal_Pipeline/scripts/11_run_oracle_dataset_batch.py \
+  --config IndustReal_Pipeline/configs/raw_cad_dataset.json \
+  --archives test_p3 \
+  --clips 17_assy_1_5
+\end{lstlisting}
+
+\section{How To Restore Preserved Full Outputs}
+
+If \texttt{/tmp} is cleaned but the preserved tarball still exists:
+
+\begin{lstlisting}[language=bash]
+mkdir -p /tmp/industreal_pilot/results/raw_cad_dataset
+tar -xzf IndustReal_Pipeline/results/preserved_tmp/raw_cad_dataset__all_test_clips.tar.gz \
+  -C /tmp/industreal_pilot/results/raw_cad_dataset
+\end{lstlisting}
+
+After that, the detailed per-clip outputs should again be available under:
+
+\begin{lstlisting}
+/tmp/industreal_pilot/results/raw_cad_dataset/raw_cad_dataset__all_test_clips/
+\end{lstlisting}
+
+\section{Recommended Presentation Explanation}
+
+A simple explanation for a presentation is:
+
+\begin{quote}
+We adapted the XR assembly-understanding idea to IndustReal. Because IndustReal is large, we created a batch runner that processes one clip at a time in temporary storage. Instead of focusing on object detection, we used IndustReal's own assembly-state labels as an oracle. Then we used CAD-informed assembly knowledge, including known parts, legal states, and legal transitions, to convert frame-level states into procedure steps and graph outputs. On 19 real test clips, the stronger oracle mode recovered almost all ground-truth steps and caught all labeled error clips.
+\end{quote}
+
+The limitation should also be stated clearly:
+
+\begin{quote}
+This does not yet prove image-only detection or 3D CAD alignment. It proves the reasoning layer: given trustworthy assembly-state labels, the pipeline can produce useful procedural and graph-level understanding.
+\end{quote}
+
+\section{Best Next Improvements}
+
+\subsection{Best next step for thesis reporting}
+
+Create tables and figures from:
+
+\begin{lstlisting}
+summary.csv
+mode_comparison.csv
+assembly_graph.json
+\end{lstlisting}
+
+These files are the strongest basis for presentation-ready results.
+
+\subsection{Best next step for improving quality}
+
+Reduce extra predicted steps to improve precision.
+
+Recall is already strong in \texttt{od\_plus\_psr\_error\_hints}, but precision is still modest.
+
+\subsection{Best next step for deeper CAD use}
+
+Investigate whether the real CAD files can be used more deeply.
+
+Possible future directions:
+
+\begin{itemize}[leftmargin=*]
+    \item Visualize CAD model states beside predicted procedure graphs.
+    \item Map graph nodes more explicitly to CAD assets.
+    \item Add non-metric CAD diagrams to reports.
+    \item Attempt metric CAD alignment only if reliable intrinsics are found.
+\end{itemize}
+
+\subsection{Best next step for scaling}
+
+If running more archives becomes slow or storage-heavy, move the batch runner to UPPMAX or another larger machine. The output contracts were designed so that the environment switch should not change the pipeline design.
+
+\section{Final Verdict}
+
+The build is successful as an oracle-first IndustReal reasoning pipeline.
+
+It now runs on the real configured IndustReal test clips, not only synthetic fixtures and not only the small pilot.
+
+The strongest result is:
+
+\begin{quote}
+\texttt{od\_plus\_psr\_error\_hints} recovered nearly all procedure steps and caught all labeled error clips.
+\end{quote}
+
+The main weakness is:
+
+\begin{quote}
+Precision is still low because the pipeline predicts extra steps.
+\end{quote}
+
+The honest thesis framing is:
+
+\begin{quote}
+This pipeline demonstrates CAD-informed procedural reasoning over IndustReal using trusted dataset labels. It does not yet demonstrate fully automatic image-based part detection or metric 3D CAD alignment.
+\end{quote}
+
+\end{document}
+

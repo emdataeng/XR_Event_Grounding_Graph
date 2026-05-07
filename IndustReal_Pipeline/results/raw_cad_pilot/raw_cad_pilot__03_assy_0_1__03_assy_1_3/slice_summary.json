@@ -1,0 +1,129 @@
+{
+  "slice_id": "raw_cad_pilot__03_assy_0_1__03_assy_1_3",
+  "slice_dir": "/tmp/industreal_pilot/slices/raw_cad_pilot__03_assy_0_1__03_assy_1_3",
+  "selected_clips": [
+    "03_assy_0_1",
+    "03_assy_1_3"
+  ],
+  "clip_count": 2,
+  "warnings": [
+    "third clip source archive unavailable; using base two-clip slice fallback"
+  ],
+  "storage": {
+    "compressed_base_slice_mb": 262.74,
+    "extracted_slice_mb": 266.2,
+    "compressed_slice_cap_mb": 600,
+    "extracted_slice_cap_mb": 2500,
+    "within_cap": true
+  },
+  "clips": [
+    {
+      "clip": "03_assy_0_1",
+      "source_archive": "relevant_slice_test_p1.tar.gz",
+      "split": "test",
+      "frame_count": 701,
+      "frame_min": 550,
+      "frame_max": 1250,
+      "windows": [
+        {
+          "start": 550,
+          "end": 579,
+          "reasons": [
+            "context_head"
+          ]
+        },
+        {
+          "start": 612,
+          "end": 702,
+          "reasons": [
+            "Install rear rear chassis pin"
+          ]
+        },
+        {
+          "start": 1084,
+          "end": 1174,
+          "reasons": [
+            "Install front chassis",
+            "Install front chassis pin"
+          ]
+        },
+        {
+          "start": 1221,
+          "end": 1250,
+          "reasons": [
+            "context_tail"
+          ]
+        }
+      ],
+      "selected_frame_count": 242,
+      "metadata_present": {
+        "pose.csv": true,
+        "gaze.csv": true,
+        "hands.csv": true,
+        "OD_labels.json": true,
+        "PSR_labels.csv": true,
+        "PSR_labels_with_errors.csv": true,
+        "PSR_labels_raw.csv": false,
+        "AR_labels.csv": false
+      },
+      "stream_counts": {
+        "rgb": 701,
+        "depth": 701,
+        "stereo_left": 701,
+        "stereo_right": 701
+      }
+    },
+    {
+      "clip": "03_assy_1_3",
+      "source_archive": "relevant_slice_test_p1.tar.gz",
+      "split": "test",
+      "frame_count": 502,
+      "frame_min": 350,
+      "frame_max": 900,
+      "windows": [
+        {
+          "start": 350,
+          "end": 379,
+          "reasons": [
+            "Install front rear chassis pin",
+            "Install rear chassis",
+            "context_head"
+          ]
+        },
+        {
+          "start": 428,
+          "end": 518,
+          "reasons": [
+            "Install rear rear chassis pin"
+          ]
+        },
+        {
+          "start": 710,
+          "end": 900,
+          "reasons": [
+            "Incorrectly installed front chassis",
+            "Install front chassis pin",
+            "context_tail"
+          ]
+        }
+      ],
+      "selected_frame_count": 312,
+      "metadata_present": {
+        "pose.csv": true,
+        "gaze.csv": true,
+        "hands.csv": true,
+        "OD_labels.json": true,
+        "PSR_labels.csv": true,
+        "PSR_labels_with_errors.csv": true,
+        "PSR_labels_raw.csv": false,
+        "AR_labels.csv": false
+      },
+      "stream_counts": {
+        "rgb": 502,
+        "depth": 502,
+        "stereo_left": 502,
+        "stereo_right": 502
+      }
+    }
+  ]
+}

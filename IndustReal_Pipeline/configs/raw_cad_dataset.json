@@ -1,0 +1,211 @@
+{
+  "paths": {
+    "data_root": "data",
+    "results_root": "results/raw_cad_dataset_reports",
+    "reports_root": "results/raw_cad_dataset_reports",
+    "working_root": "/tmp/industreal_pilot",
+    "slice_subdir": "slices",
+    "source_subdir": "source",
+    "working_results_subdir": "results/raw_cad_dataset",
+    "batch_extract_subdir": "dataset_batch"
+  },
+  "archives": {
+    "asd_results_zip": "data/ASD_results.zip",
+    "part_geometries_repo": "data/part_geometries.zip",
+    "part_geometries_working": "/tmp/industreal_pilot/source/part_geometries.zip",
+    "source_archives": [
+      {
+        "name": "test_p1",
+        "split": "test",
+        "local_path": "/tmp/industreal_pilot/source/test_p1.zip",
+        "url": "https://data.4tu.nl/file/b008dd74-020d-4ea4-a8ba-7bb60769d224/ec7a4f94-7c1d-497d-b75a-4e694b7a9f7e"
+      },
+      {
+        "name": "test_p2",
+        "split": "test",
+        "local_path": "/tmp/industreal_pilot/source/test_p2.zip",
+        "url": "https://data.4tu.nl/file/b008dd74-020d-4ea4-a8ba-7bb60769d224/d07789b6-83b1-429d-be0c-95edba210757"
+      },
+      {
+        "name": "test_p3",
+        "split": "test",
+        "local_path": "/tmp/industreal_pilot/source/test_p3.zip",
+        "url": "https://data.4tu.nl/file/b008dd74-020d-4ea4-a8ba-7bb60769d224/31f88cb6-a2e7-44df-ac51-5aaa0a148fc3"
+      }
+    ]
+  },
+  "batch": {
+    "name": "raw_cad_dataset",
+    "scope": "all_test_clips",
+    "clip_scope": "full_clip",
+    "oracle_runs": [
+      "od_only",
+      "od_plus_psr_error_hints"
+    ],
+    "archive_policy": "local_first",
+    "allow_download_missing": false,
+    "resume": true,
+    "keep_debug_visuals": true
+  },
+  "detector": {
+    "default_backend": "oracle_od",
+    "oracle_backend": "oracle_od",
+    "oracle_mode": "state_labels",
+    "model_ids": [
+      "openmmlab-community/mm_grounding_dino_base_all",
+      "IDEA-Research/grounding-dino-base"
+    ],
+    "box_threshold": 0.25,
+    "text_threshold": 0.25,
+    "iou_smoothing_threshold": 0.35,
+    "track_decay": 0.85
+  },
+  "reasoner": {
+    "min_non_error_conf": 0.48,
+    "top_k_states": 3,
+    "step_export_mode": "direct_transitions",
+    "transition_weights": {
+      "stay": 0.08,
+      "observed": 0.05,
+      "reverse": -0.05,
+      "error_entry": -0.08,
+      "error_exit": -0.03
+    },
+    "component_presence_floor": 0.02
+  },
+  "evaluation": {
+    "min_event_window_evidence_ratio": 0.8,
+    "score_scope": "full_clip"
+  },
+  "visualization": {
+    "n_samples_per_clip": 6
+  },
+  "slice_rules": {
+    "install_pre": 60,
+    "install_post": 30,
+    "error_pre": 120,
+    "error_post": 60,
+    "context_head": 30,
+    "context_tail": 30,
+    "merge_gap": 20
+  },
+  "cad": {
+    "state_asset_pattern": "state{index}.fbx",
+    "asset_families": {
+      "beams_braces": "SPS-000001 - Rubber-band-driven car - Beams Braces.3mf",
+      "screws_pins": "SPS-000001 - Rubber-band-driven car - Screws Pins.3mf",
+      "sign_nuts_washers_pulley": "SPS-000001 - Rubber-band-driven car - Sign Nuts Washers Pulley.3mf",
+      "wheels": "SPS-000001 - Rubber-band-driven car - Wheels.3mf"
+    },
+    "components": [
+      {
+        "key": "base",
+        "display_name": "base",
+        "state_bit_index": 0,
+        "detector_group": "structures",
+        "prompts": ["base", "car base", "vehicle base"],
+        "aliases": ["base plate"],
+        "asset_family": "beams_braces"
+      },
+      {
+        "key": "front_chassis",
+        "display_name": "front chassis",
+        "state_bit_index": 1,
+        "detector_group": "structures",
+        "prompts": ["front chassis", "front frame"],
+        "aliases": ["front beam chassis"],
+        "asset_family": "beams_braces"
+      },
+      {
+        "key": "front_chassis_pin",
+        "display_name": "front chassis pin",
+        "state_bit_index": 2,
+        "detector_group": "connectors",
+        "prompts": ["front chassis pin", "pin"],
+        "aliases": ["short pin"],
+        "asset_family": "screws_pins"
+      },
+      {
+        "key": "rear_chassis",
+        "display_name": "rear chassis",
+        "state_bit_index": 3,
+        "detector_group": "structures",
+        "prompts": ["rear chassis", "rear frame"],
+        "aliases": ["rear beam chassis"],
+        "asset_family": "beams_braces"
+      },
+      {
+        "key": "short_rear_chassis",
+        "display_name": "short rear chassis",
+        "state_bit_index": 4,
+        "detector_group": "structures",
+        "prompts": ["short rear chassis", "short rear frame"],
+        "aliases": ["short chassis"],
+        "asset_family": "beams_braces"
+      },
+      {
+        "key": "front_rear_chassis_pin",
+        "display_name": "front rear chassis pin",
+        "state_bit_index": 5,
+        "detector_group": "connectors",
+        "prompts": ["front rear chassis pin", "front rear pin"],
+        "aliases": ["rear pin front"],
+        "asset_family": "screws_pins"
+      },
+      {
+        "key": "rear_rear_chassis_pin",
+        "display_name": "rear rear chassis pin",
+        "state_bit_index": 6,
+        "detector_group": "connectors",
+        "prompts": ["rear rear chassis pin", "rear rear pin"],
+        "aliases": ["rear pin back"],
+        "asset_family": "screws_pins"
+      },
+      {
+        "key": "front_bracket",
+        "display_name": "front bracket",
+        "state_bit_index": 7,
+        "detector_group": "structures",
+        "prompts": ["front bracket", "bracket"],
+        "aliases": ["small bracket"],
+        "asset_family": "beams_braces"
+      },
+      {
+        "key": "front_bracket_screw",
+        "display_name": "front bracket screw",
+        "state_bit_index": 8,
+        "detector_group": "connectors",
+        "prompts": ["front bracket screw", "screw"],
+        "aliases": ["bracket screw"],
+        "asset_family": "screws_pins"
+      },
+      {
+        "key": "front_wheel_assy",
+        "display_name": "front wheel assy",
+        "state_bit_index": 9,
+        "detector_group": "assemblies",
+        "prompts": ["front wheel assembly", "front wheel"],
+        "aliases": ["front wheel assy"],
+        "asset_family": "wheels"
+      },
+      {
+        "key": "rear_wheel_assy",
+        "display_name": "rear wheel assy",
+        "state_bit_index": 10,
+        "detector_group": "assemblies",
+        "prompts": ["rear wheel assembly", "rear wheel"],
+        "aliases": ["rear wheel assy"],
+        "asset_family": "wheels"
+      }
+    ],
+    "context_components": [
+      {
+        "key": "hand",
+        "display_name": "hand",
+        "detector_group": "hands",
+        "prompts": ["hand"],
+        "aliases": []
+      }
+    ]
+  }
+}
