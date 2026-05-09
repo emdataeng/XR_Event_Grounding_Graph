@@ -1,11 +1,8 @@
 """Visualization helpers for raw IndustReal pilot clips."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Iterable, Optional
-
-os.environ.setdefault("MPLCONFIGDIR", "/tmp/matplotlib")
 
 import matplotlib
 

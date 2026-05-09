@@ -2,33 +2,34 @@
   "paths": {
     "data_root": "data",
     "results_root": "results/raw_cad_pilot",
-    "working_root": "/tmp/industreal_pilot",
+    "working_root": ".tmp/industreal_pilot",
     "slice_subdir": "slices",
-    "source_subdir": "source"
+    "source_subdir": "source",
+    "matplotlib_cache_subdir": "matplotlib"
   },
   "archives": {
     "base_slice_repo": "data/relevant_slice_test_p1.tar.gz",
     "asd_results_zip": "data/ASD_results.zip",
     "ar_labels_csv": "data/ar_labels/test.csv",
     "part_geometries_repo": "data/part_geometries.zip",
-    "part_geometries_working": "/tmp/industreal_pilot/source/part_geometries.zip",
+    "part_geometries_working": ".tmp/industreal_pilot/source/part_geometries.zip",
     "source_archives": [
       {
         "name": "test_p1",
         "split": "test",
-        "local_path": "/tmp/industreal_pilot/source/test_p1.zip",
+        "local_path": ".tmp/industreal_pilot/source/test_p1.zip",
         "url": "https://data.4tu.nl/file/b008dd74-020d-4ea4-a8ba-7bb60769d224/ec7a4f94-7c1d-497d-b75a-4e694b7a9f7e"
       },
       {
         "name": "test_p2",
         "split": "test",
-        "local_path": "/tmp/industreal_pilot/source/test_p2.zip",
+        "local_path": ".tmp/industreal_pilot/source/test_p2.zip",
         "url": "https://data.4tu.nl/file/b008dd74-020d-4ea4-a8ba-7bb60769d224/d07789b6-83b1-429d-be0c-95edba210757"
       },
       {
         "name": "test_p3",
         "split": "test",
-        "local_path": "/tmp/industreal_pilot/source/test_p3.zip",
+        "local_path": ".tmp/industreal_pilot/source/test_p3.zip",
         "url": "https://data.4tu.nl/file/b008dd74-020d-4ea4-a8ba-7bb60769d224/31f88cb6-a2e7-44df-ac51-5aaa0a148fc3"
       }
     ]

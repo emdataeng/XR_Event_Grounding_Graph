@@ -1,3 +1,10 @@
+# Credentials
+.env
+
+# Codex workspace metadata
+.codex
+
+#Python cache files
 __pycache__/
 *.pyc
 *.pyo
