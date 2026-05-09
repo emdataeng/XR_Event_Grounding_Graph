@@ -1,0 +1,79 @@
+{
+  "defaults": {
+    "threshold": 0.70,
+    "aggregation": "min"
+  },
+  "rules": [
+    {
+      "id": "infer_install_expected_effect",
+      "type": "inference",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "hasAction", "args": ["?s", "install"]},
+        {"name": "usesObject", "args": ["?s", "?o"]}
+      ],
+      "consequents": [
+        {"name": "expectedEffect", "kind": "effect", "args": ["installed", "?o"]}
+      ]
+    },
+    {
+      "id": "infer_remove_expected_effect",
+      "type": "inference",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "hasAction", "args": ["?s", "remove"]},
+        {"name": "usesObject", "args": ["?s", "?o"]}
+      ],
+      "consequents": [
+        {"name": "expectedEffect", "kind": "effect", "args": ["removed", "?o"]}
+      ]
+    },
+    {
+      "id": "infer_action_requires_object_available",
+      "type": "inference",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "hasAction", "args": ["?s", "?action"]},
+        {"name": "usesObject", "args": ["?s", "?o"]}
+      ],
+      "consequents": [
+        {"name": "requiredCondition", "kind": "precondition", "args": ["object_available", "?o"]}
+      ]
+    },
+    {
+      "id": "infer_entity_type_support",
+      "type": "inference",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "usesObject", "args": ["?s", "?o"]},
+        {"name": "isA", "args": ["?o", "?type"]}
+      ],
+      "consequents": [
+        {"name": "semanticSupport", "kind": "semantic", "args": ["object_type_known", "?o", "?type"]}
+      ]
+    },
+    {
+      "id": "infer_missing_temporal_end",
+      "type": "inference",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "hasTimeWindow", "args": ["?s", "?start", null]}
+      ],
+      "consequents": [
+        {"name": "missingEvidence", "kind": "temporal", "args": ["time_window_end", "?s"]}
+      ]
+    },
+    {
+      "id": "compat_error_action_marks_incompatibility",
+      "type": "compatibility",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "hasAction", "args": ["?s", "error"]},
+        {"name": "usesObject", "args": ["?s", "?o"]}
+      ],
+      "consequents": [
+        {"name": "incompatibility", "kind": "incompatibility", "args": ["incorrect_assembly_state", "?o"]}
+      ]
+    }
+  ]
+}
