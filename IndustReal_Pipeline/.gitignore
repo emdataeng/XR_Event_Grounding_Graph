@@ -8,3 +8,4 @@ results/*
 data/part_geometries.zip
 data/raw/
 data/slices/
+.tmp/
