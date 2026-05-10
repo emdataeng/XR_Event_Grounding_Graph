@@ -1,0 +1,92 @@
+{
+  "schema_version": "industreal_domain_config.v1",
+  "entities": {
+    "Workspace": {
+      "name": "workspace",
+      "generic_type": "Workspace"
+    }
+  },
+  "components": {
+    "industreal_component::base": {
+      "name": "base",
+      "generic_type": "Base",
+      "installation_target": "Workspace"
+    },
+    "industreal_component::front_chassis": {
+      "name": "front_chassis",
+      "generic_type": "Chassis",
+      "installation_target": "industreal_component::base"
+    },
+    "industreal_component::rear_chassis": {
+      "name": "rear_chassis",
+      "generic_type": "Chassis",
+      "installation_target": "industreal_component::base"
+    },
+    "industreal_component::short_rear_chassis": {
+      "name": "short_rear_chassis",
+      "generic_type": "Chassis",
+      "installation_target": "industreal_component::base"
+    },
+    "industreal_component::front_chassis_pin": {
+      "name": "front_chassis_pin",
+      "generic_type": "ChassisPin",
+      "parent_component": "industreal_component::front_chassis",
+      "installation_target": "industreal_component::front_chassis",
+      "required_conditions": [
+        {"name": "aligned", "args": ["$self", "$installation_target"]}
+      ],
+      "safety_requirements": [
+        {"name": "secured", "args": ["industreal_component::base", "Workspace"]}
+      ]
+    },
+    "industreal_component::front_rear_chassis_pin": {
+      "name": "front_rear_chassis_pin",
+      "generic_type": "ChassisPin",
+      "parent_component": "industreal_component::rear_chassis",
+      "installation_target": "industreal_component::rear_chassis",
+      "required_conditions": [
+        {"name": "aligned", "args": ["$self", "$installation_target"]}
+      ],
+      "safety_requirements": [
+        {"name": "secured", "args": ["industreal_component::base", "Workspace"]}
+      ]
+    },
+    "industreal_component::rear_rear_chassis_pin": {
+      "name": "rear_rear_chassis_pin",
+      "generic_type": "ChassisPin",
+      "parent_component": "industreal_component::rear_chassis",
+      "installation_target": "industreal_component::rear_chassis",
+      "required_conditions": [
+        {"name": "aligned", "args": ["$self", "$installation_target"]}
+      ],
+      "safety_requirements": [
+        {"name": "secured", "args": ["industreal_component::base", "Workspace"]}
+      ]
+    },
+    "industreal_component::front_bracket": {
+      "name": "front_bracket",
+      "generic_type": "Bracket",
+      "parent_component": "industreal_component::front_chassis",
+      "installation_target": "industreal_component::front_chassis"
+    },
+    "industreal_component::front_bracket_screw": {
+      "name": "front_bracket_screw",
+      "generic_type": "Screw",
+      "parent_component": "industreal_component::front_bracket",
+      "installation_target": "industreal_component::front_bracket",
+      "required_tool": "screwdriver"
+    },
+    "industreal_component::front_wheel_assy": {
+      "name": "front_wheel_assy",
+      "generic_type": "WheelAssembly",
+      "parent_component": "industreal_component::front_chassis",
+      "installation_target": "industreal_component::front_chassis"
+    },
+    "industreal_component::rear_wheel_assy": {
+      "name": "rear_wheel_assy",
+      "generic_type": "WheelAssembly",
+      "parent_component": "industreal_component::rear_chassis",
+      "installation_target": "industreal_component::rear_chassis"
+    }
+  }
+}

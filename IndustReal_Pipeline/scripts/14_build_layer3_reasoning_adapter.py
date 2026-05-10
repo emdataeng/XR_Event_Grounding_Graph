@@ -10,9 +10,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.reasoning_adapter import (
+from src.layer3_reasoning_adapter import (
     DEFAULT_CSV_DIR,
+    DEFAULT_DOMAIN_CONFIG_PATH,
     DEFAULT_OUTPUT_ROOT,
+    DEFAULT_PREDICATE_CONFIG_PATH,
     DEFAULT_RUN_ID,
     AdapterInputs,
     build_reasoning_adapter_outputs,
@@ -30,6 +32,8 @@ def main() -> None:
     parser.add_argument("--archive", type=str, default=None)
     parser.add_argument("--clip", type=str, default=None)
     parser.add_argument("--evidence-root", type=Path, default=None)
+    parser.add_argument("--predicate-config", type=Path, default=DEFAULT_PREDICATE_CONFIG_PATH)
+    parser.add_argument("--domain-config", type=Path, default=DEFAULT_DOMAIN_CONFIG_PATH)
     args = parser.parse_args()
 
     output_dir = args.output_dir or (args.output_root / args.run_id)
@@ -43,6 +47,8 @@ def main() -> None:
             archive_name=args.archive,
             clip=args.clip,
             evidence_root=args.evidence_root,
+            predicate_config_path=args.predicate_config,
+            domain_config_path=args.domain_config,
         )
     )
     print(json.dumps(result, indent=2))

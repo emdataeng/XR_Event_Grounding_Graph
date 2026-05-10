@@ -49,18 +49,29 @@ def run_layer3_inference(inputs: Layer3Inputs) -> dict[str, Any]:
             predicates_by_step.setdefault(step_id, []).append(predicate)
 
     constraints: list[dict[str, Any]] = []
+    inference_rules = [rule for rule in rules if str(rule.get("type")) != "compatibility"]
+    compatibility_rules = [rule for rule in rules if str(rule.get("type")) == "compatibility"]
     for step in steps:
         step_id = str(step.get("id") or step.get("step_id") or "")
         if not step_id:
             continue
         step_predicates = predicates_by_step.get(step_id, [])
-        for rule in rules:
+        for rule in inference_rules:
             constraints.extend(
-                _apply_rule(
+                _apply_inference_rule(
                     step_id,
                     step_predicates,
                     rule,
                     default_threshold=float(defaults.get("threshold", 0.0)),
+                    default_aggregation=str(defaults.get("aggregation", "min")),
+                )
+            )
+        for rule in compatibility_rules:
+            constraints.extend(
+                _apply_compatibility_rule(
+                    step_id,
+                    step_predicates,
+                    rule,
                     default_aggregation=str(defaults.get("aggregation", "min")),
                 )
             )
@@ -73,11 +84,12 @@ def run_layer3_inference(inputs: Layer3Inputs) -> dict[str, Any]:
         "constraints": len(constraints),
         "output_path": str(inputs.output_path),
         "constraints_by_kind": _count_by(constraints, "kind"),
+        "constraints_by_rule_type": _count_by(constraints, "rule_type"),
         "constraints_by_rule": _count_by(constraints, "rule_id"),
     }
 
 
-def _apply_rule(
+def _apply_inference_rule(
     step_id: str,
     predicates: list[dict[str, Any]],
     rule: dict[str, Any],
@@ -86,7 +98,7 @@ def _apply_rule(
     default_aggregation: str,
 ) -> list[dict[str, Any]]:
     antecedents = list(rule.get("antecedents", []))
-    consequents = list(rule.get("consequents", []))
+    constraint_templates = _rule_constraint_templates(rule)
     threshold = float(rule.get("threshold", default_threshold))
     aggregation = str(rule.get("aggregation", default_aggregation))
     matches = _find_matches(antecedents, predicates)
@@ -97,26 +109,97 @@ def _apply_rule(
         if conf is None or conf < threshold:
             continue
         bindings = dict(match["bindings"])
-        for consequent_idx, consequent in enumerate(consequents):
-            name = str(consequent["name"])
-            kind = str(consequent.get("kind") or ("incompatibility" if rule.get("type") == "compatibility" else "constraint"))
-            args = [_instantiate_arg(arg, bindings) for arg in consequent.get("args", [])]
-            constraints.append(
-                {
-                    "constraint_id": _constraint_id(step_id, str(rule["id"]), match_idx, consequent_idx, name, args),
-                    "step_id": step_id,
-                    "name": name,
-                    "kind": kind,
-                    "args": json.dumps(args, ensure_ascii=False),
-                    "conf": f"{conf:.6g}",
-                    "rule_id": str(rule["id"]),
-                    "rule_type": str(rule.get("type") or "inference"),
-                    "threshold": f"{threshold:.6g}",
-                    "aggregation": aggregation,
-                    "evidence_predicate_ids": json.dumps([str(item.get("id")) for item in evidence], ensure_ascii=False),
-                    "status": "incompatibility" if str(rule.get("type")) == "compatibility" else "inferred",
-                }
+        constraints.extend(
+            _instantiate_constraints(
+                step_id,
+                rule,
+                constraint_templates,
+                bindings,
+                evidence,
+                conf=conf,
+                threshold=threshold,
+                aggregation=aggregation,
+                match_idx=match_idx,
+                status="inferred",
             )
+        )
+    return constraints
+
+
+def _apply_compatibility_rule(
+    step_id: str,
+    predicates: list[dict[str, Any]],
+    rule: dict[str, Any],
+    *,
+    default_aggregation: str,
+) -> list[dict[str, Any]]:
+    antecedents = list(rule.get("antecedents", []))
+    constraint_templates = _rule_constraint_templates(rule)
+    aggregation = str(rule.get("aggregation", default_aggregation))
+    matches = _find_matches(antecedents, predicates)
+    constraints: list[dict[str, Any]] = []
+    for match_idx, match in enumerate(matches):
+        evidence = list(match["evidence"])
+        conf = _aggregate_confidence(evidence, aggregation)
+        bindings = dict(match["bindings"])
+        constraints.extend(
+            _instantiate_constraints(
+                step_id,
+                rule,
+                constraint_templates,
+                bindings,
+                evidence,
+                conf=conf,
+                threshold=_parse_float(rule.get("threshold")),
+                aggregation=aggregation,
+                match_idx=match_idx,
+                status="incompatibility",
+            )
+        )
+    return constraints
+
+
+def _rule_constraint_templates(rule: dict[str, Any]) -> list[dict[str, Any]]:
+    templates = list(rule.get("constraints", []))
+    if not templates:
+        raise ValueError(f"rule must define one or more constraints: {rule.get('id')}")
+    return templates
+
+
+def _instantiate_constraints(
+    step_id: str,
+    rule: dict[str, Any],
+    constraint_templates: list[dict[str, Any]],
+    bindings: dict[str, Any],
+    evidence: list[dict[str, Any]],
+    *,
+    conf: float | None,
+    threshold: float | None,
+    aggregation: str,
+    match_idx: int,
+    status: str,
+) -> list[dict[str, Any]]:
+    constraints = []
+    for template_idx, template in enumerate(constraint_templates):
+        name = str(template["name"])
+        kind = str(template.get("kind") or rule.get("type") or "constraint")
+        args = [_instantiate_arg(arg, bindings) for arg in template.get("args", [])]
+        constraints.append(
+            {
+                "constraint_id": _constraint_id(step_id, str(rule["id"]), match_idx, template_idx, name, args),
+                "step_id": step_id,
+                "name": name,
+                "kind": kind,
+                "args": json.dumps(args, ensure_ascii=False),
+                "conf": "" if conf is None else f"{conf:.6g}",
+                "rule_id": str(rule["id"]),
+                "rule_type": str(rule.get("type") or "inference"),
+                "threshold": "" if threshold is None else f"{threshold:.6g}",
+                "aggregation": aggregation,
+                "evidence_predicate_ids": json.dumps([str(item.get("id")) for item in evidence], ensure_ascii=False),
+                "status": status,
+            }
+        )
     return constraints
 
 
@@ -202,11 +285,11 @@ def _dedupe_matches(matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return output
 
 
-def _constraint_id(step_id: str, rule_id: str, match_idx: int, consequent_idx: int, name: str, args: list[Any]) -> str:
+def _constraint_id(step_id: str, rule_id: str, match_idx: int, template_idx: int, name: str, args: list[Any]) -> str:
     safe_rule = _safe_id(rule_id)
     safe_name = _safe_id(name)
     safe_args = _safe_id("_".join(str(arg) for arg in args if arg is not None))[:80]
-    return f"{step_id}::c::{safe_rule}::{match_idx}_{consequent_idx}::{safe_name}::{safe_args}"
+    return f"{step_id}::c::{safe_rule}::{match_idx}_{template_idx}::{safe_name}::{safe_args}"
 
 
 def _safe_id(value: str) -> str:

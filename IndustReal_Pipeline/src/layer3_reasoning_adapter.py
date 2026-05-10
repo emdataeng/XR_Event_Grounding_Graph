@@ -17,11 +17,28 @@ from typing import Any, Iterable
 DEFAULT_RUN_ID = "raw_cad_dataset__all_test_clips"
 DEFAULT_CSV_DIR = Path(__file__).resolve().parent.parent / "results" / "neo4j" / DEFAULT_RUN_ID
 DEFAULT_OUTPUT_ROOT = Path(__file__).resolve().parent.parent / "results" / "reasoning_layers"
+DEFAULT_PREDICATE_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "thesis_rules.yaml"
+DEFAULT_DOMAIN_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "domain_config.yaml"
 
 EVENTS_CSV = "nodes_events.csv"
 EVENT_COMPONENT_CSV = "edges_event_component.csv"
 EVENT_NEXT_CSV = "edges_event_next.csv"
 COMPONENTS_CSV = "nodes_components.csv"
+
+REQUIRED_PREDICATE_KEYS = (
+    "has_action",
+    "has_time_window",
+    "uses_tool",
+    "uses_object",
+    "is_a",
+    "has_label",
+    "has_parent_component",
+    "has_install_target",
+    "requires_installed_before",
+    "has_required_condition",
+    "has_safety_requirement",
+    "has_required_tool",
+)
 
 
 @dataclass(frozen=True)
@@ -34,6 +51,8 @@ class AdapterInputs:
     archive_name: str | None = None
     clip: str | None = None
     evidence_root: Path | None = None
+    predicate_config_path: Path | None = DEFAULT_PREDICATE_CONFIG_PATH
+    domain_config_path: Path | None = DEFAULT_DOMAIN_CONFIG_PATH
 
 
 def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
@@ -44,6 +63,8 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
     event_component_edges = _read_csv(csv_dir / EVENT_COMPONENT_CSV)
     event_next_edges = _read_csv(csv_dir / EVENT_NEXT_CSV)
     components = _read_csv(csv_dir / COMPONENTS_CSV)
+    predicate_defs = _load_predicate_defs(inputs.predicate_config_path)
+    domain_config = _load_domain_config(inputs.domain_config_path)
 
     filtered_events = _filter_events(
         events,
@@ -99,6 +120,8 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
                 row,
                 edges_by_event=edges_by_event,
                 component_by_id=component_by_id,
+                predicate_defs=predicate_defs,
+                domain_config=domain_config,
             )
         )
 
@@ -114,6 +137,8 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
         "output_dir": str(output_dir),
         "step_records_path": str(step_path),
         "predicates_path": str(pred_path),
+        "predicate_config_path": str(inputs.predicate_config_path) if inputs.predicate_config_path else None,
+        "domain_config_path": str(inputs.domain_config_path) if inputs.domain_config_path else None,
         "step_records": len(step_records),
         "predicates": len(predicates),
         "clip_result_ids": sorted({str(row.get("clip_result_id", "")) for row in ordered_events}),
@@ -198,78 +223,282 @@ def _predicates_for_step(
     *,
     edges_by_event: dict[str, list[dict[str, str]]],
     component_by_id: dict[str, dict[str, str]],
+    predicate_defs: dict[str, dict[str, Any]],
+    domain_config: dict[str, Any],
 ) -> list[dict[str, Any]]:
     event_id = str(step_record["source_event_id"])
     step_id = str(step_record["id"])
     conf = _parse_float(row.get("conf:float"))
-    predicates = [
-        _predicate(
-            step_id,
-            "hasAction",
-            [step_id, step_record["action"]["name"]],
-            conf,
-            source_file=EVENTS_CSV,
-            source_fields=["event_type", "action_desc"],
-            notes=None if step_record["action"]["name"] is not None else "Action could not be normalized from event_type/action_desc.",
-        ),
-        _predicate(
-            step_id,
-            "hasTimeWindow",
-            [
+    predicates: list[dict[str, Any]] = []
+    predicates.extend(
+        item
+        for item in [
+            _predicate_from_key(
+                predicate_defs,
+                "has_action",
                 step_id,
-                step_record["time_window"]["start_s"],
-                step_record["time_window"]["end_s"],
-            ],
-            conf,
-            source_file=EVENTS_CSV,
-            source_fields=["frame:int", "time_s:float"],
-            notes="End time is null because the existing graph stores step instants, not durations.",
-        ),
-    ]
+                [step_id, step_record["action"]["name"]],
+                conf,
+                source_file=EVENTS_CSV,
+                source_fields=["event_type", "action_desc"],
+                notes=None
+                if step_record["action"]["name"] is not None
+                else "Action could not be normalized from event_type/action_desc.",
+            ),
+            _predicate_from_key(
+                predicate_defs,
+                "has_time_window",
+                step_id,
+                [
+                    step_id,
+                    step_record["time_window"]["start_s"],
+                    step_record["time_window"]["end_s"],
+                ],
+                conf,
+                source_file=EVENTS_CSV,
+                source_fields=["frame:int", "time_s:float"],
+                notes="End time is null because the existing graph stores step instants, not durations.",
+            ),
+        ]
+        if item is not None
+    )
     for edge in edges_by_event.get(event_id, []):
         component_id = edge.get(":END_ID(Component)", "")
         component = component_by_id.get(component_id, {})
         component_label = _blank_to_none(component.get("name")) or _label_from_component_id(component_id)
         component_type = _blank_to_none(component.get("normalized_name")) or _normalize_token(component_label)
-        edge_role = str(edge.get("role") or "component").lower()
-        relation = "usesTool" if edge_role == "tool" else "usesObject"
-        role_note = None
-        if relation == "usesObject":
-            role_note = "Existing graph marks this ACTS_ON edge as a component; no tool-specific role was available."
-        predicates.append(
-            _predicate(
-                step_id,
-                relation,
-                [step_id, component_id],
-                conf,
-                source_file=EVENT_COMPONENT_CSV,
-                source_fields=[":START_ID(AssemblyEvent)", ":END_ID(Component)", "role"],
-                notes=role_note,
-            )
+        has_domain_type = isinstance(domain_config.get("components", {}).get(component_id), dict) and bool(
+            domain_config["components"][component_id].get("generic_type")
         )
-        predicates.append(
-            _predicate(
+        edge_role = str(edge.get("role") or "component").lower()
+        relation_key = "uses_tool" if edge_role == "tool" else "uses_object"
+        role_note = None
+        if relation_key == "uses_object":
+            role_note = "Existing graph marks this ACTS_ON edge as a component; no tool-specific role was available."
+        interaction_predicate = _predicate_from_key(
+            predicate_defs,
+            relation_key,
+            step_id,
+            [step_id, component_id],
+            conf,
+            source_file=EVENT_COMPONENT_CSV,
+            source_fields=[":START_ID(AssemblyEvent)", ":END_ID(Component)", "role"],
+            notes=role_note,
+        )
+        type_predicate = None
+        if not has_domain_type:
+            type_predicate = _predicate_from_key(
+                predicate_defs,
+                "is_a",
                 step_id,
-                "isA",
                 [component_id, component_type],
                 conf,
                 source_file=COMPONENTS_CSV,
                 source_fields=["component_id:ID(Component)", "name", "normalized_name"],
                 notes="Component type is derived from the existing component normalized_name, not from a richer ontology.",
             )
+        label_predicate = _predicate_from_key(
+            predicate_defs,
+            "has_label",
+            step_id,
+            [component_id, component_label],
+            conf,
+            source_file=COMPONENTS_CSV,
+            source_fields=["component_id:ID(Component)", "display_name", "name"],
+            notes=None,
         )
-        predicates.append(
-            _predicate(
-                step_id,
-                "hasLabel",
-                [component_id, component_label],
-                conf,
-                source_file=COMPONENTS_CSV,
-                source_fields=["component_id:ID(Component)", "display_name", "name"],
-                notes=None,
-            )
+        domain_predicates = _domain_predicates_for_component(
+            predicate_defs,
+            domain_config,
+            step_id,
+            component_id,
+            conf,
+        )
+        predicates.extend(
+            item
+            for item in [interaction_predicate, type_predicate, label_predicate, *domain_predicates]
+            if item is not None
         )
     return predicates
+
+
+def _domain_predicates_for_component(
+    predicate_defs: dict[str, dict[str, Any]],
+    domain_config: dict[str, Any],
+    step_id: str,
+    component_id: str,
+    conf: float | None,
+) -> list[dict[str, Any]]:
+    components = domain_config.get("components", {})
+    entry = components.get(component_id)
+    if not isinstance(entry, dict):
+        return []
+
+    output: list[dict[str, Any] | None] = []
+    generic_type = _blank_to_none(entry.get("generic_type"))
+    if generic_type:
+        output.append(
+            _domain_predicate(
+                predicate_defs,
+                "is_a",
+                step_id,
+                [component_id, generic_type],
+                conf,
+                fields=["components", component_id, "generic_type"],
+            )
+        )
+
+    parent = _blank_to_none(entry.get("parent_component"))
+    if parent:
+        output.append(
+            _domain_predicate(
+                predicate_defs,
+                "has_parent_component",
+                step_id,
+                [component_id, parent],
+                conf,
+                fields=["components", component_id, "parent_component"],
+            )
+        )
+
+    installation_target = _blank_to_none(entry.get("installation_target"))
+    if installation_target:
+        output.append(
+            _domain_predicate(
+                predicate_defs,
+                "has_install_target",
+                step_id,
+                [component_id, installation_target],
+                conf,
+                fields=["components", component_id, "installation_target"],
+            )
+        )
+        target_entry = components.get(installation_target)
+        if isinstance(target_entry, dict):
+            target_support = _blank_to_none(target_entry.get("installation_target"))
+            if target_support:
+                output.append(
+                    _domain_predicate(
+                        predicate_defs,
+                        "requires_installed_before",
+                        step_id,
+                        [component_id, installation_target, target_support],
+                        conf,
+                        fields=["components", component_id, "installation_target"],
+                    )
+                )
+
+    required_tool = _blank_to_none(entry.get("required_tool"))
+    if required_tool:
+        output.append(
+            _domain_predicate(
+                predicate_defs,
+                "has_required_tool",
+                step_id,
+                [component_id, required_tool],
+                conf,
+                fields=["components", component_id, "required_tool"],
+            )
+        )
+
+    for idx, condition in enumerate(entry.get("required_conditions", []) or []):
+        if not isinstance(condition, dict):
+            continue
+        condition_name = _blank_to_none(condition.get("name"))
+        args = _resolve_domain_args(condition.get("args", []), component_id, entry)
+        if condition_name and len(args) == 2:
+            output.append(
+                _domain_predicate(
+                    predicate_defs,
+                    "has_required_condition",
+                    step_id,
+                    [component_id, condition_name, *args],
+                    conf,
+                    fields=["components", component_id, "required_conditions", str(idx)],
+                )
+            )
+
+    for idx, requirement in enumerate(entry.get("safety_requirements", []) or []):
+        if not isinstance(requirement, dict):
+            continue
+        requirement_name = _blank_to_none(requirement.get("name"))
+        args = _resolve_domain_args(requirement.get("args", []), component_id, entry)
+        if requirement_name and len(args) == 2:
+            output.append(
+                _domain_predicate(
+                    predicate_defs,
+                    "has_safety_requirement",
+                    step_id,
+                    [component_id, requirement_name, *args],
+                    conf,
+                    fields=["components", component_id, "safety_requirements", str(idx)],
+                )
+            )
+    return [item for item in output if item is not None]
+
+
+def _domain_predicate(
+    predicate_defs: dict[str, dict[str, Any]],
+    key: str,
+    step_id: str,
+    args: list[Any],
+    conf: float | None,
+    *,
+    fields: list[str],
+) -> dict[str, Any] | None:
+    return _predicate_from_key(
+        predicate_defs,
+        key,
+        step_id,
+        args,
+        conf,
+        source_file="config/domain_config.yaml",
+        source_fields=fields,
+        notes="Derived from manually authored domain_config.yaml.",
+    )
+
+
+def _resolve_domain_args(args: Any, component_id: str, entry: dict[str, Any]) -> list[Any]:
+    output = []
+    for arg in list(args or []):
+        if arg == "$self":
+            output.append(component_id)
+        elif arg == "$installation_target":
+            output.append(entry.get("installation_target"))
+        elif arg == "$parent_component":
+            output.append(entry.get("parent_component"))
+        else:
+            output.append(arg)
+    return output
+
+
+def _predicate_from_key(
+    predicate_defs: dict[str, dict[str, Any]],
+    key: str,
+    step_id: str,
+    args: list[Any],
+    conf: float | None,
+    *,
+    source_file: str,
+    source_fields: list[str],
+    notes: str | None,
+) -> dict[str, Any] | None:
+    predicate_def = predicate_defs.get(key)
+    if predicate_def is None:
+        raise KeyError(f"missing adapter predicate definition: {key}")
+    if not predicate_def.get("enabled", True):
+        return None
+    return _predicate(
+        step_id,
+        str(predicate_def["name"]),
+        args,
+        conf,
+        source_file=source_file,
+        source_fields=source_fields,
+        notes=notes,
+        category=_blank_to_none(predicate_def.get("category")),
+        predicate_key=key,
+    )
 
 
 def _predicate(
@@ -281,6 +510,8 @@ def _predicate(
     source_file: str,
     source_fields: list[str],
     notes: str | None,
+    category: str | None,
+    predicate_key: str | None,
 ) -> dict[str, Any]:
     suffix = _normalize_token("_".join(str(arg) for arg in args if arg is not None))[:96]
     return {
@@ -289,6 +520,8 @@ def _predicate(
         "id": f"{step_id}::p::{name}::{suffix}",
         "step_id": step_id,
         "name": name,
+        "predicate_key": predicate_key,
+        "category": category,
         "args": args,
         "conf": conf,
         "source": {
@@ -298,6 +531,59 @@ def _predicate(
         },
         "notes": notes,
     }
+
+
+def _load_predicate_defs(config_path: Path | None) -> dict[str, dict[str, Any]]:
+    if config_path is None:
+        raise ValueError("adapter predicate config path is required")
+
+    config = _load_config(Path(config_path))
+    configured = config.get("adapter", {}).get("predicates", {})
+    if not configured:
+        raise ValueError(f"adapter predicate config missing adapter.predicates: {config_path}")
+
+    flattened: dict[str, dict[str, Any]] = {}
+    for category, entries in configured.items():
+        if not isinstance(entries, dict):
+            raise ValueError(f"adapter predicate category must be a mapping: {category}")
+        for key, value in entries.items():
+            if not isinstance(value, dict):
+                raise ValueError(f"adapter predicate definition must be a mapping: {category}.{key}")
+            name = value.get("name")
+            if not name:
+                raise ValueError(f"adapter predicate definition missing name: {category}.{key}")
+            flattened[str(key)] = {
+                **value,
+                "name": str(name),
+                "category": str(category),
+                "enabled": bool(value.get("enabled", True)),
+            }
+
+    missing_keys = [key for key in REQUIRED_PREDICATE_KEYS if key not in flattened]
+    if missing_keys:
+        raise ValueError(f"adapter predicate config missing required keys: {', '.join(missing_keys)}")
+    return flattened
+
+
+def _load_config(path: Path) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        return json.loads(text)
+    loaded = yaml.safe_load(text)
+    if not isinstance(loaded, dict):
+        raise ValueError(f"config must be a mapping: {path}")
+    return loaded
+
+
+def _load_domain_config(config_path: Path | None) -> dict[str, Any]:
+    if config_path is None:
+        return {"components": {}, "entities": {}}
+    config = _load_config(Path(config_path))
+    if not isinstance(config.get("components", {}), dict):
+        raise ValueError(f"domain config components must be a mapping: {config_path}")
+    return config
 
 
 def _filter_events(
