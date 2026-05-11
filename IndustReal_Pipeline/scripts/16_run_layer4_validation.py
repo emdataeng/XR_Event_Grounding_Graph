@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.layer4_validation import Layer4Inputs, run_layer4_validation
+from src.layer4_validation import DEFAULT_CONFIG_PATH, Layer4Inputs, run_layer4_validation
 
 
 def main() -> None:
@@ -19,6 +19,7 @@ def main() -> None:
     parser.add_argument("--predicates", type=Path, required=True)
     parser.add_argument("--constraints", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     args = parser.parse_args()
 
     result = run_layer4_validation(
@@ -27,6 +28,7 @@ def main() -> None:
             predicates_path=args.predicates,
             constraints_path=args.constraints,
             output_path=args.output,
+            config_path=args.config,
         )
     )
     print(json.dumps(result, indent=2))

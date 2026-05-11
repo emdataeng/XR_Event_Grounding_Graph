@@ -85,6 +85,10 @@
     "threshold": 0.70,
     "aggregation": "min"
   },
+  "validation": {
+    "tau_acc": 0.70,
+    "tau_unc": 0.35
+  },
   "rule_types": {
     "inferred_precondition": "Derives conditions that should hold before a step is valid.",
     "expected_effect": "Derives effects that a step is expected to produce for later validation.",
