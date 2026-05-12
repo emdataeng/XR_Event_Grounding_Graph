@@ -64,6 +64,8 @@ predicates.jsonl
 
 `predicates.jsonl` contains symbolic facts derived from each step, such as the step action, time window, object use, and component metadata.
 
+The upstream graph stores event instants. The adapter fills `time_window.start_s` and `start_frame` from the event row, and currently infers `end_s` and `end_frame` from the next distinct event timestamp in the same clip when one exists. The final timestamp group remains open-ended with null end values. This is a downstream fallback until upper-layer step segmentation provides explicit step windows.
+
 ## Predicate Configuration
 
 Predicate names are configured in:

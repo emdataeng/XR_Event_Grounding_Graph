@@ -101,16 +101,20 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
             _event_id(row),
         ),
     )
+    inferred_time_windows = _infer_time_window_ends(ordered_events)
 
     step_records: list[dict[str, Any]] = []
     predicates: list[dict[str, Any]] = []
     for row in ordered_events:
+        inferred_window = inferred_time_windows.get(_event_id(row), {})
         step_record = _step_record(
             row,
             edges_by_event=edges_by_event,
             component_by_id=component_by_id,
             next_event_id=next_by_event.get(_event_id(row)),
             previous_event_id=previous_by_event.get(_event_id(row)),
+            inferred_end_frame=inferred_window.get("end_frame"),
+            inferred_end_s=inferred_window.get("end_s"),
             evidence_root=inputs.evidence_root,
         )
         step_records.append(step_record)
@@ -153,6 +157,8 @@ def _step_record(
     component_by_id: dict[str, dict[str, str]],
     next_event_id: str | None,
     previous_event_id: str | None,
+    inferred_end_frame: int | None,
+    inferred_end_s: float | None,
     evidence_root: Path | None,
 ) -> dict[str, Any]:
     event_id = _event_id(row)
@@ -160,7 +166,11 @@ def _step_record(
     frame = _parse_int(row.get("frame:int"))
     time_s = _parse_float(row.get("time_s:float"))
     component_refs = _component_refs(event_id, edges_by_event=edges_by_event, component_by_id=component_by_id)
-    missing_inputs = ["time_window.end_frame", "time_window.end_s"]
+    missing_inputs = []
+    if inferred_end_frame is None:
+        missing_inputs.append("time_window.end_frame")
+    if inferred_end_s is None:
+        missing_inputs.append("time_window.end_s")
     evidence_paths = _available_evidence_paths(row, evidence_root=evidence_root)
     if not evidence_paths:
         missing_inputs.extend(
@@ -189,11 +199,17 @@ def _step_record(
         },
         "time_window": {
             "start_frame": frame,
-            "end_frame": None,
+            "end_frame": inferred_end_frame,
             "start_s": time_s,
-            "end_s": None,
-            "source": f"{EVENTS_CSV}: frame:int/time_s:float",
-            "notes": "Existing graph stores step instants, not durations.",
+            "end_s": inferred_end_s,
+            "source": (
+                f"{EVENTS_CSV}: frame:int/time_s:float; "
+                "end inferred from next distinct timestamp in the same clip when available"
+            ),
+            "notes": (
+                "Existing graph stores step instants; end time is inferred from the next distinct "
+                "event timestamp and remains null for the final timestamp group."
+            ),
         },
         "action": {
             "name": _normalize_action(row),
@@ -215,6 +231,39 @@ def _step_record(
             "source_files": [EVENTS_CSV, EVENT_COMPONENT_CSV, EVENT_NEXT_CSV, COMPONENTS_CSV],
         },
     }
+
+
+def _infer_time_window_ends(rows: list[dict[str, str]]) -> dict[str, dict[str, Any]]:
+    by_clip: dict[str, list[dict[str, str]]] = {}
+    for row in rows:
+        by_clip.setdefault(str(row.get("clip_result_id") or ""), []).append(row)
+
+    inferred: dict[str, dict[str, Any]] = {}
+    for clip_rows in by_clip.values():
+        groups: list[dict[str, Any]] = []
+        for row in clip_rows:
+            time_s = _parse_float(row.get("time_s:float"))
+            frame = _parse_int(row.get("frame:int"))
+            if not groups or groups[-1]["time_s"] != time_s:
+                groups.append({"time_s": time_s, "frame": frame, "rows": [row]})
+            else:
+                groups[-1]["rows"].append(row)
+
+        for idx, group in enumerate(groups):
+            next_group = _next_distinct_time_group(groups, idx)
+            end_s = next_group["time_s"] if next_group else None
+            end_frame = next_group["frame"] if next_group else None
+            for row in group["rows"]:
+                inferred[_event_id(row)] = {"end_s": end_s, "end_frame": end_frame}
+    return inferred
+
+
+def _next_distinct_time_group(groups: list[dict[str, Any]], idx: int) -> dict[str, Any] | None:
+    current_time = groups[idx]["time_s"]
+    for group in groups[idx + 1 :]:
+        if group["time_s"] != current_time:
+            return group
+    return None
 
 
 def _predicates_for_step(
@@ -257,7 +306,10 @@ def _predicates_for_step(
                 conf,
                 source_file=EVENTS_CSV,
                 source_fields=["frame:int", "time_s:float"],
-                notes="End time is null because the existing graph stores step instants, not durations.",
+                notes=(
+                    "End time is inferred from the next distinct event timestamp in the same clip "
+                    "when available; it is null for the final timestamp group."
+                ),
             ),
         ]
         if item is not None

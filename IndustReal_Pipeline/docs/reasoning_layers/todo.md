@@ -19,6 +19,10 @@ This document tracks implementation follow-ups for the reasoning-layer prototype
 
 - [ ] Add rules/effects for remove actions.
 
+- [ ] Move step time-window boundaries upstream.
+  - Step `end_s`/`end_frame` should come from upper-layer segmentation when available.
+  - The reasoning adapter currently infers end boundaries from the next distinct event timestamp only as a downstream fallback.
+
 - [ ] Add graph export for validation records, constraints, produced effects, and dependency links.
 
 - [ ] Add tests for domain-config predicate generation, Layer 3 generic rule matching, and Layer 4 history validation.

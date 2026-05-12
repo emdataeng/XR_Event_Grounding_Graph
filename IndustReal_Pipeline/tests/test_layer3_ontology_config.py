@@ -33,11 +33,26 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     )
 
     predicates = _read_jsonl(output_dir / "predicates.jsonl")
+    steps = _read_jsonl(output_dir / "step_records.jsonl")
     is_a = {tuple(item["args"]) for item in predicates if item["name"] == "isA"}
     labels = {tuple(item["args"]) for item in predicates if item["name"] == "hasLabel"}
     required_tools = {tuple(item["args"]) for item in predicates if item["name"] == "hasRequiredTool"}
+    time_windows = {
+        item["source_event_id"].rsplit("::", 1)[-1]: item["time_window"]
+        for item in steps
+    }
+    has_time_window = {
+        item["step_id"].rsplit("::", 1)[-1]: tuple(item["args"][1:])
+        for item in predicates
+        if item["name"] == "hasTimeWindow"
+    }
 
     assert adapter_result["step_records"] == 11
+    assert time_windows["event_0"]["start_s"] == 70.9
+    assert time_windows["event_0"]["end_s"] == 118.7
+    assert time_windows["event_1"]["end_s"] == 118.7
+    assert time_windows["event_2"]["end_s"] == 118.7
+    assert has_time_window["event_0"] == (70.9, 118.7)
     assert ("base", "Base") in is_a
     assert ("base", "base") not in is_a
     assert ("base", "base") in labels
