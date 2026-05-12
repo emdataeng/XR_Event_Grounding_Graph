@@ -22,6 +22,8 @@ existing graph CSVs
   -> inferred_constraints.csv
   -> Layer 4 validation
   -> validation_records.jsonl
+  -> procedural_reasoning_graph
+  -> procedural_reasoning_graph.json
 ```
 
 Current scripts:
@@ -30,6 +32,7 @@ Current scripts:
 scripts/14_build_layer3_reasoning_adapter.py
 scripts/15_run_layer3_inference.py
 scripts/16_run_layer4_validation.py
+scripts/17_build_procedural_reasoning_graph.py
 ```
 
 Current implementation modules:
@@ -38,6 +41,7 @@ Current implementation modules:
 src/layer3_reasoning_adapter.py
 src/layer3_inference.py
 src/layer4_validation.py
+src/procedural_reasoning_graph.py
 ```
 
 Adapter runtime defaults are configured in:
@@ -241,6 +245,57 @@ future explicit annotation support, when available
 
 If a requirement is supported by a previous effect, the validation record links it to the earlier producing constraint. If no support is found, the requirement is recorded as missing and the step is marked `uncertain`. Compatibility constraints still act as hard violations and mark a step `rejected`.
 
+## Procedural Reasoning Graph
+
+The `procedural_reasoning_graph` is the reasoning-enriched procedural representation produced after Layer 3 inference and Layer 4 validation. It is separate from the upstream assembly/Neo4j graph: the upstream graph represents exported source events and component relations, while `procedural_reasoning_graph` represents validated steps, predicate evidence, inferred constraints, rule provenance, dependency support, missing requirements, and explanation traces.
+
+The primary graph-builder input is:
+
+```text
+validation_records.jsonl
+```
+
+Optional inputs such as `step_records.jsonl`, `predicates.jsonl`, and `inferred_constraints.csv` are accepted by the script only for future metadata enrichment. The current builder relies on `validation_records.jsonl` because it already contains the validation status, predicate evidence, constraint evidence, produced effects, dependency support, missing requirements, incompatibilities, and trace information.
+
+The graph JSON has this shape:
+
+```json
+{
+  "schema_version": "1.0",
+  "graph_name": "procedural_reasoning_graph",
+  "nodes": [],
+  "edges": []
+}
+```
+
+Node types:
+
+```text
+Step        one node per validation record
+Predicate   predicate evidence from evidence_predicates / trace.predicate_evidence
+Constraint  inferred/validated constraints from evidence and requirement fields
+Rule        rule_id provenance from constraints
+Entity      object/tool/workspace/material arguments extracted from predicates and constraints
+Source      predicate source file/field provenance
+```
+
+Edge types:
+
+```text
+NEXT            Step -> Step ordered by validation index
+HAS_PREDICATE   Step -> Predicate
+HAS_CONSTRAINT  Step -> Constraint
+USES            Step -> Entity from usesObject / usesTool predicates
+PRODUCES        Step -> Constraint for produced_effects
+REQUIRES        Step -> Constraint for requires / requiresTool / requiresSafety
+DEPENDS_ON      later Step -> earlier Step when a requirement is supported by a previous produced effect
+SUPPORTED_BY    Constraint -> Predicate or Constraint support evidence
+DERIVED_FROM    Constraint -> Rule and Predicate -> Source
+HAS_ENTITY      Predicate or Constraint -> Entity
+```
+
+Accepted, uncertain, and rejected steps are included by default. `--exclude-rejected` omits rejected steps. Rejected steps are not allowed to support later `DEPENDS_ON` edges. Uncertain steps may support later dependencies, but those dependency edges are marked `provisional=true`.
+
 ## Current Output Contract
 
 Current predicate records include:
@@ -350,6 +405,14 @@ python scripts\16_run_layer4_validation.py `
   --predicates results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\predicates.jsonl `
   --constraints results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\inferred_constraints.csv `
   --output results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\validation_records.jsonl
+```
+
+Build the procedural reasoning graph:
+
+```powershell
+python scripts\17_build_procedural_reasoning_graph.py `
+  --validations results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\validation_records.jsonl `
+  --output-dir results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
 ```
 
 Use a different predicate/rule config:
