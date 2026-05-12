@@ -81,6 +81,30 @@
       }
     }
   },
+  "predicate_vocabulary": {
+    "hasAction": {"arity": 2, "description": "Associates a step with its normalized action label."},
+    "hasTimeWindow": {"arity": 3, "description": "Associates a step with its start and end timestamps."},
+    "usesObject": {"arity": 2, "description": "Associates a step with a non-tool component it acts on."},
+    "usesTool": {"arity": 2, "description": "Associates a step with a component whose edge role is tool."},
+    "isA": {"arity": 2, "description": "Associates an individual with a generic class."},
+    "hasLabel": {"arity": 2, "description": "Associates an individual with its display label."},
+    "hasParentComponent": {"arity": 2, "description": "Associates a component with its parent component."},
+    "hasInstallTarget": {"arity": 2, "description": "Associates a component with its expected installation target."},
+    "requiresInstalledBefore": {"arity": 3, "description": "States that a component requires its target to be installed first."},
+    "hasRequiredCondition": {"arity": 4, "description": "Associates a component with a required assembly condition."},
+    "hasSafetyRequirement": {"arity": 4, "description": "Associates a component with a safety condition."},
+    "hasRequiredTool": {"arity": 2, "description": "Associates a component with a required tool."},
+    "requires": {"arity": 4, "description": "Layer 3 inferred precondition or assembly condition."},
+    "produces": {"arity": 4, "description": "Layer 3 expected effect."},
+    "requiresSafety": {"arity": 4, "description": "Layer 3 inferred safety requirement."},
+    "requiresTool": {"arity": 2, "description": "Layer 3 inferred tool requirement."},
+    "incompatibleAction": {"arity": 3, "description": "Layer 3 inferred incompatibility."}
+  },
+  "predicate_aliases": {
+    "stepHasAction": "hasAction",
+    "actsOn": "usesObject",
+    "typeOf": "isA"
+  },
   "defaults": {
     "threshold": 0.70,
     "aggregation": "min"
@@ -105,6 +129,7 @@
       "antecedents": [
         {"name": "hasAction", "args": ["?s", "install"]},
         {"name": "usesObject", "args": ["?s", "?component"]},
+        {"name": "isA", "args": ["?component", "Component"]},
         {"name": "requiresInstalledBefore", "args": ["?component", "?target", "?support"]}
       ],
       "constraints": [
@@ -118,6 +143,7 @@
       "antecedents": [
         {"name": "hasAction", "args": ["?s", "install"]},
         {"name": "usesObject", "args": ["?s", "?component"]},
+        {"name": "isA", "args": ["?component", "Component"]},
         {"name": "hasInstallTarget", "args": ["?component", "?target"]}
       ],
       "constraints": [
@@ -131,6 +157,7 @@
       "antecedents": [
         {"name": "hasAction", "args": ["?s", "install"]},
         {"name": "usesObject", "args": ["?s", "?component"]},
+        {"name": "isA", "args": ["?component", "ChassisPin"]},
         {"name": "hasRequiredCondition", "args": ["?component", "?condition", "?arg1", "?arg2"]}
       ],
       "constraints": [
@@ -144,6 +171,7 @@
       "antecedents": [
         {"name": "hasAction", "args": ["?s", "install"]},
         {"name": "usesObject", "args": ["?s", "?component"]},
+        {"name": "isA", "args": ["?component", "ChassisPin"]},
         {"name": "hasSafetyRequirement", "args": ["?component", "?condition", "?arg1", "?arg2"]}
       ],
       "constraints": [
@@ -156,6 +184,7 @@
       "threshold": 0.70,
       "antecedents": [
         {"name": "usesObject", "args": ["?s", "?component"]},
+        {"name": "isA", "args": ["?component", "Screw"]},
         {"name": "hasRequiredTool", "args": ["?component", "?tool"]}
       ],
       "constraints": [

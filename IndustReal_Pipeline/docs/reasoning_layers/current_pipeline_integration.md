@@ -101,7 +101,7 @@ Example:
 
 The stable adapter key is used by Python code to decide which extraction path to run. The configured `name` is what appears in `predicates.jsonl` and what Layer 3 rules match against.
 
-This means that renaming a current predicate is a config change. For example, changing `hasAction` to `stepHasAction` only requires updating the predicate config and any rules that refer to the old name.
+Predicate aliases are configured under `predicate_aliases`. Layer 3 normalizes predicate names before rule matching, so equivalent names such as `stepHasAction`, `actsOn`, and `typeOf` can be mapped to canonical names such as `hasAction`, `usesObject`, and `isA`.
 
 Disabling a current predicate is also a config change:
 
@@ -193,29 +193,29 @@ compatibility
 
 These categories use the rule evaluation structure from `Methodology_Design.tex`, Listing `lst:alg_rule_evaluation`. Non-compatibility rules are evaluated first: find bindings, collect supporting predicates, aggregate confidence, compare with the rule threshold, and instantiate configured constraints. Compatibility rules are evaluated in a separate pass and emit incompatibility constraints with provenance; these are interpreted as hard validity conditions during later validation.
 
-Current examples include:
+Current examples use domain individual ids and generic class predicates:
 
 ```text
-hasAction(step1, install) + usesObject(step1, base) + isA(base, base)
-  -> produces(step1, installed, base, Workspace)
+hasAction(step1, install) + usesObject(step1, base) + isA(base, Component)
+  -> produces(step1, installed, base, workspace)
 
-hasAction(step2, install) + usesObject(step2, rear_chassis) + isA(rear_chassis, rear_chassis)
-  -> requires(step2, installed, base, Workspace)
+hasAction(step2, install) + usesObject(step2, rear_chassis) + isA(rear_chassis, Chassis)
+  -> requires(step2, installed, base, workspace)
   -> produces(step2, installed, rear_chassis, base)
 
-hasAction(step3, install) + usesObject(step3, front_rear_chassis_pin) + isA(front_rear_chassis_pin, front_rear_chassis_pin)
+hasAction(step3, install) + usesObject(step3, front_rear_chassis_pin) + isA(front_rear_chassis_pin, ChassisPin)
   -> requires(step3, installed, rear_chassis, base)
   -> requires(step3, aligned, front_rear_chassis_pin, rear_chassis)
   -> produces(step3, installed, front_rear_chassis_pin, rear_chassis)
 
-usesObject(step7, screw) + isA(screw, front_bracket_screw)
+usesObject(step7, front_bracket_screw) + isA(front_bracket_screw, Screw)
   -> requiresTool(step, screwdriver)
 
 hasAction(step, error) + usesObject(step, object)
   -> incompatibleAction(step, object, error)
 ```
 
-Because rules match by predicate name, changing a predicate output name in `adapter.predicates` should be coordinated with the rule antecedents that consume that predicate.
+Because rules match by predicate name after alias normalization, changing a predicate output name in `adapter.predicates` should either use a canonical vocabulary name or add an explicit alias to `predicate_aliases`.
 
 ## Layer 4 Validation
 
@@ -257,6 +257,8 @@ notes
 
 `source` records which CSV file and fields produced the predicate.
 
+The output file contract is unchanged: the adapter still writes `step_records.jsonl` and `predicates.jsonl`, Layer 3 still writes `inferred_constraints.csv`, and Layer 4 still writes `validation_records.jsonl`. The main semantic change is that configured domain components now use the domain individual `name` in predicate arguments, such as `base`, while generic classes stay class-like, such as `Base` or `Chassis`. Labels remain separate through `hasLabel(base, "base")`.
+
 ## Domain Configuration
 
 Component-specific assembly knowledge is stored separately in:
@@ -279,15 +281,31 @@ safety requirements
 
 For example, the config maps both `front_chassis` and `rear_chassis` to `Chassis`, and maps chassis pins to `ChassisPin` with their parent chassis as the installation target.
 
+The domain config now also carries lightweight ontology-style metadata:
+
+```text
+type_hierarchy
+type_defaults
+condition_vocabulary
+predicate_aliases
+```
+
+`type_hierarchy` makes generic classes explicit. The adapter emits the configured class and its parents, for example `isA(front_bracket_screw, Screw)`, `isA(front_bracket_screw, Fastener)`, and `isA(front_bracket_screw, Component)`.
+
+`type_defaults` provides common requirements for all components of a generic type unless the component overrides the field. For example, `Screw` defines `required_tool: screwdriver`, and `ChassisPin` defines aligned and secured requirements shared by all chassis pins.
+
+`condition_vocabulary` controls condition names and arities used by `required_conditions` and `safety_requirements`. The adapter validates those configured conditions at load time and raises a clear error for unknown names or wrong argument counts.
+
 The adapter materializes this domain config into predicates such as:
 
 ```text
 isA(component, Chassis)
+isA(component, Component)
 hasInstallTarget(component, target)
 requiresInstalledBefore(component, target, support)
 hasParentComponent(component, parent)
 hasRequiredCondition(component, aligned, component, target)
-hasSafetyRequirement(component, secured, base, Workspace)
+hasSafetyRequirement(component, secured, base, workspace)
 hasRequiredTool(component, screwdriver)
 ```
 

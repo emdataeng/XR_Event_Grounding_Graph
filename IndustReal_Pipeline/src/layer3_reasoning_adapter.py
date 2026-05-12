@@ -263,13 +263,17 @@ def _predicates_for_step(
         if item is not None
     )
     for edge in edges_by_event.get(event_id, []):
-        component_id = edge.get(":END_ID(Component)", "")
-        component = component_by_id.get(component_id, {})
-        component_label = _blank_to_none(component.get("name")) or _label_from_component_id(component_id)
-        component_type = _blank_to_none(component.get("normalized_name")) or _normalize_token(component_label)
-        has_domain_type = isinstance(domain_config.get("components", {}).get(component_id), dict) and bool(
-            domain_config["components"][component_id].get("generic_type")
+        source_component_id = edge.get(":END_ID(Component)", "")
+        component_id = _domain_individual_id(domain_config, source_component_id)
+        component = component_by_id.get(source_component_id, {})
+        domain_entry = _effective_domain_entry(domain_config, source_component_id)
+        component_label = (
+            _blank_to_none(domain_entry.get("name"))
+            or _blank_to_none(component.get("name"))
+            or _label_from_component_id(source_component_id)
         )
+        component_type = _blank_to_none(component.get("normalized_name")) or _normalize_token(component_label)
+        has_domain_type = bool(_blank_to_none(domain_entry.get("generic_type")))
         edge_role = str(edge.get("role") or "component").lower()
         relation_key = "uses_tool" if edge_role == "tool" else "uses_object"
         role_note = None
@@ -311,6 +315,7 @@ def _predicates_for_step(
             predicate_defs,
             domain_config,
             step_id,
+            source_component_id,
             component_id,
             conf,
         )
@@ -326,65 +331,66 @@ def _domain_predicates_for_component(
     predicate_defs: dict[str, dict[str, Any]],
     domain_config: dict[str, Any],
     step_id: str,
-    component_id: str,
+    source_component_id: str,
+    individual_id: str,
     conf: float | None,
 ) -> list[dict[str, Any]]:
-    components = domain_config.get("components", {})
-    entry = components.get(component_id)
-    if not isinstance(entry, dict):
+    entry = _effective_domain_entry(domain_config, source_component_id)
+    if not entry:
         return []
 
     output: list[dict[str, Any] | None] = []
     generic_type = _blank_to_none(entry.get("generic_type"))
-    if generic_type:
+    for type_name in _type_closure(domain_config, generic_type):
         output.append(
             _domain_predicate(
                 predicate_defs,
                 "is_a",
                 step_id,
-                [component_id, generic_type],
+                [individual_id, type_name],
                 conf,
-                fields=["components", component_id, "generic_type"],
+                fields=["components", source_component_id, "generic_type"],
             )
         )
 
-    parent = _blank_to_none(entry.get("parent_component"))
+    parent = _domain_individual_id(domain_config, _blank_to_none(entry.get("parent_component")))
     if parent:
         output.append(
             _domain_predicate(
                 predicate_defs,
                 "has_parent_component",
                 step_id,
-                [component_id, parent],
+                [individual_id, parent],
                 conf,
-                fields=["components", component_id, "parent_component"],
+                fields=["components", source_component_id, "parent_component"],
             )
         )
 
-    installation_target = _blank_to_none(entry.get("installation_target"))
+    installation_target_source = _blank_to_none(entry.get("installation_target"))
+    installation_target = _domain_individual_id(domain_config, installation_target_source)
     if installation_target:
         output.append(
             _domain_predicate(
                 predicate_defs,
                 "has_install_target",
                 step_id,
-                [component_id, installation_target],
+                [individual_id, installation_target],
                 conf,
-                fields=["components", component_id, "installation_target"],
+                fields=["components", source_component_id, "installation_target"],
             )
         )
-        target_entry = components.get(installation_target)
+        target_entry = _effective_domain_entry(domain_config, installation_target_source)
         if isinstance(target_entry, dict):
-            target_support = _blank_to_none(target_entry.get("installation_target"))
+            target_support = _domain_individual_id(domain_config, _blank_to_none(target_entry.get("installation_target")))
             if target_support:
                 output.append(
                     _domain_predicate(
                         predicate_defs,
                         "requires_installed_before",
                         step_id,
-                        [component_id, installation_target, target_support],
+                        [individual_id, installation_target, target_support],
                         conf,
-                        fields=["components", component_id, "installation_target"],
+                        fields=["components", source_component_id, "installation_target"],
                     )
                 )
 
@@ -395,9 +401,9 @@ def _domain_predicates_for_component(
                 predicate_defs,
                 "has_required_tool",
                 step_id,
-                [component_id, required_tool],
+                [individual_id, required_tool],
                 conf,
-                fields=["components", component_id, "required_tool"],
+                fields=["components", source_component_id, "required_tool"],
             )
         )
 
@@ -405,16 +411,16 @@ def _domain_predicates_for_component(
         if not isinstance(condition, dict):
             continue
         condition_name = _blank_to_none(condition.get("name"))
-        args = _resolve_domain_args(condition.get("args", []), component_id, entry)
+        args = _resolve_domain_args(condition.get("args", []), individual_id, entry, domain_config)
         if condition_name and len(args) == 2:
             output.append(
                 _domain_predicate(
                     predicate_defs,
                     "has_required_condition",
                     step_id,
-                    [component_id, condition_name, *args],
+                    [individual_id, condition_name, *args],
                     conf,
-                    fields=["components", component_id, "required_conditions", str(idx)],
+                    fields=["components", source_component_id, "required_conditions", str(idx)],
                 )
             )
 
@@ -422,16 +428,16 @@ def _domain_predicates_for_component(
         if not isinstance(requirement, dict):
             continue
         requirement_name = _blank_to_none(requirement.get("name"))
-        args = _resolve_domain_args(requirement.get("args", []), component_id, entry)
+        args = _resolve_domain_args(requirement.get("args", []), individual_id, entry, domain_config)
         if requirement_name and len(args) == 2:
             output.append(
                 _domain_predicate(
                     predicate_defs,
                     "has_safety_requirement",
                     step_id,
-                    [component_id, requirement_name, *args],
+                    [individual_id, requirement_name, *args],
                     conf,
-                    fields=["components", component_id, "safety_requirements", str(idx)],
+                    fields=["components", source_component_id, "safety_requirements", str(idx)],
                 )
             )
     return [item for item in output if item is not None]
@@ -458,17 +464,17 @@ def _domain_predicate(
     )
 
 
-def _resolve_domain_args(args: Any, component_id: str, entry: dict[str, Any]) -> list[Any]:
+def _resolve_domain_args(args: Any, component_id: str, entry: dict[str, Any], domain_config: dict[str, Any]) -> list[Any]:
     output = []
     for arg in list(args or []):
         if arg == "$self":
             output.append(component_id)
         elif arg == "$installation_target":
-            output.append(entry.get("installation_target"))
+            output.append(_domain_individual_id(domain_config, _blank_to_none(entry.get("installation_target"))))
         elif arg == "$parent_component":
-            output.append(entry.get("parent_component"))
+            output.append(_domain_individual_id(domain_config, _blank_to_none(entry.get("parent_component"))))
         else:
-            output.append(arg)
+            output.append(_domain_individual_id(domain_config, _blank_to_none(arg)) or arg)
     return output
 
 
@@ -583,7 +589,110 @@ def _load_domain_config(config_path: Path | None) -> dict[str, Any]:
     config = _load_config(Path(config_path))
     if not isinstance(config.get("components", {}), dict):
         raise ValueError(f"domain config components must be a mapping: {config_path}")
+    _validate_domain_config(config, Path(config_path))
     return config
+
+
+def _domain_individual_id(domain_config: dict[str, Any], source_id: str | None) -> str | None:
+    if not source_id:
+        return None
+    components = domain_config.get("components", {})
+    entry = components.get(source_id)
+    if isinstance(entry, dict):
+        return _blank_to_none(entry.get("name")) or source_id
+    entities = domain_config.get("entities", {})
+    entity = entities.get(source_id)
+    if isinstance(entity, dict):
+        return _blank_to_none(entity.get("name")) or source_id
+    return source_id
+
+
+def _effective_domain_entry(domain_config: dict[str, Any], source_component_id: str | None) -> dict[str, Any]:
+    if not source_component_id:
+        return {}
+    components = domain_config.get("components", {})
+    entry = components.get(source_component_id)
+    if not isinstance(entry, dict):
+        return {}
+    effective: dict[str, Any] = {}
+    for type_name in reversed(_type_closure(domain_config, _blank_to_none(entry.get("generic_type")))):
+        defaults = domain_config.get("type_defaults", {}).get(type_name)
+        if isinstance(defaults, dict):
+            for key, value in defaults.items():
+                effective.setdefault(key, value)
+    effective.update(entry)
+    return effective
+
+
+def _type_closure(domain_config: dict[str, Any], type_name: str | None) -> list[str]:
+    if not type_name:
+        return []
+    hierarchy = domain_config.get("type_hierarchy", {})
+    output: list[str] = []
+    seen: set[str] = set()
+
+    def visit(current: str) -> None:
+        if current in seen:
+            return
+        seen.add(current)
+        output.append(current)
+        entry = hierarchy.get(current, {})
+        parents = entry.get("parents", []) if isinstance(entry, dict) else []
+        for parent in parents or []:
+            visit(str(parent))
+
+    visit(str(type_name))
+    return output
+
+
+def _validate_domain_config(config: dict[str, Any], path: Path) -> None:
+    vocabulary = config.get("condition_vocabulary", {})
+    if not isinstance(vocabulary, dict):
+        raise ValueError(f"domain config condition_vocabulary must be a mapping: {path}")
+    type_hierarchy = config.get("type_hierarchy", {})
+    if not isinstance(type_hierarchy, dict):
+        raise ValueError(f"domain config type_hierarchy must be a mapping: {path}")
+
+    for type_name, entry in config.get("type_defaults", {}).items():
+        if not isinstance(entry, dict):
+            raise ValueError(f"domain config type default must be a mapping: type_defaults.{type_name}")
+        _validate_condition_list(entry, vocabulary, path, ["type_defaults", str(type_name), "required_conditions"])
+        _validate_condition_list(entry, vocabulary, path, ["type_defaults", str(type_name), "safety_requirements"])
+
+    for component_id, entry in config.get("components", {}).items():
+        if not isinstance(entry, dict):
+            raise ValueError(f"domain config component must be a mapping: components.{component_id}")
+        generic_type = _blank_to_none(entry.get("generic_type"))
+        if generic_type and generic_type not in type_hierarchy:
+            raise ValueError(f"domain config unknown generic_type '{generic_type}' at components.{component_id}")
+        _validate_condition_list(entry, vocabulary, path, ["components", str(component_id), "required_conditions"])
+        _validate_condition_list(entry, vocabulary, path, ["components", str(component_id), "safety_requirements"])
+
+
+def _validate_condition_list(
+    entry: dict[str, Any],
+    vocabulary: dict[str, Any],
+    path: Path,
+    fields: list[str],
+) -> None:
+    list_name = fields[-1]
+    for idx, condition in enumerate(entry.get(list_name, []) or []):
+        if not isinstance(condition, dict):
+            raise ValueError(f"domain config condition must be a mapping at {'.'.join(fields + [str(idx)])}")
+        name = _blank_to_none(condition.get("name"))
+        if not name or name not in vocabulary:
+            raise ValueError(
+                f"domain config unknown condition '{name}' at {'.'.join(fields + [str(idx)])}; "
+                f"add it to condition_vocabulary in {path}"
+            )
+        vocab_entry = vocabulary.get(name)
+        expected_arity = int(vocab_entry.get("arity")) if isinstance(vocab_entry, dict) else None
+        actual_arity = len(list(condition.get("args", []) or []))
+        if expected_arity is not None and actual_arity != expected_arity:
+            raise ValueError(
+                f"domain config condition '{name}' at {'.'.join(fields + [str(idx)])} has arity "
+                f"{actual_arity}, expected {expected_arity}"
+            )
 
 
 def _filter_events(

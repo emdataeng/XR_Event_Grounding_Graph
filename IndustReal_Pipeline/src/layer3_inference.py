@@ -40,7 +40,9 @@ def run_layer3_inference(inputs: Layer3Inputs) -> dict[str, Any]:
     predicates = _read_records(Path(inputs.predicates_path))
     config = _load_rule_config(Path(inputs.rules_path))
     defaults = config.get("defaults", {})
-    rules = list(config.get("rules", []))
+    aliases = _predicate_aliases(config)
+    predicates = [_normalize_predicate_record(predicate, aliases) for predicate in predicates]
+    rules = [_normalize_rule(rule, aliases) for rule in list(config.get("rules", []))]
 
     predicates_by_step: dict[str, list[dict[str, Any]]] = {}
     for predicate in predicates:
@@ -334,7 +336,83 @@ def _load_rule_config(path: Path) -> dict[str, Any]:
     loaded = yaml.safe_load(text)
     if not isinstance(loaded, dict):
         raise ValueError(f"rule config must be a mapping: {path}")
+    _validate_rule_config(loaded, path)
     return loaded
+
+
+def _predicate_aliases(config: dict[str, Any]) -> dict[str, str]:
+    aliases = config.get("predicate_aliases", {})
+    if not isinstance(aliases, dict):
+        return {}
+    return {str(key): str(value) for key, value in aliases.items()}
+
+
+def _canonical_predicate_name(name: Any, aliases: dict[str, str]) -> str:
+    current = str(name)
+    seen: set[str] = set()
+    while current in aliases and current not in seen:
+        seen.add(current)
+        current = aliases[current]
+    return current
+
+
+def _normalize_predicate_record(predicate: dict[str, Any], aliases: dict[str, str]) -> dict[str, Any]:
+    name = _canonical_predicate_name(predicate.get("name"), aliases)
+    if name == predicate.get("name"):
+        return predicate
+    return {**predicate, "name": name}
+
+
+def _normalize_rule(rule: dict[str, Any], aliases: dict[str, str]) -> dict[str, Any]:
+    normalized = dict(rule)
+    normalized["antecedents"] = [
+        {**antecedent, "name": _canonical_predicate_name(antecedent.get("name"), aliases)}
+        for antecedent in list(rule.get("antecedents", []))
+    ]
+    normalized["constraints"] = [
+        {**constraint, "name": _canonical_predicate_name(constraint.get("name"), aliases)}
+        for constraint in list(rule.get("constraints", []))
+    ]
+    return normalized
+
+
+def _validate_rule_config(config: dict[str, Any], path: Path) -> None:
+    vocabulary = config.get("predicate_vocabulary", {})
+    if not isinstance(vocabulary, dict):
+        raise ValueError(f"rule config predicate_vocabulary must be a mapping: {path}")
+    aliases = _predicate_aliases(config)
+    for rule in list(config.get("rules", [])):
+        rule_id = str(rule.get("id") or "<unknown>")
+        for idx, antecedent in enumerate(list(rule.get("antecedents", []))):
+            _validate_predicate_pattern(
+                antecedent,
+                vocabulary,
+                aliases,
+                f"rules.{rule_id}.antecedents.{idx}",
+            )
+        for idx, constraint in enumerate(list(rule.get("constraints", []))):
+            _validate_predicate_pattern(
+                constraint,
+                vocabulary,
+                aliases,
+                f"rules.{rule_id}.constraints.{idx}",
+            )
+
+
+def _validate_predicate_pattern(
+    pattern: dict[str, Any],
+    vocabulary: dict[str, Any],
+    aliases: dict[str, str],
+    location: str,
+) -> None:
+    name = _canonical_predicate_name(pattern.get("name"), aliases)
+    if name not in vocabulary:
+        raise ValueError(f"unknown predicate '{pattern.get('name')}' at {location}")
+    vocab_entry = vocabulary.get(name)
+    expected_arity = int(vocab_entry.get("arity")) if isinstance(vocab_entry, dict) else None
+    actual_arity = len(list(pattern.get("args", []) or []))
+    if expected_arity is not None and actual_arity != expected_arity:
+        raise ValueError(f"predicate '{name}' at {location} has arity {actual_arity}, expected {expected_arity}")
 
 
 def _write_constraints_csv(path: Path, constraints: list[dict[str, Any]]) -> None:
