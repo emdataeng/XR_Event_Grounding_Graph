@@ -40,6 +40,14 @@ src/layer3_inference.py
 src/layer4_validation.py
 ```
 
+Adapter runtime defaults are configured in:
+
+```text
+config/reasoning_adapter.yaml
+```
+
+That file defines the default run id, input CSV directory, output root, predicate/rule config path, domain config path, and the expected Neo4j CSV filenames consumed by the adapter. `scripts/14_build_layer3_reasoning_adapter.py` accepts `--adapter-config` to load a different adapter config.
+
 ## Adapter Role
 
 The adapter turns existing graph CSV records into the JSONL inputs used by the reasoning layers.

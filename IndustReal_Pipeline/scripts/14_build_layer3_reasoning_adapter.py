@@ -11,29 +11,31 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from src.layer3_reasoning_adapter import (
-    DEFAULT_CSV_DIR,
-    DEFAULT_DOMAIN_CONFIG_PATH,
-    DEFAULT_OUTPUT_ROOT,
-    DEFAULT_PREDICATE_CONFIG_PATH,
-    DEFAULT_RUN_ID,
+    DEFAULT_ADAPTER_CONFIG_PATH,
     AdapterInputs,
     build_reasoning_adapter_outputs,
+    load_adapter_config,
 )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--run-id", type=str, default=DEFAULT_RUN_ID)
-    parser.add_argument("--csv-dir", type=Path, default=DEFAULT_CSV_DIR)
-    parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
+    bootstrap = argparse.ArgumentParser(add_help=False)
+    bootstrap.add_argument("--adapter-config", type=Path, default=DEFAULT_ADAPTER_CONFIG_PATH)
+    bootstrap_args, _ = bootstrap.parse_known_args()
+    adapter_config = load_adapter_config(bootstrap_args.adapter_config)
+
+    parser = argparse.ArgumentParser(parents=[bootstrap])
+    parser.add_argument("--run-id", type=str, default=adapter_config.run_id)
+    parser.add_argument("--csv-dir", type=Path, default=adapter_config.csv_dir)
+    parser.add_argument("--output-root", type=Path, default=adapter_config.output_root)
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--clip-result-id", type=str, default=None)
     parser.add_argument("--mode", type=str, default=None)
     parser.add_argument("--archive", type=str, default=None)
     parser.add_argument("--clip", type=str, default=None)
     parser.add_argument("--evidence-root", type=Path, default=None)
-    parser.add_argument("--predicate-config", type=Path, default=DEFAULT_PREDICATE_CONFIG_PATH)
-    parser.add_argument("--domain-config", type=Path, default=DEFAULT_DOMAIN_CONFIG_PATH)
+    parser.add_argument("--predicate-config", type=Path, default=adapter_config.predicate_config_path)
+    parser.add_argument("--domain-config", type=Path, default=adapter_config.domain_config_path)
     args = parser.parse_args()
 
     output_dir = args.output_dir or (args.output_root / args.run_id)
@@ -47,6 +49,7 @@ def main() -> None:
             archive_name=args.archive,
             clip=args.clip,
             evidence_root=args.evidence_root,
+            adapter_config_path=args.adapter_config,
             predicate_config_path=args.predicate_config,
             domain_config_path=args.domain_config,
         )

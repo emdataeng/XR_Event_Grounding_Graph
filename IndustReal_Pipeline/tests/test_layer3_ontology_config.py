@@ -48,6 +48,7 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     }
 
     assert adapter_result["step_records"] == 11
+    assert adapter_result["adapter_config_path"] is not None
     assert time_windows["event_0"]["start_s"] == 70.9
     assert time_windows["event_0"]["end_s"] == 118.7
     assert time_windows["event_1"]["end_s"] == 118.7

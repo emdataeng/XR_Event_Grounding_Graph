@@ -14,16 +14,103 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-DEFAULT_RUN_ID = "raw_cad_dataset__all_test_clips"
-DEFAULT_CSV_DIR = Path(__file__).resolve().parent.parent / "results" / "neo4j" / DEFAULT_RUN_ID
-DEFAULT_OUTPUT_ROOT = Path(__file__).resolve().parent.parent / "results" / "reasoning_layers"
-DEFAULT_PREDICATE_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "thesis_rules.yaml"
-DEFAULT_DOMAIN_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "domain_config.yaml"
+ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_ADAPTER_CONFIG_PATH = ROOT / "config" / "reasoning_adapter.yaml"
 
-EVENTS_CSV = "nodes_events.csv"
-EVENT_COMPONENT_CSV = "edges_event_component.csv"
-EVENT_NEXT_CSV = "edges_event_next.csv"
-COMPONENTS_CSV = "nodes_components.csv"
+
+@dataclass(frozen=True)
+class ReasoningAdapterConfig:
+    run_id: str
+    csv_dir: Path
+    output_root: Path
+    predicate_config_path: Path
+    domain_config_path: Path
+    events_csv: str
+    event_component_csv: str
+    event_next_csv: str
+    components_csv: str
+
+
+def load_adapter_config(config_path: Path | None = DEFAULT_ADAPTER_CONFIG_PATH) -> ReasoningAdapterConfig:
+    """Load adapter paths and input CSV filenames from config."""
+    path = Path(config_path or DEFAULT_ADAPTER_CONFIG_PATH)
+    config = _load_config_file(path)
+    run_id = str(config.get("default_run_id") or "")
+    if not run_id:
+        raise ValueError(f"adapter config missing default_run_id: {path}")
+    paths = config.get("paths", {})
+    csv_files = config.get("csv_files", {})
+    if not isinstance(paths, dict):
+        raise ValueError(f"adapter config paths must be a mapping: {path}")
+    if not isinstance(csv_files, dict):
+        raise ValueError(f"adapter config csv_files must be a mapping: {path}")
+    return ReasoningAdapterConfig(
+        run_id=run_id,
+        csv_dir=_config_path(path, _expand_config_value(paths.get("csv_dir"), run_id)),
+        output_root=_config_path(path, _expand_config_value(paths.get("output_root"), run_id)),
+        predicate_config_path=_config_path(path, _expand_config_value(paths.get("predicate_config"), run_id)),
+        domain_config_path=_config_path(path, _expand_config_value(paths.get("domain_config"), run_id)),
+        events_csv=_required_config_string(csv_files, "events", path),
+        event_component_csv=_required_config_string(csv_files, "event_component", path),
+        event_next_csv=_required_config_string(csv_files, "event_next", path),
+        components_csv=_required_config_string(csv_files, "components", path),
+    )
+
+
+def _load_config_file(path: Path) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        loaded = json.loads(text)
+    else:
+        loaded = yaml.safe_load(text)
+    if not isinstance(loaded, dict):
+        raise ValueError(f"config must be a mapping: {path}")
+    return loaded
+
+
+def _expand_config_value(value: Any, run_id: str) -> str:
+    return str(value or "").replace("${default_run_id}", run_id)
+
+
+def _config_path(config_path: Path, value: str) -> Path:
+    if not value:
+        raise ValueError(f"adapter config path value cannot be empty: {config_path}")
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    return ROOT / path
+
+
+def _required_config_string(mapping: dict[str, Any], key: str, path: Path) -> str:
+    value = str(mapping.get(key) or "")
+    if not value:
+        raise ValueError(f"adapter config missing csv_files.{key}: {path}")
+    return value
+
+
+_DEFAULT_ADAPTER_CONFIG = None
+
+
+def default_adapter_config() -> ReasoningAdapterConfig:
+    """Return the default adapter config loaded from config/reasoning_adapter.yaml."""
+    global _DEFAULT_ADAPTER_CONFIG
+    if _DEFAULT_ADAPTER_CONFIG is None:
+        _DEFAULT_ADAPTER_CONFIG = load_adapter_config(DEFAULT_ADAPTER_CONFIG_PATH)
+    return _DEFAULT_ADAPTER_CONFIG
+
+
+DEFAULT_RUN_ID = default_adapter_config().run_id
+DEFAULT_CSV_DIR = default_adapter_config().csv_dir
+DEFAULT_OUTPUT_ROOT = default_adapter_config().output_root
+DEFAULT_PREDICATE_CONFIG_PATH = default_adapter_config().predicate_config_path
+DEFAULT_DOMAIN_CONFIG_PATH = default_adapter_config().domain_config_path
+
+EVENTS_CSV = default_adapter_config().events_csv
+EVENT_COMPONENT_CSV = default_adapter_config().event_component_csv
+EVENT_NEXT_CSV = default_adapter_config().event_next_csv
+COMPONENTS_CSV = default_adapter_config().components_csv
 
 REQUIRED_PREDICATE_KEYS = (
     "has_action",
@@ -51,18 +138,24 @@ class AdapterInputs:
     archive_name: str | None = None
     clip: str | None = None
     evidence_root: Path | None = None
+    adapter_config_path: Path | None = DEFAULT_ADAPTER_CONFIG_PATH
     predicate_config_path: Path | None = DEFAULT_PREDICATE_CONFIG_PATH
     domain_config_path: Path | None = DEFAULT_DOMAIN_CONFIG_PATH
 
 
 def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
     """Build step_records.jsonl and predicates.jsonl from existing graph CSVs."""
+    adapter_config = load_adapter_config(inputs.adapter_config_path)
     csv_dir = Path(inputs.csv_dir)
     output_dir = Path(inputs.output_dir)
-    events = _read_csv(csv_dir / EVENTS_CSV)
-    event_component_edges = _read_csv(csv_dir / EVENT_COMPONENT_CSV)
-    event_next_edges = _read_csv(csv_dir / EVENT_NEXT_CSV)
-    components = _read_csv(csv_dir / COMPONENTS_CSV)
+    events_csv = adapter_config.events_csv
+    event_component_csv = adapter_config.event_component_csv
+    event_next_csv = adapter_config.event_next_csv
+    components_csv = adapter_config.components_csv
+    events = _read_csv(csv_dir / events_csv)
+    event_component_edges = _read_csv(csv_dir / event_component_csv)
+    event_next_edges = _read_csv(csv_dir / event_next_csv)
+    components = _read_csv(csv_dir / components_csv)
     predicate_defs = _load_predicate_defs(inputs.predicate_config_path)
     domain_config = _load_domain_config(inputs.domain_config_path)
 
@@ -115,6 +208,7 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
             previous_event_id=previous_by_event.get(_event_id(row)),
             inferred_end_frame=inferred_window.get("end_frame"),
             inferred_end_s=inferred_window.get("end_s"),
+            csv_files=adapter_config,
             evidence_root=inputs.evidence_root,
         )
         step_records.append(step_record)
@@ -126,6 +220,7 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
                 component_by_id=component_by_id,
                 predicate_defs=predicate_defs,
                 domain_config=domain_config,
+                csv_files=adapter_config,
             )
         )
 
@@ -141,6 +236,7 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
         "output_dir": str(output_dir),
         "step_records_path": str(step_path),
         "predicates_path": str(pred_path),
+        "adapter_config_path": str(inputs.adapter_config_path) if inputs.adapter_config_path else None,
         "predicate_config_path": str(inputs.predicate_config_path) if inputs.predicate_config_path else None,
         "domain_config_path": str(inputs.domain_config_path) if inputs.domain_config_path else None,
         "step_records": len(step_records),
@@ -159,6 +255,7 @@ def _step_record(
     previous_event_id: str | None,
     inferred_end_frame: int | None,
     inferred_end_s: float | None,
+    csv_files: ReasoningAdapterConfig,
     evidence_root: Path | None,
 ) -> dict[str, Any]:
     event_id = _event_id(row)
@@ -195,7 +292,7 @@ def _step_record(
         "sequence": {
             "previous_event_id": previous_event_id,
             "next_event_id": next_event_id,
-            "source": f"{EVENT_NEXT_CSV} when present; local_event_id:int otherwise",
+            "source": f"{csv_files.event_next_csv} when present; local_event_id:int otherwise",
         },
         "time_window": {
             "start_frame": frame,
@@ -203,7 +300,7 @@ def _step_record(
             "start_s": time_s,
             "end_s": inferred_end_s,
             "source": (
-                f"{EVENTS_CSV}: frame:int/time_s:float; "
+                f"{csv_files.events_csv}: frame:int/time_s:float; "
                 "end inferred from next distinct timestamp in the same clip when available"
             ),
             "notes": (
@@ -215,20 +312,25 @@ def _step_record(
             "name": _normalize_action(row),
             "event_type": _blank_to_none(row.get("event_type")),
             "description": _blank_to_none(row.get("action_desc")),
-            "source": f"{EVENTS_CSV}: event_type/action_desc",
+            "source": f"{csv_files.events_csv}: event_type/action_desc",
         },
         "objects": component_refs,
         "source_descriptions": [
-            _source_description("display_name", row.get("display_name")),
-            _source_description("name", row.get("name")),
-            _source_description("action_desc", row.get("action_desc")),
+            _source_description("display_name", row.get("display_name"), csv_files.events_csv),
+            _source_description("name", row.get("name"), csv_files.events_csv),
+            _source_description("action_desc", row.get("action_desc"), csv_files.events_csv),
         ],
         "confidence": _parse_float(row.get("conf:float")),
         "available_evidence_files": evidence_paths,
         "missing_inputs": sorted(set(missing_inputs)),
         "provenance": {
             "source": "existing_industreal_graph_csv",
-            "source_files": [EVENTS_CSV, EVENT_COMPONENT_CSV, EVENT_NEXT_CSV, COMPONENTS_CSV],
+            "source_files": [
+                csv_files.events_csv,
+                csv_files.event_component_csv,
+                csv_files.event_next_csv,
+                csv_files.components_csv,
+            ],
         },
     }
 
@@ -274,6 +376,7 @@ def _predicates_for_step(
     component_by_id: dict[str, dict[str, str]],
     predicate_defs: dict[str, dict[str, Any]],
     domain_config: dict[str, Any],
+    csv_files: ReasoningAdapterConfig,
 ) -> list[dict[str, Any]]:
     event_id = str(step_record["source_event_id"])
     step_id = str(step_record["id"])
@@ -288,7 +391,7 @@ def _predicates_for_step(
                 step_id,
                 [step_id, step_record["action"]["name"]],
                 conf,
-                source_file=EVENTS_CSV,
+                source_file=csv_files.events_csv,
                 source_fields=["event_type", "action_desc"],
                 notes=None
                 if step_record["action"]["name"] is not None
@@ -304,7 +407,7 @@ def _predicates_for_step(
                     step_record["time_window"]["end_s"],
                 ],
                 conf,
-                source_file=EVENTS_CSV,
+                source_file=csv_files.events_csv,
                 source_fields=["frame:int", "time_s:float"],
                 notes=(
                     "End time is inferred from the next distinct event timestamp in the same clip "
@@ -337,7 +440,7 @@ def _predicates_for_step(
             step_id,
             [step_id, component_id],
             conf,
-            source_file=EVENT_COMPONENT_CSV,
+            source_file=csv_files.event_component_csv,
             source_fields=[":START_ID(AssemblyEvent)", ":END_ID(Component)", "role"],
             notes=role_note,
         )
@@ -349,7 +452,7 @@ def _predicates_for_step(
                 step_id,
                 [component_id, component_type],
                 conf,
-                source_file=COMPONENTS_CSV,
+                source_file=csv_files.components_csv,
                 source_fields=["component_id:ID(Component)", "name", "normalized_name"],
                 notes="Component type is derived from the existing component normalized_name, not from a richer ontology.",
             )
@@ -359,7 +462,7 @@ def _predicates_for_step(
             step_id,
             [component_id, component_label],
             conf,
-            source_file=COMPONENTS_CSV,
+            source_file=csv_files.components_csv,
             source_fields=["component_id:ID(Component)", "display_name", "name"],
             notes=None,
         )
@@ -818,11 +921,11 @@ def _normalize_action(row: dict[str, str]) -> str | None:
     return action_desc.split(maxsplit=1)[0]
 
 
-def _source_description(kind: str, value: str | None) -> dict[str, Any]:
+def _source_description(kind: str, value: str | None, source_file: str) -> dict[str, Any]:
     return {
         "type": kind,
         "text": _blank_to_none(value),
-        "source": EVENTS_CSV,
+        "source": source_file,
     }
 
 
