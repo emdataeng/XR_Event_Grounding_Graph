@@ -8,6 +8,10 @@ from pathlib import Path
 from typing import Any, Iterable
 
 DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "thesis_rules.yaml"
+SAME_STEP_CONSTRAINT_SUPPORT = {
+    "type": "same_step_constraint",
+    "notes": "Constraint observed in the step.",
+}
 
 
 @dataclass(frozen=True)
@@ -91,7 +95,7 @@ def _validate_step(
 ) -> dict[str, Any]:
     step_id = str(step.get("id") or step.get("step_id") or "")
     evidence_predicates = [_predicate_ref(item) for item in predicates]
-    evidence_constraints = [_constraint_ref(item, support=None) for item in constraints]
+    evidence_constraints = [_constraint_ref(item, support=_same_step_constraint_support()) for item in constraints]
     requirements = [item for item in constraints if _is_requirement(item)]
     incompatibilities = [
         item
@@ -138,7 +142,10 @@ def _validate_step(
         "step_id": step_id,
         "predicate_evidence": evidence_predicates,
         "constraint_evidence": evidence_constraints,
-        "incompatibility_evidence": [_constraint_ref(item, support=None) for item in incompatibilities],
+        "incompatibility_evidence": [
+            _constraint_ref(item, support=_same_step_constraint_support())
+            for item in incompatibilities
+        ],
         "dependency_evidence": dependency_support,
         "missing_requirements": missing_requirements,
         "status": status,
@@ -156,7 +163,10 @@ def _validate_step(
         "supported_requirements": supported_requirements,
         "missing_requirements": missing_requirements,
         "dependency_support": dependency_support,
-        "incompatibilities": [_constraint_ref(item, support=None) for item in incompatibilities],
+        "incompatibilities": [
+            _constraint_ref(item, support=_same_step_constraint_support())
+            for item in incompatibilities
+        ],
         "evidence_predicates": evidence_predicates,
         "evidence_constraints": evidence_constraints,
         "trace_id": step_id,
@@ -164,12 +174,20 @@ def _validate_step(
         "supported_requires": supported_requirements,
         "missing_requires": missing_requirements,
         "produced_effects": [
-            _constraint_ref(item, support=None)
+            _constraint_ref(item, support=_same_step_constraint_support())
             for item in constraints
             if item.get("name") == "produces"
         ],
-        "safety_requirements": [_constraint_ref(item, support=None) for item in constraints if item.get("name") == "requiresSafety"],
-        "tool_requirements": [_constraint_ref(item, support=None) for item in constraints if item.get("name") == "requiresTool"],
+        "safety_requirements": [
+            _constraint_ref(item, support=_same_step_constraint_support())
+            for item in constraints
+            if item.get("name") == "requiresSafety"
+        ],
+        "tool_requirements": [
+            _constraint_ref(item, support=_same_step_constraint_support())
+            for item in constraints
+            if item.get("name") == "requiresTool"
+        ],
         "trace": trace,
     }
 
@@ -278,6 +296,10 @@ def _constraint_ref(constraint: dict[str, Any], *, support: dict[str, Any] | Non
         "rule_id": constraint.get("rule_id"),
         "support": support,
     }
+
+
+def _same_step_constraint_support() -> dict[str, Any]:
+    return dict(SAME_STEP_CONSTRAINT_SUPPORT)
 
 
 def _predicate_ref(predicate: dict[str, Any]) -> dict[str, Any]:

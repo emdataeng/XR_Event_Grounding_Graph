@@ -84,9 +84,14 @@ def test_layer4_writes_thesis_records_and_uses_only_prior_effects_for_preconditi
 
     assert by_step["s3"]["status"] == "rejected"
     assert by_step["s3"]["missing_requirements"][0]["constraint_id"] == "c4"
+    assert by_step["s3"]["missing_requirements"][0]["support"] is None
     assert by_step["s4"]["status"] == "uncertain"
     assert {item["constraint_id"] for item in by_step["s4"]["supported_requirements"]} == {"c7"}
     assert {item["constraint_id"] for item in by_step["s4"]["missing_requirements"]} == {"c6"}
+    assert by_step["s1"]["evidence_constraints"][0]["support"] == {
+        "type": "same_step_constraint",
+        "notes": "Constraint observed in the step.",
+    }
 
     traces = json.loads((tmp_path / "explanation_traces.json").read_text(encoding="utf-8"))
     trace = next(item for item in traces if item["step_id"] == "s2")
@@ -101,6 +106,10 @@ def test_layer4_writes_thesis_records_and_uses_only_prior_effects_for_preconditi
         "confidence",
     }
     assert trace["dependency_evidence"] == by_step["s2"]["dependency_support"]
+    assert trace["constraint_evidence"][0]["support"] == {
+        "type": "same_step_constraint",
+        "notes": "Constraint observed in the step.",
+    }
 
 
 def _predicate(predicate_id: str, step_id: str, name: str, args: list[str]) -> dict[str, object]:
