@@ -1,4 +1,4 @@
-"""Prepare deterministic raw IndustReal pilot slices under /tmp."""
+"""Prepare deterministic raw IndustReal pilot slices under the configured working root."""
 from __future__ import annotations
 
 import csv
@@ -11,7 +11,7 @@ from collections import defaultdict
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from .raw_cad_config import RawCadPaths
+from .raw_cad_config import RawCadPaths, resolve_path
 from .raw_loader import ROOT_METADATA_FILES, STREAM_NAMES, discover_clip_streams, frame_name_to_idx
 
 
@@ -180,7 +180,7 @@ def select_third_clip(cfg: dict[str, Any], paths: RawCadPaths) -> dict[str, Any]
         return None
     with zipfile.ZipFile(asd_zip_path) as asd_zip:
         for archive_cfg in cfg["archives"]["source_archives"]:
-            archive_path = Path(archive_cfg["local_path"])
+            archive_path = resolve_path(str(archive_cfg["local_path"]), base=paths.root)
             if not archive_path.exists():
                 continue
             with zipfile.ZipFile(archive_path) as zf:

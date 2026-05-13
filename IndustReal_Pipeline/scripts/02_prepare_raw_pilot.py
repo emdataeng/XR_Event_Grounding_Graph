@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare the deterministic raw IndustReal pilot slice under /tmp."""
+"""Prepare the deterministic raw IndustReal pilot slice under the configured working root."""
 from __future__ import annotations
 
 import argparse

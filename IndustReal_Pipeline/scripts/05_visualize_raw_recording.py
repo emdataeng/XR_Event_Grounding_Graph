@@ -14,15 +14,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from src.pilot_assets import load_latest_slice
-from src.raw_cad_config import RawCadPaths, load_raw_cad_config
+from src.raw_cad_config import RawCadPaths, configure_runtime_environment, load_raw_cad_config
 from src.raw_loader import load_od_labels
 from src.raw_manifest import POSE_COLUMNS
-from src.raw_viz import (
-    save_od_overlay,
-    save_pose_trajectory,
-    save_rgb_depth_preview,
-    save_stereo_preview,
-)
 
 
 def _sample_rows(df: pd.DataFrame, n: int) -> pd.DataFrame:
@@ -48,6 +42,14 @@ def main() -> None:
 
     cfg = load_raw_cad_config(args.config)
     paths = RawCadPaths(cfg)
+    configure_runtime_environment(paths)
+    from src.raw_viz import (
+        save_od_overlay,
+        save_pose_trajectory,
+        save_rgb_depth_preview,
+        save_stereo_preview,
+    )
+
     latest = load_latest_slice(paths)
     slice_id = args.slice_id or latest["slice_id"]
     manifests_dir = paths.slice_manifests_dir(slice_id)

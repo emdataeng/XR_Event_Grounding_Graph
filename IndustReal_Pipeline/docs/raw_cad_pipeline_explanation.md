@@ -372,6 +372,43 @@ It performs:
 
 This is the script to use for whole-dataset oracle runs.
 
+### `scripts/16_run_layer4_validation.py`
+
+This runs thesis Layer 4 step validation over the Layer 3 reasoning outputs.
+
+It reads:
+
+- `step_records.jsonl`
+- `predicates.jsonl`
+- `inferred_constraints.csv`
+- `config/thesis_rules.yaml`
+
+The `--config` flag points to the thesis reasoning config. Layer 4 uses the `validation` block in that config for the acceptance and uncertainty thresholds:
+
+```json
+"validation": {
+  "tau_acc": 0.70,
+  "tau_unc": 0.35
+}
+```
+
+Example command:
+
+```bash
+python scripts/16_run_layer4_validation.py \
+  --step-records results/reasoning_layers/raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1/step_records.jsonl \
+  --predicates results/reasoning_layers/raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1/predicates.jsonl \
+  --constraints results/reasoning_layers/raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1/inferred_constraints.csv \
+  --output results/reasoning_layers/raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1/validation_records.jsonl \
+  --config config/thesis_rules.yaml
+```
+
+It writes:
+
+- `validation_records.jsonl`
+- `step_validations.csv`
+- `explanation_traces.json`
+
 ## 12. Main Source Modules
 
 The scripts above are thin entrypoints. Most real logic lives in `IndustReal_Pipeline/src/`.

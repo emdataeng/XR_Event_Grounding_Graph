@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
@@ -41,11 +42,12 @@ class RawCadPaths:
             path_cfg.get("reports_root", path_cfg["results_root"]),
             base=self.root,
         )
-        self.working_root = Path(path_cfg["working_root"])
+        self.working_root = resolve_path(path_cfg["working_root"], base=self.root)
         self.slice_root = self.working_root / path_cfg.get("slice_subdir", "slices")
         self.source_root = self.working_root / path_cfg.get("source_subdir", "source")
         self.working_results_root = self.working_root / path_cfg.get("working_results_subdir", "results")
         self.batch_extract_root = self.working_root / path_cfg.get("batch_extract_subdir", "dataset_batch")
+        self.matplotlib_config_dir = self.working_root / path_cfg.get("matplotlib_cache_subdir", "matplotlib")
         self.latest_slice_path = self.results_root / "latest_slice.json"
 
     def ensure_base_dirs(self) -> None:
@@ -121,3 +123,8 @@ class RawCadPaths:
 
     def dataset_mode_comparison_path(self, run_id: str) -> Path:
         return self.dataset_run_reports_dir(run_id) / "mode_comparison.csv"
+
+
+def configure_runtime_environment(paths: RawCadPaths) -> None:
+    """Apply config-driven runtime paths before importing optional heavy libraries."""
+    os.environ.setdefault("MPLCONFIGDIR", str(paths.matplotlib_config_dir))

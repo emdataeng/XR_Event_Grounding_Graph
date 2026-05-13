@@ -29,10 +29,9 @@ from .egg_builder import build_assembly_graph
 from .eval_raw_cad import evaluate_state_predictions, step_metrics
 from .pilot_assets import build_slice_windows
 from .psr import evaluate, run_psr
-from .raw_cad_config import ROOT, RawCadPaths
+from .raw_cad_config import ROOT, RawCadPaths, configure_runtime_environment, resolve_path
 from .raw_loader import ROOT_METADATA_FILES, STREAM_NAMES, frame_name_to_idx, load_od_labels, load_step_labels_csv
 from .raw_manifest import build_raw_manifest, save_manifest, save_manifest_report, validate_raw_manifest
-from .raw_viz import save_od_overlay, save_pose_trajectory, save_rgb_depth_preview, save_stereo_preview
 from .track2d import load_jsonl, save_jsonl, smooth_frame_evidence
 from .detector_rgb import run_detector_for_clip
 
@@ -151,7 +150,7 @@ def _graph_to_json(graph: Any) -> dict[str, Any]:
 
 
 def maybe_download_archive(archive_cfg: dict[str, Any], *, allow_download: bool) -> Path:
-    local_path = Path(str(archive_cfg["local_path"]))
+    local_path = resolve_path(str(archive_cfg["local_path"]), base=ROOT)
     if local_path.exists():
         return local_path
     if not allow_download:
@@ -332,6 +331,8 @@ def generate_clip_debug_visuals(
     visual_dir: Path,
     n_samples: int,
 ) -> None:
+    from .raw_viz import save_od_overlay, save_pose_trajectory, save_rgb_depth_preview, save_stereo_preview
+
     od_labels = load_od_labels(clip_dir / "OD_labels.json")
     visual_dir.mkdir(parents=True, exist_ok=True)
     for _, row in _sample_rows(manifest_df, n_samples).iterrows():
@@ -739,6 +740,7 @@ def run_oracle_dataset_batch(
     download_missing: bool | None = None,
     resume: bool | None = None,
 ) -> dict[str, Any]:
+    configure_runtime_environment(paths)
     paths.ensure_base_dirs()
     run_id = run_id or default_run_id(cfg)
     selected_modes = [

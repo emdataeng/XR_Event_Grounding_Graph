@@ -10,8 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.dataset_batch import run_oracle_dataset_batch
-from src.raw_cad_config import RawCadPaths, load_raw_cad_config
+from src.raw_cad_config import RawCadPaths, configure_runtime_environment, load_raw_cad_config
 
 
 def _optional_set(values: list[str] | None) -> set[str] | None:
@@ -33,6 +32,9 @@ def main() -> None:
 
     cfg = load_raw_cad_config(args.config)
     paths = RawCadPaths(cfg)
+    configure_runtime_environment(paths)
+    from src.dataset_batch import run_oracle_dataset_batch
+
     result = run_oracle_dataset_batch(
         cfg,
         paths=paths,

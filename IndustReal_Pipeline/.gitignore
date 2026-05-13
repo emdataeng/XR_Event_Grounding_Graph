@@ -1,3 +1,10 @@
+# Credentials
+.env
+
+# Codex workspace metadata
+.codex
+
+#Python cache files
 __pycache__/
 *.pyc
 *.pyo
@@ -8,3 +15,4 @@ results/*
 data/part_geometries.zip
 data/raw/
 data/slices/
+.tmp/
