@@ -1,3 +1,4 @@
+import csv
 import json
 import sys
 from pathlib import Path
@@ -102,6 +103,23 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
 
     graph = json.loads((output_dir / "procedural_reasoning_graph.json").read_text(encoding="utf-8"))
     assert graph["graph_name"] == "procedural_reasoning_graph"
+    nodes_by_id = {node["id"]: node for node in graph["nodes"]}
+    step = nodes_by_id["Step::s1"]["properties"]
+    predicate = nodes_by_id["Predicate::p2"]["properties"]
+    constraint = nodes_by_id["Constraint::c2"]["properties"]
+    rule = nodes_by_id["Rule::rule_inferred_precondition"]["properties"]
+    entity = nodes_by_id["Entity::base"]["properties"]
+    source = next(node["properties"] for node in graph["nodes"] if node["type"] == "Source")
+    assert step["display_name"] == "Step 1"
+    assert step["display_label"] == "Step 1 [accepted]"
+    assert step["short_id"] == "event_1"
+    assert predicate["display_name"] == "usesObject"
+    assert predicate["display_label"] == "usesObject(s1, base)"
+    assert constraint["display_name"] == "requires installed"
+    assert constraint["display_label"] == "requires installed(base, workspace) [supported]"
+    assert rule["display_name"] == "rule_inferred_precondition"
+    assert entity["display_name"] == "base"
+    assert source["display_name"] == "test:test.csv"
     assert result["node_counts"]["Step"] == 2
     assert result["node_counts"]["Rule"] == 2
     assert result["edge_counts"]["NEXT"] == 1
@@ -112,6 +130,12 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
     assert result["step_status_counts"] == {"accepted": 1, "uncertain": 1}
     assert (output_dir / "procedural_reasoning_graph_nodes.csv").exists()
     assert (output_dir / "procedural_reasoning_graph_edges.csv").exists()
+    with open(output_dir / "procedural_reasoning_graph_nodes.csv", newline="", encoding="utf-8") as f:
+        csv_rows = list(csv.DictReader(f))
+    csv_step = next(row for row in csv_rows if row["id"] == "Step::s1")
+    csv_step_props = json.loads(csv_step["properties"])
+    assert csv_step_props["display_name"] == "Step 1"
+    assert csv_step_props["display_label"] == "Step 1 [accepted]"
 
 
 def _predicate(predicate_id: str, step_id: str, name: str, args: list[object]) -> dict[str, object]:

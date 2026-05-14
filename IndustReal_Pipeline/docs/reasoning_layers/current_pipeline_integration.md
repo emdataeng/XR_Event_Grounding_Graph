@@ -279,6 +279,16 @@ Entity      object/tool/workspace/material arguments extracted from predicates a
 Source      predicate source file/field provenance
 ```
 
+All nodes include display-oriented properties for Neo4j Aura captions:
+
+```text
+display_name   short readable caption, such as Step 2 or requires installed
+display_label  slightly richer caption, such as Step 2 [uncertain]
+short_id       compact source identifier when available
+```
+
+These fields are presentation helpers only. They do not change node ids, relationships, validation status, confidence, provenance, or reasoning semantics.
+
 Edge types:
 
 ```text
@@ -293,6 +303,19 @@ SUPPORTED_BY    Constraint -> Predicate or Constraint support evidence
 DERIVED_FROM    Constraint -> Rule and Predicate -> Source
 HAS_ENTITY      Predicate or Constraint -> Entity
 ```
+
+Neo4j import uses only the semantic node type as the Neo4j label:
+
+```text
+Step
+Predicate
+Constraint
+Rule
+Entity
+Source
+```
+
+The importer does not add a generic `ProceduralReasoningGraph` or `ProceduralReasoningGraphNode` label. Graph-level identity is kept as node and relationship properties, especially `graph_name="procedural_reasoning_graph"` and `schema_version`, so all imported nodes can still be queried by graph name without cluttering the Aura visualization labels.
 
 Accepted, uncertain, and rejected steps are included by default. `--exclude-rejected` omits rejected steps. Rejected steps are not allowed to support later `DEPENDS_ON` edges. Uncertain steps may support later dependencies, but those dependency edges are marked `provisional=true`.
 
@@ -414,6 +437,30 @@ python scripts\17_build_procedural_reasoning_graph.py `
   --validations results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\validation_records.jsonl `
   --output-dir results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
 ```
+
+Import the procedural reasoning graph into Neo4j:
+
+```powershell
+python scripts\18_import_procedural_reasoning_graph_neo4j.py `
+  --graph results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
+```
+
+Verify Neo4j labels after import:
+
+```cypher
+MATCH (n)
+RETURN labels(n) AS labels, count(*) AS count
+ORDER BY count DESC;
+```
+
+```cypher
+MATCH (n)
+WHERE n.graph_name = "procedural_reasoning_graph"
+RETURN labels(n) AS labels, count(*) AS count
+ORDER BY count DESC;
+```
+
+Expected label combinations are single semantic labels such as `["Step"]`, `["Constraint"]`, `["Predicate"]`, `["Rule"]`, `["Entity"]`, and `["Source"]`.
 
 Use a different predicate/rule config:
 

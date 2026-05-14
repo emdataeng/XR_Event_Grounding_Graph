@@ -60,6 +60,9 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
                     "source_event_id": record.get("source_event_id"),
                     "index": record.get("index"),
                     "status": record.get("status"),
+                    "display_name": _step_display_name(record),
+                    "display_label": _step_display_label(record),
+                    "short_id": _short_event_id(record.get("source_event_id") or step_id),
                     "confidence": record.get("confidence"),
                     "conf": record.get("conf"),
                     "schema_version": record.get("schema_version"),
@@ -119,7 +122,16 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
             if rule_id:
                 rule_node_id = _node_id("Rule", rule_id)
                 rule_nodes[rule_id] = rule_node_id
-                builder.add_node(rule_node_id, "Rule", {"rule_id": rule_id})
+                builder.add_node(
+                    rule_node_id,
+                    "Rule",
+                    {
+                        "rule_id": rule_id,
+                        "display_name": rule_id,
+                        "display_label": rule_id,
+                        "short_id": rule_id,
+                    },
+                )
                 builder.add_edge(constraint_node_id, rule_node_id, "DERIVED_FROM", {})
 
             for entity in _constraint_entity_args(constraint, condition_names):
@@ -169,12 +181,12 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
 
     for entity, types in entity_types.items():
         entity_node_id = _node_id("Entity", entity)
-        builder.add_node(entity_node_id, "Entity", {"entity_id": entity, "entity_type": sorted(types)})
+        builder.add_node(entity_node_id, "Entity", _entity_properties(entity, sorted(types)))
 
     for node in list(builder.nodes.values()):
         if node["type"] == "Entity" and not node["properties"]:
             entity_id = node["id"].split("::", 1)[1]
-            node["properties"] = {"entity_id": entity_id}
+            node["properties"] = _entity_properties(entity_id)
 
     ordered_steps = sorted(
         [
@@ -297,13 +309,18 @@ def _dedupe_items(items: Iterable[dict[str, Any]], key_field: str) -> list[dict[
 
 
 def _predicate_properties(predicate: dict[str, Any]) -> dict[str, Any]:
+    name = str(predicate.get("name") or "")
+    args = _args(predicate)
     return _clean_properties(
         {
             "predicate_id": predicate.get("predicate_id"),
             "name": predicate.get("name"),
             "predicate_key": predicate.get("predicate_key"),
             "category": predicate.get("category"),
-            "args": _args(predicate),
+            "args": args,
+            "display_name": name,
+            "display_label": _call_label(name, _compact_args(args)),
+            "short_id": _short_predicate_id(predicate),
             "confidence": predicate.get("confidence") if predicate.get("confidence") is not None else predicate.get("conf"),
             "conf": predicate.get("conf") if predicate.get("conf") is not None else predicate.get("confidence"),
             "source": predicate.get("source"),
@@ -313,12 +330,18 @@ def _predicate_properties(predicate: dict[str, Any]) -> dict[str, Any]:
 
 
 def _constraint_properties(constraint: dict[str, Any], support_status: str | None) -> dict[str, Any]:
+    name = str(constraint.get("name") or "")
+    args = _args(constraint)
+    display_name = _constraint_display_name(name, args)
     return _clean_properties(
         {
             "constraint_id": constraint.get("constraint_id"),
             "name": constraint.get("name"),
             "kind": constraint.get("kind"),
-            "args": _args(constraint),
+            "args": args,
+            "display_name": display_name,
+            "display_label": _constraint_display_label(display_name, args, support_status),
+            "short_id": _short_constraint_id(constraint),
             "confidence": constraint.get("confidence") if constraint.get("confidence") is not None else constraint.get("conf"),
             "conf": constraint.get("conf") if constraint.get("conf") is not None else constraint.get("confidence"),
             "rule_id": constraint.get("rule_id"),
@@ -330,14 +353,119 @@ def _constraint_properties(constraint: dict[str, Any], support_status: str | Non
 
 
 def _source_properties(source: dict[str, Any], source_node_id: str) -> dict[str, Any]:
+    source_id = source_node_id.split("::", 1)[1]
+    display_name = _source_display_name(source, source_id)
     return _clean_properties(
         {
-            "source_id": source_node_id.split("::", 1)[1],
+            "source_id": source_id,
             "source_type": source.get("type"),
             "file": source.get("file"),
             "fields": source.get("fields"),
+            "display_name": display_name,
+            "display_label": display_name,
+            "short_id": source_id,
         }
     )
+
+
+def _entity_properties(entity_id: str, entity_type: list[str] | None = None) -> dict[str, Any]:
+    return _clean_properties(
+        {
+            "entity_id": entity_id,
+            "entity_type": entity_type or [],
+            "display_name": entity_id,
+            "display_label": entity_id,
+            "short_id": entity_id,
+        }
+    )
+
+
+def _step_display_name(record: dict[str, Any]) -> str:
+    index = record.get("index")
+    return f"Step {index}" if index is not None else "Step"
+
+
+def _step_display_label(record: dict[str, Any]) -> str:
+    name = _step_display_name(record)
+    status = _blank_to_none(record.get("status"))
+    return f"{name} [{status}]" if status else name
+
+
+def _constraint_display_name(name: str, args: list[Any]) -> str:
+    if name == "requiresTool":
+        return "requires tool"
+    if name == "requiresSafety":
+        condition = str(args[1]) if len(args) > 1 else ""
+        return f"requires safety {condition}".strip()
+    if name in {"requires", "produces"}:
+        condition = str(args[1]) if len(args) > 1 else ""
+        return f"{name} {condition}".strip()
+    if name == "incompatibleAction":
+        return "incompatible action"
+    return _humanize_identifier(name)
+
+
+def _constraint_display_label(display_name: str, args: list[Any], support_status: str | None) -> str:
+    compact_args = _compact_args(args[2:] if len(args) > 2 else args[1:])
+    label = _call_label(display_name, compact_args)
+    return f"{label} [{support_status}]" if support_status else label
+
+
+def _source_display_name(source: dict[str, Any], source_id: str) -> str:
+    file_name = Path(str(source.get("file") or "")).name
+    source_type = _blank_to_none(source.get("type"))
+    if file_name and source_type:
+        return f"{source_type}:{file_name}"
+    if file_name:
+        return file_name
+    return source_type or source_id
+
+
+def _call_label(name: str, args: list[Any]) -> str:
+    if not args:
+        return name
+    return f"{name}({', '.join(str(arg) for arg in args)})"
+
+
+def _compact_args(args: list[Any], max_args: int = 4) -> list[Any]:
+    compact = [_compact_arg(arg) for arg in args[:max_args]]
+    if len(args) > max_args:
+        compact.append("...")
+    return compact
+
+
+def _compact_arg(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+    if value.startswith("step::"):
+        return _short_event_id(value)
+    return value
+
+
+def _short_event_id(value: Any) -> str:
+    text = str(value or "")
+    if not text:
+        return ""
+    return text.split("::")[-1]
+
+
+def _short_predicate_id(predicate: dict[str, Any]) -> str | None:
+    return _blank_to_none(predicate.get("predicate_id")) or _blank_to_none(predicate.get("id"))
+
+
+def _short_constraint_id(constraint: dict[str, Any]) -> str | None:
+    return _blank_to_none(constraint.get("constraint_id")) or _blank_to_none(constraint.get("id"))
+
+
+def _humanize_identifier(value: str) -> str:
+    text = str(value or "").replace("_", " ")
+    output = []
+    for index, char in enumerate(text):
+        previous = text[index - 1] if index else ""
+        if index and char.isupper() and (previous.islower() or previous.isdigit()):
+            output.append(" ")
+        output.append(char.lower())
+    return "".join(output).strip()
 
 
 def _constraint_support_status(record: dict[str, Any], constraint: dict[str, Any]) -> str | None:
