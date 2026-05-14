@@ -21,9 +21,10 @@ existing graph CSVs
   -> Layer 3 rule inference
   -> inferred_constraints.csv
   -> Layer 4 validation
-  -> validation_records.jsonl
+  -> validation_records.jsonl + step_validations.csv + explanation_traces.json
   -> procedural_reasoning_graph
-  -> procedural_reasoning_graph.json
+  -> procedural_reasoning_graph.json + procedural_reasoning_graph_nodes.csv + procedural_reasoning_graph_edges.csv
+  -> Neo4j procedural graph import
 ```
 
 Current scripts:
@@ -33,6 +34,7 @@ scripts/14_build_layer3_reasoning_adapter.py
 scripts/15_run_layer3_inference.py
 scripts/16_run_layer4_validation.py
 scripts/17_build_procedural_reasoning_graph.py
+scripts/18_import_procedural_reasoning_graph_neo4j.py
 ```
 
 Current implementation modules:
@@ -42,6 +44,7 @@ src/layer3_reasoning_adapter.py
 src/layer3_inference.py
 src/layer4_validation.py
 src/procedural_reasoning_graph.py
+src/procedural_neo4j_import.py
 ```
 
 Adapter runtime defaults are configured in:
@@ -184,6 +187,8 @@ It writes:
 
 ```text
 validation_records.jsonl
+step_validations.csv
+explanation_traces.json
 ```
 
 Rules are also stored in `config/thesis_rules.yaml`, under:
@@ -240,10 +245,11 @@ Layer 4 walks the ordered steps and maintains an accumulated history of previous
 ```text
 same-step predicates
 previous produced effects
-future explicit annotation support, when available
 ```
 
-If a requirement is supported by a previous effect, the validation record links it to the earlier producing constraint. If no support is found, the requirement is recorded as missing and the step is marked `uncertain`. Compatibility constraints still act as hard violations and mark a step `rejected`.
+If a requirement is supported by a previous effect, the validation record links it to the earlier producing constraint. Domain requirement predicates such as `hasRequiredCondition(...)`, `hasSafetyRequirement(...)`, and `hasRequiredTool(...)` state that a condition is required; they are not treated as evidence that the condition was satisfied.
+
+If no support is found, the requirement is recorded as missing. A step is `accepted` only when no requirements are missing and its confidence meets `validation.tau_acc` from `config/thesis_rules.yaml`. A step with partial support and confidence above `validation.tau_unc` is marked `uncertain`. Compatibility constraints still act as hard violations and mark a step `rejected`.
 
 ## Procedural Reasoning Graph
 
@@ -266,6 +272,13 @@ The graph JSON has this shape:
   "nodes": [],
   "edges": []
 }
+```
+
+The graph builder also writes:
+
+```text
+procedural_reasoning_graph_nodes.csv
+procedural_reasoning_graph_edges.csv
 ```
 
 Node types:
@@ -345,7 +358,9 @@ notes
 
 `source` records which CSV file and fields produced the predicate.
 
-The output file contract is unchanged: the adapter still writes `step_records.jsonl` and `predicates.jsonl`, Layer 3 still writes `inferred_constraints.csv`, and Layer 4 still writes `validation_records.jsonl`. The main semantic change is that configured domain components now use the domain individual `name` in predicate arguments, such as `base`, while generic classes stay class-like, such as `Base` or `Chassis`. Labels remain separate through `hasLabel(base, "base")`.
+The reasoning-record contract is stable: the adapter writes `step_records.jsonl` and `predicates.jsonl`, Layer 3 writes `inferred_constraints.csv`, and Layer 4 writes `validation_records.jsonl` plus human/debug views in `step_validations.csv` and `explanation_traces.json`. The procedural graph export writes JSON plus node/edge CSV files, and node properties include presentation helpers such as `display_name`, `display_label`, and `short_id`.
+
+Configured domain components use the domain individual `name` in predicate arguments, such as `base`, while generic classes stay class-like, such as `Base` or `Chassis`. Labels remain separate through `hasLabel(base, "base")`.
 
 ## Domain Configuration
 
@@ -406,7 +421,7 @@ In principle, this domain config can be generated from CAD metadata. A CAD-deriv
 Build adapter outputs for a filtered clip:
 
 ```powershell
-python scripts\14_build_layer3_reasoning_adapter.py `
+.venv\Scripts\python.exe scripts\14_build_layer3_reasoning_adapter.py `
   --clip-result-id raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1 `
   --output-dir results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
 ```
@@ -414,7 +429,7 @@ python scripts\14_build_layer3_reasoning_adapter.py `
 Run Layer 3 inference:
 
 ```powershell
-python scripts\15_run_layer3_inference.py `
+.venv\Scripts\python.exe scripts\15_run_layer3_inference.py `
   --step-records results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\step_records.jsonl `
   --predicates results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\predicates.jsonl `
   --output results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\inferred_constraints.csv
@@ -423,7 +438,7 @@ python scripts\15_run_layer3_inference.py `
 Run Layer 4 validation:
 
 ```powershell
-python scripts\16_run_layer4_validation.py `
+.venv\Scripts\python.exe scripts\16_run_layer4_validation.py `
   --step-records results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\step_records.jsonl `
   --predicates results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\predicates.jsonl `
   --constraints results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\inferred_constraints.csv `
@@ -433,7 +448,7 @@ python scripts\16_run_layer4_validation.py `
 Build the procedural reasoning graph:
 
 ```powershell
-python scripts\17_build_procedural_reasoning_graph.py `
+.venv\Scripts\python.exe scripts\17_build_procedural_reasoning_graph.py `
   --validations results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\validation_records.jsonl `
   --output-dir results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
 ```
@@ -441,7 +456,7 @@ python scripts\17_build_procedural_reasoning_graph.py `
 Import the procedural reasoning graph into Neo4j:
 
 ```powershell
-python scripts\18_import_procedural_reasoning_graph_neo4j.py `
+.venv\Scripts\python.exe scripts\18_import_procedural_reasoning_graph_neo4j.py `
   --graph results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
 ```
 
@@ -462,16 +477,25 @@ ORDER BY count DESC;
 
 Expected label combinations are single semantic labels such as `["Step"]`, `["Constraint"]`, `["Predicate"]`, `["Rule"]`, `["Entity"]`, and `["Source"]`.
 
+Verify display properties after import:
+
+```cypher
+MATCH (s:Step)
+WHERE s.graph_name = "procedural_reasoning_graph"
+RETURN s.display_name, s.display_label, s.status, s.confidence
+ORDER BY s.index;
+```
+
 Use a different predicate/rule config:
 
 ```powershell
-python scripts\14_build_layer3_reasoning_adapter.py --predicate-config path\to\custom_rules.yaml
+.venv\Scripts\python.exe scripts\14_build_layer3_reasoning_adapter.py --predicate-config path\to\custom_rules.yaml
 ```
 
 Use a different domain config:
 
 ```powershell
-python scripts\14_build_layer3_reasoning_adapter.py --domain-config path\to\domain_config.yaml
+.venv\Scripts\python.exe scripts\14_build_layer3_reasoning_adapter.py --domain-config path\to\domain_config.yaml
 ```
 
 ## Notes For Future README Integration
