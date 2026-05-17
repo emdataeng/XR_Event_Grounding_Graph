@@ -1,0 +1,194 @@
+\chapter{Evaluation}
+\label{cha:evaluation}
+
+This chapter evaluates the implemented reasoning layer described in \cref{cha:implementation}. The evaluation focuses on the contribution of this thesis: symbolic constraint inference, step validation, uncertainty handling, dependency support, explanation traces, and graph construction. It does not evaluate low-level perception, object detection, step segmentation, or CAD-to-image alignment, since these are outside the scope of the thesis.
+
+\section{Evaluation objective}
+\label{sec:evaluation-objective}
+
+The objective of the evaluation is to determine whether the proposed reasoning layer can validate and enrich ordered procedural step artifacts in a traceable and interpretable way. The evaluation is therefore artifact-based and reasoning-focused. It examines whether the implemented pipeline produces the expected intermediate records, whether Layer 3 infers meaningful procedural constraints, whether Layer 4 responds correctly to incomplete or uncertain evidence, and whether the final procedural reasoning graph exposes the evidence and dependencies behind validation outcomes.
+
+The evaluation is aligned with the research questions as follows. RQ1 is addressed by evaluating whether ordered step hypotheses can be represented through step records, predicates, constraints, validation records, and graph nodes. RQ2 is addressed by evaluating how confidence values are propagated from predicates to constraints and validation outcomes. RQ3 is addressed through controlled perturbations of the evidence, such as missing requirements, reduced confidence, and incompatibility conditions. RQ4 is addressed by evaluating whether validation outcomes can be traced back to predicates, inferred constraints, rules, missing requirements, incompatibilities, and dependency relations.
+
+\section{Evaluation setup}
+\label{sec:evaluation-setup}
+
+The evaluation uses artifacts produced from the IndustReal-based upstream pipeline. The upstream pipeline uses IndustReal assembly-state labels as oracle input, applies CAD-informed assembly rules, converts state changes into procedure steps, and exports graph-style assembly outputs. These upstream artifacts are treated as inputs to the reasoning layer evaluated in this thesis. The extraction of assembly states and procedure steps is not evaluated as part of this thesis.
+
+The reasoning-layer evaluation starts from the adapter outputs:
+\begin{itemize}
+    \item \path{step_records.jsonl}, containing ordered step records;
+    \item \path{predicates.jsonl}, containing symbolic predicates associated with steps, objects, component types, tools, and source information.
+\end{itemize}
+
+Layer 3 consumes these files and writes:
+\begin{itemize}
+    \item \path{inferred_constraints.csv}, containing inferred requirements, expected effects, tool requirements, safety requirements, and incompatibilities.
+\end{itemize}
+
+Layer 4 consumes the step records, predicates, and inferred constraints, and writes:
+\begin{itemize}
+    \item \path{validation_records.jsonl};
+    \item \path{step_validations.csv};
+    \item \path{explanation_traces.json}.
+\end{itemize}
+
+Finally, the graph exporter writes:
+\begin{itemize}
+    \item \path{procedural_reasoning_graph.json};
+    \item \path{procedural_reasoning_graph_nodes.csv};
+    \item \path{procedural_reasoning_graph_edges.csv}.
+\end{itemize}
+
+The evaluation uses these files to check whether the reasoning pipeline behaves according to the design specified in \cref{cha:design}.
+
+\section{Evaluation 1: Pipeline artifact correctness}
+\label{sec:evaluation-artifact-correctness}
+
+The first evaluation checks whether the implemented pipeline produces the expected artifacts and whether the artifacts satisfy basic consistency conditions. This evaluation verifies that each pipeline stage can be inspected independently and that no reasoning stage depends on hidden state.
+
+\begin{table}[htbp]
+\centering
+\caption{Pipeline artifact checks.}
+\label{tab:evaluation-artifact-checks}
+\begin{tabular}{p{0.32\textwidth} p{0.48\textwidth} p{0.12\textwidth}}
+\toprule
+Check & Expected condition & Result \\
+\midrule
+Step records produced & Each input step is represented in \path{step_records.jsonl}. & TODO \\
+Predicate records produced & Each step has associated symbolic predicate evidence where available. & TODO \\
+Layer 3 constraints produced & Rule inference writes \path{inferred_constraints.csv}. & TODO \\
+Layer 4 validation records produced & Each step has a validation record and status. & TODO \\
+Explanation traces produced & Validation decisions include trace information. & TODO \\
+Graph export produced & Graph JSON and node/edge CSV files are written. & TODO \\
+Input order preserved & \texttt{NEXT} edges follow the validation index. & TODO \\
+Rejected-step dependency rule respected & Rejected steps do not support later \texttt{DEPENDS\_ON} edges. & TODO \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This evaluation addresses RQ1 by confirming that the implemented representation supports the complete reasoning chain from step records and predicates to validation records and graph outputs.
+
+\section{Evaluation 2: Constraint inference coverage}
+\label{sec:evaluation-constraint-coverage}
+
+The second evaluation checks whether Layer 3 enriches the input predicates with procedural constraints. The goal is not to evaluate perception accuracy, but to verify that the rule layer derives the expected types of procedural knowledge from the available symbolic facts.
+
+\begin{table}[htbp]
+\centering
+\caption{Constraint inference coverage for selected evaluation clips.}
+\label{tab:evaluation-constraint-coverage}
+\begin{tabular}{p{0.24\textwidth}rrrrrr}
+\toprule
+Clip & Predicates & Requires & Produces & Tools & Safety & Incompat. \\
+\midrule
+TODO & TODO & TODO & TODO & TODO & TODO & TODO \\
+TODO & TODO & TODO & TODO & TODO & TODO & TODO \\
+TODO & TODO & TODO & TODO & TODO & TODO & TODO \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The expected result is that Layer 3 derives constraints that are not directly present as step labels. For example, an input step involving an installation action and a component can lead to a produced effect, while component-level domain knowledge can lead to required tools, safety requirements, or implicit assembly conditions.
+
+This evaluation addresses RQ1 and RQ2 by showing that symbolic predicates can be transformed into explicit procedural constraints with associated confidence and provenance.
+
+\section{Evaluation 3: Validation behavior under controlled evidence changes}
+\label{sec:evaluation-controlled-perturbations}
+
+The third evaluation examines whether Layer 4 behaves as expected when evidence is incomplete, uncertain, or contradictory. This is evaluated through controlled perturbations of the reasoning inputs. Each perturbation modifies one aspect of the evidence while keeping the remaining pipeline structure unchanged.
+
+\begin{table}[htbp]
+\centering
+\caption{Controlled validation scenarios.}
+\label{tab:evaluation-controlled-scenarios}
+\begin{tabular}{p{0.25\textwidth} p{0.35\textwidth} p{0.30\textwidth}}
+\toprule
+Scenario & Modification & Expected behavior \\
+\midrule
+Baseline & Use the unmodified adapter and Layer 3 outputs. & Steps are classified according to available requirements, effects, and confidence values. \\
+Missing requirement & Remove or suppress a produced effect needed by a later step. & The later step records a missing requirement and becomes uncertain or rejected depending on the validation policy. \\
+Reduced confidence & Lower the confidence of selected supporting predicates. & Derived constraints and validation outcomes receive lower confidence; accepted steps may become uncertain. \\
+Compatibility violation & Inject or activate an incompatible action or object relation. & The affected step is rejected due to a hard incompatibility. \\
+Rejected dependency & Force an earlier supporting step to be rejected. & Produced effects from the rejected step are not used to support later dependencies. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For each scenario, the validation output is inspected using \path{validation_records.jsonl}, \path{step_validations.csv}, and \path{explanation_traces.json}. The expected outcome is not simply a change in the status label, but a traceable explanation of why the status changed.
+
+\begin{table}[htbp]
+\centering
+\caption{Validation response to controlled evidence changes.}
+\label{tab:evaluation-validation-response}
+\begin{tabular}{p{0.22\textwidth} p{0.22\textwidth} p{0.22\textwidth} p{0.24\textwidth}}
+\toprule
+Scenario & Baseline status & Perturbed status & Explanation trace change \\
+\midrule
+Missing requirement & TODO & TODO & TODO \\
+Reduced confidence & TODO & TODO & TODO \\
+Compatibility violation & TODO & TODO & TODO \\
+Rejected dependency & TODO & TODO & TODO \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This evaluation addresses RQ2 and RQ3. It tests whether uncertainty and missing evidence affect validation outcomes in the intended way, and whether the implementation prevents unsupported or rejected evidence from being used as dependency support.
+
+\section{Evaluation 4: Procedural graph traceability}
+\label{sec:evaluation-graph-traceability}
+
+The fourth evaluation examines whether the procedural reasoning graph provides the traceability required by the thesis objective. The graph should preserve the provided order through \texttt{NEXT} edges and expose reasoning-derived relations through edges such as \texttt{REQUIRES}, \texttt{PRODUCES}, \texttt{DEPENDS\_ON}, \texttt{HAS\_PREDICATE}, \texttt{HAS\_CONSTRAINT}, \texttt{SUPPORTED\_BY}, and \texttt{DERIVED\_FROM}.
+
+\begin{table}[htbp]
+\centering
+\caption{Procedural reasoning graph traceability checks.}
+\label{tab:evaluation-graph-traceability}
+\begin{tabular}{p{0.34\textwidth} p{0.46\textwidth} p{0.12\textwidth}}
+\toprule
+Check & Expected condition & Result \\
+\midrule
+Order preservation & Each \texttt{NEXT} edge follows the input validation index. & TODO \\
+Dependency grounding & Each \texttt{DEPENDS\_ON} edge is supported by a requirement and an earlier produced effect. & TODO \\
+Requirement visibility & Requirements are represented as explicit constraint nodes or edges. & TODO \\
+Missing requirement visibility & Missing requirements are represented in the validation record and trace. & TODO \\
+Evidence traceability & Step statuses can be traced to predicates and constraints. & TODO \\
+Rule provenance & Derived constraints can be linked to the rule that produced them. & TODO \\
+Rejected-step isolation & Rejected steps do not support later dependency edges. & TODO \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This evaluation addresses RQ4 by checking whether the graph supports explanation-oriented inspection. A successful result means that a validation outcome can be traced from the step node to the evidence and rules that support or contradict it.
+
+\section{Relation to IndustReal-based upstream evaluation}
+\label{sec:evaluation-industreal-relation}
+
+The IndustReal-based upstream pipeline provides the external assembly context for the reasoning-layer evaluation. It processes real IndustReal test clips using oracle assembly-state labels and CAD-informed state-transition rules. Its purpose is to generate step-level and graph-like artifacts from the dataset, not to evaluate the reasoning layer proposed in this thesis.
+
+The evaluation in this thesis therefore uses the upstream artifacts as inputs rather than as results to be claimed. The relevant question is not whether this thesis can recognize procedure steps from raw frames, but whether the proposed reasoning layer can validate and enrich the ordered step artifacts once they are available.
+
+The procedural reasoning graph can be compared against the IndustReal-derived assembly artifacts to check whether it preserves the expected step order and exposes additional reasoning information, such as requirements, produced effects, dependency support, missing conditions, incompatibilities, and provenance. This comparison provides an academic grounding for the graph.
+
+\section{Threats to validity}
+\label{sec:evaluation-threats-validity}
+
+Several threats to validity must be considered.
+
+First, the evaluation relies on upstream artifacts derived from IndustReal and from an oracle-first pipeline. This means the results do not demonstrate fully automatic recognition from raw images. They evaluate the reasoning layer under the assumption that ordered step records and predicates are available.
+
+Second, the domain configuration and rules are manually specified. This is appropriate for evaluating the reasoning design, but it limits claims about scalability to new assemblies without additional configuration effort.
+
+Third, the controlled perturbation scenarios test expected reasoning behavior, but they do not cover all possible perception errors or industrial edge cases. The results should therefore be interpreted as evidence of correct reasoning behavior under selected conditions, not as proof of complete operational robustness.
+
+Fourth, the graph is evaluated as an explanation and inspection artifact. It is not evaluated as a full executable process model or runtime guidance controller.
+
+\section{Summary}
+\label{sec:evaluation-summary}
+
+The evaluation focuses on the reasoning contribution of this thesis. It checks that the implemented pipeline produces the expected artifacts, that Layer 3 enriches symbolic predicates with procedural constraints, that Layer 4 responds correctly to missing, uncertain, and incompatible evidence, and that the final graph exposes validation status, dependencies, evidence, and provenance. This evaluation supports the academic claim that the thesis contributes a traceable reasoning layer for validating and enriching ordered procedural artifacts, rather than a perception system or a complete XR guidance application.
+
+\section{Data collection protocol and labeling plan}
+\label{sec:data-protocol}
+
+The dataset consists of XR recordings of controlled assembly scenarios, including both successful and faulty executions. Scenarios are defined to capture variability in object placement, alignment, and interaction patterns where predicate confidence and conflicting interpretations are systematically varied. Annotation focuses on step boundaries and outcome labels, without requiring detailed geometric ground truth. Data is split across sessions and operators to reduce leakage, and consistency checks are applied to ensure annotation quality.

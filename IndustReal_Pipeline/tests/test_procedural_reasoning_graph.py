@@ -14,7 +14,29 @@ from src.procedural_reasoning_graph import (
 
 def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Path) -> None:
     validations_path = tmp_path / "validation_records.jsonl"
+    step_records_path = tmp_path / "step_records.jsonl"
     output_dir = tmp_path / "graph"
+    _write_jsonl(
+        step_records_path,
+        [
+            {
+                "id": "s1",
+                "clip_result_id": "run::od_only::test_p1::03_assy_0_1",
+                "run_id": "run",
+                "mode": "od_only",
+                "archive_name": "test_p1",
+                "clip": "03_assy_0_1",
+            },
+            {
+                "id": "s2",
+                "clip_result_id": "run::od_only::test_p1::03_assy_0_1",
+                "run_id": "run",
+                "mode": "od_only",
+                "archive_name": "test_p1",
+                "clip": "03_assy_0_1",
+            },
+        ],
+    )
     _write_jsonl(
         validations_path,
         [
@@ -98,7 +120,11 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
     )
 
     result = build_procedural_reasoning_graph(
-        ProceduralReasoningGraphInputs(validations_path=validations_path, output_dir=output_dir)
+        ProceduralReasoningGraphInputs(
+            validations_path=validations_path,
+            output_dir=output_dir,
+            step_records_path=step_records_path,
+        )
     )
 
     graph = json.loads((output_dir / "procedural_reasoning_graph.json").read_text(encoding="utf-8"))
@@ -113,6 +139,9 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
     assert step["display_name"] == "Step 1"
     assert step["display_label"] == "Step 1 [accepted]"
     assert step["short_id"] == "event_1"
+    assert step["clip_result_id"] == "run::od_only::test_p1::03_assy_0_1"
+    assert step["archive_name"] == "test_p1"
+    assert step["clip"] == "03_assy_0_1"
     assert predicate["display_name"] == "usesObject"
     assert predicate["display_label"] == "usesObject(s1, base)"
     assert constraint["display_name"] == "requires installed"

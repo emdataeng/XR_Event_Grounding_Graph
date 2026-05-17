@@ -28,6 +28,7 @@ class ProceduralReasoningGraphInputs:
 
 def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> dict[str, Any]:
     validations = _read_records(Path(inputs.validations_path))
+    step_records_by_id = _read_step_records_by_id(inputs.step_records_path)
     included_records = [
         record
         for record in validations
@@ -48,6 +49,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
         step_id = str(record.get("step_id") or record.get("id") or "")
         if not step_id:
             continue
+        step_record = step_records_by_id.get(step_id, {})
         step_node_id = _node_id("Step", step_id)
         step_nodes[step_id] = step_node_id
         step_status[step_id] = str(record.get("status") or "")
@@ -57,6 +59,11 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
             _clean_properties(
                 {
                     "step_id": step_id,
+                    "clip_result_id": step_record.get("clip_result_id") or record.get("clip_result_id"),
+                    "run_id": step_record.get("run_id") or record.get("run_id"),
+                    "mode": step_record.get("mode") or record.get("mode"),
+                    "archive_name": step_record.get("archive_name") or record.get("archive_name"),
+                    "clip": step_record.get("clip") or record.get("clip"),
                     "source_event_id": record.get("source_event_id"),
                     "index": record.get("index"),
                     "status": record.get("status"),
@@ -91,6 +98,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
 
             for entity in _predicate_entity_args(predicate, condition_names):
                 entity_node_id = _node_id("Entity", entity)
+                builder.add_node(entity_node_id, "Entity", _entity_properties(entity))
                 builder.add_edge(predicate_node_id, entity_node_id, "HAS_ENTITY", {})
                 if predicate.get("name") in {"usesObject", "usesTool"}:
                     builder.add_edge(
@@ -136,6 +144,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
 
             for entity in _constraint_entity_args(constraint, condition_names):
                 entity_node_id = _node_id("Entity", entity)
+                builder.add_node(entity_node_id, "Entity", _entity_properties(entity))
                 builder.add_edge(constraint_node_id, entity_node_id, "HAS_ENTITY", {})
 
             for evidence_id in _evidence_predicate_ids(constraint):
@@ -226,6 +235,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
         "schema_version": SCHEMA_VERSION,
         "graph_name": GRAPH_NAME,
         "validations_path": str(inputs.validations_path),
+        "step_records_path": str(inputs.step_records_path) if inputs.step_records_path else None,
         "output_path": str(graph_path),
         "nodes_csv_path": str(nodes_csv_path),
         "edges_csv_path": str(edges_csv_path),
@@ -624,6 +634,16 @@ def _parse_csv_record(row: dict[str, str]) -> dict[str, Any]:
         if key in parsed:
             parsed[key] = _parse_float(parsed[key])
     return parsed
+
+
+def _read_step_records_by_id(path: Path | None) -> dict[str, dict[str, Any]]:
+    if path is None or not Path(path).exists():
+        return {}
+    return {
+        str(record.get("id")): record
+        for record in _read_records(Path(path))
+        if record.get("id")
+    }
 
 
 def _write_json(path: Path, data: Any) -> None:

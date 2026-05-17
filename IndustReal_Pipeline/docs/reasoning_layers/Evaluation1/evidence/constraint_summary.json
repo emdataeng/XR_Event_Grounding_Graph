@@ -1,0 +1,9 @@
+{
+  "rows": 26,
+  "summary_by_name": {
+    "produces": 10,
+    "requires": 12,
+    "requiresSafety": 3,
+    "requiresTool": 1
+  }
+}

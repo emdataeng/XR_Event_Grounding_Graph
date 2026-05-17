@@ -261,7 +261,7 @@ The primary graph-builder input is:
 validation_records.jsonl
 ```
 
-Optional inputs such as `step_records.jsonl`, `predicates.jsonl`, and `inferred_constraints.csv` are accepted by the script only for future metadata enrichment. The current builder relies on `validation_records.jsonl` because it already contains the validation status, predicate evidence, constraint evidence, produced effects, dependency support, missing requirements, incompatibilities, and trace information.
+Optional inputs such as `step_records.jsonl`, `predicates.jsonl`, and `inferred_constraints.csv` are accepted by the script for metadata enrichment. The builder relies on `validation_records.jsonl` for validation status, predicate evidence, constraint evidence, produced effects, dependency support, missing requirements, incompatibilities, and trace information. When `--step-records` is provided, Step nodes are enriched with source metadata from the adapter step records, including `clip_result_id`, `run_id`, `mode`, `archive_name`, and `clip`.
 
 The graph JSON has this shape:
 
@@ -301,6 +301,16 @@ short_id       compact source identifier when available
 ```
 
 These fields are presentation helpers only. They do not change node ids, relationships, validation status, confidence, provenance, or reasoning semantics.
+
+Step nodes also expose source-clip metadata when the graph is built with `--step-records`. In the IndustReal sample graph, each Step node includes:
+
+```text
+clip_result_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1
+run_id: raw_cad_dataset__all_test_clips
+mode: od_only
+archive_name: test_p1
+clip: 03_assy_0_1
+```
 
 Edge types:
 
@@ -450,6 +460,7 @@ Build the procedural reasoning graph:
 ```powershell
 .venv\Scripts\python.exe scripts\17_build_procedural_reasoning_graph.py `
   --validations results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\validation_records.jsonl `
+  --step-records results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\step_records.jsonl `
   --output-dir results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
 ```
 
