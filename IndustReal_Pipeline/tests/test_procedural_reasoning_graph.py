@@ -196,6 +196,212 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
     assert csv_step_props["display_label"] == "Step 1 [accepted]"
 
 
+def test_graph_exposes_remove_semantics_and_invalidated_effects(tmp_path: Path) -> None:
+    validations_path = tmp_path / "validation_records.jsonl"
+    output_dir = tmp_path / "graph"
+    installed_effect = _constraint("c_install", "produces", "expected_effect", ["s1", "installed", "wheel", "hub"])
+    remove_requires = _constraint("c_remove_requires", "requires", "inferred_precondition", ["s2", "installed", "wheel", "hub"])
+    remove_effect = _constraint("c_removed", "produces", "expected_effect", ["s2", "removed", "wheel", "hub"])
+    rejected_effect = _constraint("c_rejected_install", "produces", "expected_effect", ["s4", "installed", "axle", "hub"])
+    _write_jsonl(
+        validations_path,
+        [
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s1",
+                "source_event_id": "event_1",
+                "index": 1,
+                "status": "accepted",
+                "confidence": 0.9,
+                "evidence_predicates": [_predicate("p1", "s1", "hasAction", ["s1", "install"])],
+                "evidence_constraints": [installed_effect],
+                "produced_effects": [installed_effect],
+                "supported_requirements": [],
+                "missing_requirements": [],
+                "dependency_support": [],
+                "invalidated_effects": [],
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s2",
+                "source_event_id": "event_2",
+                "index": 2,
+                "status": "accepted",
+                "confidence": 0.9,
+                "evidence_predicates": [_predicate("p2", "s2", "hasAction", ["s2", "remove"])],
+                "evidence_constraints": [remove_requires, remove_effect],
+                "produced_effects": [remove_effect],
+                "supported_requirements": [
+                    {
+                        **remove_requires,
+                        "support": {
+                            "type": "previous_produced_effect",
+                            "constraint_id": "c_install",
+                            "step_id": "s1",
+                            "args": ["s1", "installed", "wheel", "hub"],
+                            "condition": {"name": "installed", "args": ["wheel", "hub"]},
+                            "producer_status": "accepted",
+                            "provisional": False,
+                        },
+                    }
+                ],
+                "missing_requirements": [],
+                "dependency_support": [
+                    {
+                        "required_condition": {"name": "installed", "args": ["wheel", "hub"]},
+                        "supporting_effect": {
+                            "type": "previous_produced_effect",
+                            "constraint_id": "c_install",
+                            "step_id": "s1",
+                            "args": ["s1", "installed", "wheel", "hub"],
+                            "condition": {"name": "installed", "args": ["wheel", "hub"]},
+                            "producer_status": "accepted",
+                            "provisional": False,
+                        },
+                    }
+                ],
+                "invalidated_effects": [
+                    {
+                        "condition": {"name": "installed", "args": ["wheel", "hub"]},
+                        "produced_by_step_id": "s1",
+                        "invalidated_by_step_id": "s2",
+                        "invalidated_by_effect": {"name": "removed", "args": ["wheel", "hub"]},
+                    }
+                ],
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s3",
+                "source_event_id": "event_3",
+                "index": 3,
+                "status": "rejected",
+                "confidence": 0.2,
+                "evidence_predicates": [_predicate("p3", "s3", "hasAction", ["s3", "install"])],
+                "evidence_constraints": [_constraint("c_after_remove_requires", "requires", "inferred_precondition", ["s3", "installed", "wheel", "hub"])],
+                "produced_effects": [],
+                "supported_requirements": [],
+                "missing_requirements": [_constraint("c_after_remove_requires", "requires", "inferred_precondition", ["s3", "installed", "wheel", "hub"])],
+                "dependency_support": [],
+                "invalidated_effects": [],
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s4",
+                "source_event_id": "event_4",
+                "index": 4,
+                "status": "rejected",
+                "confidence": 0.2,
+                "evidence_predicates": [_predicate("p4", "s4", "hasAction", ["s4", "install"])],
+                "evidence_constraints": [rejected_effect],
+                "produced_effects": [rejected_effect],
+                "supported_requirements": [],
+                "missing_requirements": [],
+                "dependency_support": [],
+                "invalidated_effects": [],
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s5",
+                "source_event_id": "event_5",
+                "index": 5,
+                "status": "rejected",
+                "confidence": 0.2,
+                "evidence_predicates": [_predicate("p5", "s5", "hasAction", ["s5", "remove"])],
+                "evidence_constraints": [_constraint("c_rejected_support_requires", "requires", "inferred_precondition", ["s5", "installed", "axle", "hub"])],
+                "produced_effects": [],
+                "supported_requirements": [],
+                "missing_requirements": [_constraint("c_rejected_support_requires", "requires", "inferred_precondition", ["s5", "installed", "axle", "hub"])],
+                "dependency_support": [],
+                "invalidated_effects": [],
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+        ],
+    )
+
+    build_procedural_reasoning_graph(
+        ProceduralReasoningGraphInputs(validations_path=validations_path, output_dir=output_dir)
+    )
+
+    graph = json.loads((output_dir / "procedural_reasoning_graph.json").read_text(encoding="utf-8"))
+    nodes_by_id = {node["id"]: node for node in graph["nodes"]}
+    edges = graph["edges"]
+    remove_step = nodes_by_id["Step::s2"]["properties"]
+    assert remove_step["invalidates_effect_count"] == 1
+    assert remove_step["invalidated_effects"][0]["condition"] == {"name": "installed", "args": ["wheel", "hub"]}
+    assert nodes_by_id["Constraint::c_remove_requires"]["properties"]["display_name"] == "requires installed"
+    assert nodes_by_id["Constraint::c_removed"]["properties"]["display_name"] == "produces removed"
+    assert _has_edge(edges, "Step::s2", "Constraint::c_remove_requires", "REQUIRES")
+    assert _has_edge(edges, "Step::s2", "Constraint::c_removed", "PRODUCES")
+    depends_on_install = _edge(edges, "Step::s2", "Step::s1", "DEPENDS_ON")
+    assert depends_on_install["properties"]["provisional"] is False
+    assert not _has_edge(edges, "Step::s3", "Step::s1", "DEPENDS_ON")
+    assert not _has_edge(edges, "Step::s5", "Step::s4", "DEPENDS_ON")
+
+
+def test_graph_marks_uncertain_dependency_support_as_provisional(tmp_path: Path) -> None:
+    validations_path = tmp_path / "validation_records.jsonl"
+    output_dir = tmp_path / "graph"
+    _write_jsonl(
+        validations_path,
+        [
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s1",
+                "source_event_id": "event_1",
+                "index": 1,
+                "status": "uncertain",
+                "confidence": 0.5,
+                "evidence_constraints": [_constraint("c_install", "produces", "expected_effect", ["s1", "installed", "wheel", "hub"])],
+                "produced_effects": [_constraint("c_install", "produces", "expected_effect", ["s1", "installed", "wheel", "hub"])],
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s2",
+                "source_event_id": "event_2",
+                "index": 2,
+                "status": "uncertain",
+                "confidence": 0.5,
+                "evidence_constraints": [_constraint("c_requires", "requires", "inferred_precondition", ["s2", "installed", "wheel", "hub"])],
+                "supported_requirements": [_constraint("c_requires", "requires", "inferred_precondition", ["s2", "installed", "wheel", "hub"])],
+                "dependency_support": [
+                    {
+                        "required_condition": {"name": "installed", "args": ["wheel", "hub"]},
+                        "supporting_effect": {
+                            "type": "previous_produced_effect",
+                            "constraint_id": "c_install",
+                            "step_id": "s1",
+                            "condition": {"name": "installed", "args": ["wheel", "hub"]},
+                            "producer_status": "uncertain",
+                            "provisional": True,
+                        },
+                    }
+                ],
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+        ],
+    )
+
+    build_procedural_reasoning_graph(
+        ProceduralReasoningGraphInputs(validations_path=validations_path, output_dir=output_dir)
+    )
+
+    graph = json.loads((output_dir / "procedural_reasoning_graph.json").read_text(encoding="utf-8"))
+    assert _edge(graph["edges"], "Step::s2", "Step::s1", "DEPENDS_ON")["properties"]["provisional"] is True
+
+
+def _has_edge(edges: list[dict[str, object]], source: str, target: str, edge_type: str) -> bool:
+    return any(edge["source"] == source and edge["target"] == target and edge["type"] == edge_type for edge in edges)
+
+
+def _edge(edges: list[dict[str, object]], source: str, target: str, edge_type: str) -> dict[str, object]:
+    return next(edge for edge in edges if edge["source"] == source and edge["target"] == target and edge["type"] == edge_type)
+
+
 def _predicate(predicate_id: str, step_id: str, name: str, args: list[object]) -> dict[str, object]:
     return {
         "predicate_id": predicate_id,

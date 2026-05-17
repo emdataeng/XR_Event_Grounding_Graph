@@ -53,6 +53,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
         diagnostics = record.get("diagnostics", {}) if isinstance(record.get("diagnostics"), dict) else {}
         rule_coverage = diagnostics.get("rule_coverage", {}) if isinstance(diagnostics.get("rule_coverage"), dict) else {}
         warnings = list(record.get("warnings", []) or diagnostics.get("warnings", []) or [])
+        invalidated_effects = list(record.get("invalidated_effects", []) or [])
         step_node_id = _node_id("Step", step_id)
         step_nodes[step_id] = step_node_id
         step_status[step_id] = str(record.get("status") or "")
@@ -84,6 +85,8 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
                     "has_expected_effect": record.get("has_expected_effect", rule_coverage.get("has_expected_effect")),
                     "unsupported_action": record.get("unsupported_action", bool(warnings)),
                     "unsupported_action_name": record.get("unsupported_action_name", rule_coverage.get("action_name") if warnings else None),
+                    "invalidates_effect_count": len(invalidated_effects),
+                    "invalidated_effects": invalidated_effects,
                 }
             ),
         )
@@ -182,7 +185,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
                         "required_condition": required_condition,
                         "supporting_effect": supporting_effect,
                         "confidence": record.get("confidence") if record.get("confidence") is not None else record.get("conf"),
-                        "provisional": step_status.get(earlier_step_id) == "uncertain",
+                        "provisional": bool(supporting_effect.get("provisional")) or step_status.get(earlier_step_id) == "uncertain",
                     }
                 ),
             )

@@ -240,6 +240,15 @@ def write_json(path: Path, value: Any) -> None:
         handle.write("\n")
 
 
+def copy_if_different(source: Path, target: Path) -> None:
+    source = source.resolve()
+    target = target.resolve()
+    if source == target:
+        return
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+
+
 def row_id(row: dict[str, Any], candidates: Iterable[str]) -> str:
     for key in candidates:
         value = row.get(key)
@@ -553,7 +562,7 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
         constraint_summary[key] = constraint_summary.get(key, 0) + 1
     details["constraints"] = {"summary_by_name": constraint_summary, "rows": len(constraints)}
     if paths["rule_coverage"].exists():
-        shutil.copyfile(paths["rule_coverage"], output / "rule_coverage_diagnostics.csv")
+        copy_if_different(paths["rule_coverage"], output / "rule_coverage_diagnostics.csv")
     rule_coverage_by_step = {str(row.get("step_id")): row for row in rule_coverage if row.get("step_id")}
     uncovered_rule_steps = [
         row for row in rule_coverage
