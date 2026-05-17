@@ -32,6 +32,7 @@ CHECKS = [
     ("E1.6", "Graph export produced", "graph"),
     ("E1.7", "Input order preserved", "graph"),
     ("E1.8", "Rejected-step dependency rule respected", "graph"),
+    ("E1.9", "Rule coverage diagnostics", "diagnostics"),
 ]
 
 
@@ -272,6 +273,7 @@ def detect_missing_data(ctx: EvaluationContext) -> list[dict[str, str]]:
         (ctx.reasoning_dir / "step_records.jsonl", "adapter step records"),
         (ctx.reasoning_dir / "predicates.jsonl", "adapter predicate records"),
         (ctx.reasoning_dir / "inferred_constraints.csv", "Layer 3 inferred constraints"),
+        (ctx.reasoning_dir / "rule_coverage_diagnostics.csv", "Layer 3 rule coverage diagnostics"),
         (ctx.reasoning_dir / "validation_records.jsonl", "Layer 4 validation records"),
         (ctx.reasoning_dir / "explanation_traces.json", "Layer 4 explanation traces"),
         (ctx.graph_dir / "procedural_reasoning_graph.json", "procedural graph JSON"),
@@ -384,6 +386,7 @@ def artifact_inventory(ctx: EvaluationContext) -> list[InventoryRow]:
         ("step_records.jsonl", ctx.reasoning_dir / "step_records.jsonl", "jsonl", "adapter step records"),
         ("predicates.jsonl", ctx.reasoning_dir / "predicates.jsonl", "jsonl", "adapter symbolic evidence"),
         ("inferred_constraints.csv", ctx.reasoning_dir / "inferred_constraints.csv", "csv", "Layer 3 constraints"),
+        ("rule_coverage_diagnostics.csv", ctx.reasoning_dir / "rule_coverage_diagnostics.csv", "csv", "Layer 3 rule coverage diagnostics"),
         ("validation_records.jsonl", ctx.reasoning_dir / "validation_records.jsonl", "jsonl", "Layer 4 validation records"),
         ("step_validations.csv", ctx.reasoning_dir / "step_validations.csv", "csv", "Layer 4 tabular validation view"),
         ("explanation_traces.json", ctx.reasoning_dir / "explanation_traces.json", "json", "Layer 4 explanations"),
@@ -417,6 +420,7 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
         "steps": ctx.reasoning_dir / "step_records.jsonl",
         "predicates": ctx.reasoning_dir / "predicates.jsonl",
         "constraints": ctx.reasoning_dir / "inferred_constraints.csv",
+        "rule_coverage": ctx.reasoning_dir / "rule_coverage_diagnostics.csv",
         "validations": ctx.reasoning_dir / "validation_records.jsonl",
         "traces": ctx.reasoning_dir / "explanation_traces.json",
         "graph_json": ctx.graph_dir / "procedural_reasoning_graph.json",
@@ -440,6 +444,7 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
     steps = load_jsonl(paths["steps"]) if paths["steps"].exists() else []
     predicates = load_jsonl(paths["predicates"]) if paths["predicates"].exists() else []
     constraints = load_csv(paths["constraints"]) if paths["constraints"].exists() else []
+    rule_coverage = load_csv(paths["rule_coverage"]) if paths["rule_coverage"].exists() else []
     validations = load_jsonl(paths["validations"]) if paths["validations"].exists() else []
     traces = load_json(paths["traces"]) if paths["traces"].exists() else []
     graph = load_json(paths["graph_json"]) if paths["graph_json"].exists() else {}
@@ -459,6 +464,7 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
             "step_records": len(steps),
             "predicates": len(predicates),
             "constraints": len(constraints),
+            "rule_coverage_diagnostics": len(rule_coverage),
             "validation_records": len(validations),
             "explanation_traces": len(trace_list),
             "graph_nodes": len(graph_nodes),
@@ -546,6 +552,41 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
         key = row.get("name") or row.get("kind") or "unknown"
         constraint_summary[key] = constraint_summary.get(key, 0) + 1
     details["constraints"] = {"summary_by_name": constraint_summary, "rows": len(constraints)}
+    if paths["rule_coverage"].exists():
+        shutil.copyfile(paths["rule_coverage"], output / "rule_coverage_diagnostics.csv")
+    rule_coverage_by_step = {str(row.get("step_id")): row for row in rule_coverage if row.get("step_id")}
+    uncovered_rule_steps = [
+        row for row in rule_coverage
+        if row.get("warning_code") == "no_applicable_rule"
+    ]
+    accepted_uncovered = []
+    validation_by_step_for_coverage = {str(item.get("step_id")): item for item in validations if item.get("step_id")}
+    for row in uncovered_rule_steps:
+        validation = validation_by_step_for_coverage.get(str(row.get("step_id")), {})
+        if validation.get("status") == "accepted":
+            accepted_uncovered.append(row)
+    for column in [
+        "step_id",
+        "action_name",
+        "predicate_count",
+        "matched_rule_count",
+        "produced_constraint_count",
+        "has_rule_coverage",
+        "warning_code",
+        "warning_message",
+    ]:
+        schema_rows.append(
+            {
+                "artifact": "rule_coverage_diagnostics.csv",
+                "record_id": "header",
+                "validation_type": "required_column",
+                "field": column,
+                "status": "PASS" if (not rule_coverage or column in set(rule_coverage[0].keys())) else "FAIL",
+                "message": "present" if (not rule_coverage or column in set(rule_coverage[0].keys())) else "missing required column",
+            }
+        )
+    details["constraints"]["rule_coverage_warnings"] = len(uncovered_rule_steps)
+    details["constraints"]["accepted_uncovered_steps"] = len(accepted_uncovered)
     write_json(evidence_dir / "constraint_summary.json", details["constraints"])
     if not paths["constraints"].exists():
         add_check("E1.3", "FAIL", "critical", "inferred_constraints.csv", "Layer 3 constraints artifact is missing.", "missing_data_report.md")
@@ -553,8 +594,11 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
         add_check("E1.3", "FAIL", "critical", "inferred_constraints.csv", "No constraints were produced even though predicates are available.", "evidence/constraint_summary.json")
     elif constraint_schema_failures or constraint_ref_failures:
         add_check("E1.3", "FAIL", "critical", "inferred_constraints.csv", f"{len(constraint_schema_failures)} schema failures and {len(constraint_ref_failures)} dangling step references.", "evidence/constraint_summary.json")
+    elif accepted_uncovered:
+        add_check("E1.3", "FAIL", "critical", "rule_coverage_diagnostics.csv", f"{len(accepted_uncovered)} uncovered rule steps are still accepted without qualification.", "rule_coverage_diagnostics.csv")
     else:
-        add_check("E1.3", "PASS", "critical", "inferred_constraints.csv", f"{len(constraints)} constraints produced; names: {constraint_summary}.", "evidence/constraint_summary.json")
+        coverage_note = f"; {len(uncovered_rule_steps)} no-applicable-rule diagnostics recorded" if uncovered_rule_steps else ""
+        add_check("E1.3", "PASS", "critical", "inferred_constraints.csv", f"{len(constraints)} constraints produced; names: {constraint_summary}{coverage_note}.", "evidence/constraint_summary.json")
 
     schema_rows.extend(validate_required_fields(validations, ["step_id", "status"], "validation_records.jsonl", id_field="step_id"))
     schema_rows.extend(validate_confidence_range(validations, "confidence", "validation_records.jsonl", id_field="step_id", required=False))
@@ -573,10 +617,16 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
     }
     write_json(evidence_dir / "validation_record_details.json", details["validations"])
     validation_schema_failures = [r for r in schema_rows if r["artifact"] == "validation_records.jsonl" and r["status"] == "FAIL"]
+    validation_warning_failures = []
+    for row in uncovered_rule_steps:
+        validation = validation_by_step_for_coverage.get(str(row.get("step_id")), {})
+        warnings = validation.get("warnings", []) if isinstance(validation.get("warnings"), list) else []
+        if not any(item.get("warning_code") == "no_applicable_rule" for item in warnings if isinstance(item, dict)):
+            validation_warning_failures.append(row)
     if not paths["validations"].exists():
         add_check("E1.4", "FAIL", "critical", "validation_records.jsonl", "Validation artifact is missing.", "missing_data_report.md")
-    elif missing_validations or invalid_statuses or validation_schema_failures:
-        add_check("E1.4", "FAIL", "critical", "validation_records.jsonl", f"{len(missing_validations)} steps lack validation records; invalid statuses: {invalid_statuses}.", "evidence/validation_record_details.json")
+    elif missing_validations or invalid_statuses or validation_schema_failures or validation_warning_failures:
+        add_check("E1.4", "FAIL", "critical", "validation_records.jsonl", f"{len(missing_validations)} steps lack validation records; invalid statuses: {invalid_statuses}; {len(validation_warning_failures)} uncovered steps lack validation warnings.", "evidence/validation_record_details.json")
     elif indices_ordered is False:
         add_check("E1.4", "FAIL", "critical", "validation_records.jsonl", "Validation indices are present but not ordered.", "evidence/validation_record_details.json")
     elif extra_validations:
@@ -664,13 +714,22 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
             }
         )
     graph_schema_failures = [r for r in schema_rows if r["artifact"] == "procedural_reasoning_graph.json" and r["status"] == "FAIL"]
-    details["graph"] = {"step_nodes": len(step_nodes), "dangling_edges": len(graph_edge_failures)}
+    graph_warning_failures = []
+    graph_step_props_by_step = {}
+    for node in step_nodes:
+        props = parse_properties(node.get("properties"))
+        graph_step_props_by_step[str(props.get("step_id") or unprefix_step_node_id(row_id(node, ["id", ":ID"])))] = props
+    for row in uncovered_rule_steps:
+        props = graph_step_props_by_step.get(str(row.get("step_id")), {})
+        if not props or props.get("warning_count", 0) == 0 or props.get("has_rule_coverage") is not False:
+            graph_warning_failures.append(row)
+    details["graph"] = {"step_nodes": len(step_nodes), "dangling_edges": len(graph_edge_failures), "uncovered_steps_missing_graph_warnings": len(graph_warning_failures)}
     write_json(evidence_dir / "graph_export_details.json", details["graph"])
     graph_files_exist = all(paths[key].exists() for key in ["graph_json", "graph_nodes", "graph_edges"])
     if not graph_files_exist:
         add_check("E1.6", "FAIL", "critical", "procedural_reasoning_graph.*", "One or more graph export files are missing.", "missing_data_report.md")
-    elif graph_schema_failures or graph_edge_failures:
-        add_check("E1.6", "FAIL", "critical", "procedural_reasoning_graph.*", f"{len(graph_schema_failures)} graph schema failures and {len(graph_edge_failures)} dangling edges.", "evidence/graph_export_details.json")
+    elif graph_schema_failures or graph_edge_failures or graph_warning_failures:
+        add_check("E1.6", "FAIL", "critical", "procedural_reasoning_graph.*", f"{len(graph_schema_failures)} graph schema failures, {len(graph_edge_failures)} dangling edges, and {len(graph_warning_failures)} uncovered steps missing graph warnings.", "evidence/graph_export_details.json")
     elif len(step_nodes) < len(validations):
         add_check("E1.6", "FAIL", "critical", "procedural_reasoning_graph_nodes.csv", f"Graph has {len(step_nodes)} Step nodes for {len(validations)} validation records.", "evidence/graph_export_details.json")
     else:
@@ -767,6 +826,16 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
     else:
         add_check("E1.8", "PASS", "critical", "procedural_reasoning_graph_edges.csv", f"{len(depends_edges)} DEPENDS_ON edges avoid rejected-step support.", "dependency_rule_results.csv")
 
+    if uncovered_rule_steps:
+        add_check(
+            "E1.9",
+            "WARNING",
+            "warning",
+            "rule_coverage_diagnostics.csv",
+            _rule_coverage_warning_message(uncovered_rule_steps),
+            "rule_coverage_diagnostics.csv",
+        )
+
     inventory = artifact_inventory(ctx)
     write_csv(output / "artifact_inventory.csv", [row.__dict__ for row in inventory], ["artifact_name", "path", "type", "role_in_pipeline", "exists", "size_bytes", "record_count", "notes"])
     write_csv(output / "schema_validation_results.csv", schema_rows, ["artifact", "record_id", "validation_type", "field", "status", "message"])
@@ -811,6 +880,7 @@ Use `--restore-preserved` to restore preserved upstream `/tmp` outputs from `res
 - `nodes_events.csv` from the upstream Neo4j-style CSV export.
 - `step_records.jsonl` and `predicates.jsonl` from the reasoning adapter.
 - `inferred_constraints.csv` from Layer 3.
+- `rule_coverage_diagnostics.csv` from Layer 3 rule coverage diagnostics.
 - `validation_records.jsonl`, `step_validations.csv`, and `explanation_traces.json` from Layer 4.
 - `procedural_reasoning_graph.json`, `procedural_reasoning_graph_nodes.csv`, and `procedural_reasoning_graph_edges.csv` from the graph builder.
 
@@ -825,6 +895,7 @@ When the procedural graph is rebuilt, pass `--step-records` to `scripts\\17_buil
 - `reference_integrity_results.csv`
 - `order_consistency_results.csv`
 - `dependency_rule_results.csv`
+- `rule_coverage_diagnostics.csv`
 - `evidence/evaluation1_results.json`
 - `missing_data_report.md` only when required data is missing.
 
@@ -836,6 +907,29 @@ When the procedural graph is rebuilt, pass `--step-records` to `scripts\\17_buil
 - `SKIPPED`: the current artifact contract does not expose enough information to evaluate that check, or no applicable rows exist.
 """
     (ctx.output_dir / "README.md").write_text(text, encoding="utf-8")
+
+
+def _rule_coverage_warning_message(rows: list[dict[str, str]]) -> str:
+    action_counts: dict[str, int] = {}
+    for row in rows:
+        action = str(row.get("action_name") or "unknown")
+        action_counts[action] = action_counts.get(action, 0) + 1
+    if len(action_counts) == 1:
+        action, count = next(iter(action_counts.items()))
+        noun = _unsupported_action_noun(action)
+        prefix = "One" if count == 1 else str(count)
+        verb = "was" if count == 1 else "were"
+        return f"{prefix} unsupported {noun} {verb} detected and reported with a rule-coverage warning."
+    total = sum(action_counts.values())
+    return f"{total} unsupported actions were detected and reported with rule-coverage warnings: {dict(sorted(action_counts.items()))}."
+
+
+def _unsupported_action_noun(action: str) -> str:
+    if action == "remove":
+        return "removal action"
+    if action:
+        return f"{action} action"
+    return "action"
 
 
 def write_report(

@@ -17,6 +17,7 @@ Use `--restore-preserved` to restore preserved upstream `/tmp` outputs from `res
 - `nodes_events.csv` from the upstream Neo4j-style CSV export.
 - `step_records.jsonl` and `predicates.jsonl` from the reasoning adapter.
 - `inferred_constraints.csv` from Layer 3.
+- `rule_coverage_diagnostics.csv` from Layer 3 rule coverage diagnostics.
 - `validation_records.jsonl`, `step_validations.csv`, and `explanation_traces.json` from Layer 4.
 - `procedural_reasoning_graph.json`, `procedural_reasoning_graph_nodes.csv`, and `procedural_reasoning_graph_edges.csv` from the graph builder.
 
@@ -31,6 +32,7 @@ When the procedural graph is rebuilt, pass `--step-records` to `scripts\17_build
 - `reference_integrity_results.csv`
 - `order_consistency_results.csv`
 - `dependency_rule_results.csv`
+- `rule_coverage_diagnostics.csv`
 - `evidence/evaluation1_results.json`
 - `missing_data_report.md` only when required data is missing.
 

@@ -50,6 +50,9 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
         if not step_id:
             continue
         step_record = step_records_by_id.get(step_id, {})
+        diagnostics = record.get("diagnostics", {}) if isinstance(record.get("diagnostics"), dict) else {}
+        rule_coverage = diagnostics.get("rule_coverage", {}) if isinstance(diagnostics.get("rule_coverage"), dict) else {}
+        warnings = list(record.get("warnings", []) or diagnostics.get("warnings", []) or [])
         step_node_id = _node_id("Step", step_id)
         step_nodes[step_id] = step_node_id
         step_status[step_id] = str(record.get("status") or "")
@@ -73,6 +76,14 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
                     "confidence": record.get("confidence"),
                     "conf": record.get("conf"),
                     "schema_version": record.get("schema_version"),
+                    "warning_count": len(warnings),
+                    "warnings": warnings,
+                    "has_rule_coverage": record.get("has_rule_coverage", rule_coverage.get("has_rule_coverage")),
+                    "matched_rule_count": record.get("matched_rule_count", rule_coverage.get("matched_rule_count")),
+                    "produced_constraint_count": record.get("produced_constraint_count", rule_coverage.get("produced_constraint_count")),
+                    "has_expected_effect": record.get("has_expected_effect", rule_coverage.get("has_expected_effect")),
+                    "unsupported_action": record.get("unsupported_action", bool(warnings)),
+                    "unsupported_action_name": record.get("unsupported_action_name", rule_coverage.get("action_name") if warnings else None),
                 }
             ),
         )

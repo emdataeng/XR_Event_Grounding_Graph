@@ -63,6 +63,7 @@ def test_layer4_writes_thesis_records_and_uses_only_prior_effects_for_preconditi
     by_step = {record["step_id"]: record for record in records}
     assert result["validation_records"] == 4
     assert result["validation_config_path"] == str(config_path)
+    assert result["warnings"] == 0
     assert result["tau_acc"] == 0.7
     assert result["tau_unc"] == 0.35
     assert (tmp_path / "step_validations.csv").exists()
@@ -102,6 +103,8 @@ def test_layer4_writes_thesis_records_and_uses_only_prior_effects_for_preconditi
         "incompatibility_evidence",
         "dependency_evidence",
         "missing_requirements",
+        "warnings",
+        "diagnostics",
         "status",
         "confidence",
     }
@@ -110,6 +113,70 @@ def test_layer4_writes_thesis_records_and_uses_only_prior_effects_for_preconditi
         "type": "same_step_constraint",
         "notes": "Constraint observed in the step.",
     }
+
+
+def test_layer4_propagates_no_applicable_rule_warning_and_marks_uncertain(tmp_path: Path) -> None:
+    steps_path = tmp_path / "step_records.jsonl"
+    predicates_path = tmp_path / "predicates.jsonl"
+    constraints_path = tmp_path / "inferred_constraints.csv"
+    diagnostics_path = tmp_path / "rule_coverage_diagnostics.csv"
+    config_path = tmp_path / "thesis_rules.yaml"
+    output_path = tmp_path / "validation_records.jsonl"
+
+    config_path.write_text(json.dumps({"validation": {"tau_acc": 0.7, "tau_unc": 0.35}}), encoding="utf-8")
+    _write_jsonl(steps_path, [{"id": "s_remove", "index": 9}])
+    _write_jsonl(
+        predicates_path,
+        [
+            _predicate("p_action", "s_remove", "hasAction", ["s_remove", "remove"]),
+            _predicate("p_object", "s_remove", "usesObject", ["s_remove", "front_wheel_assy"]),
+        ],
+    )
+    _write_constraints_csv(constraints_path, [])
+    _write_rule_coverage_csv(
+        diagnostics_path,
+        [
+            {
+                "step_id": "s_remove",
+                "step_index": 9,
+                "action_name": "remove",
+                "object_args": ["front_wheel_assy"],
+                "predicate_count": 2,
+                "matched_rule_count": 0,
+                "produced_constraint_count": 0,
+                "has_expected_effect": False,
+                "has_requirement": False,
+                "has_incompatibility": False,
+                "has_meaningful_evidence": True,
+                "has_rule_coverage": False,
+                "warning_code": "no_applicable_rule",
+                "warning_message": "Step has predicate evidence but no Layer 3 rule produced constraints.",
+                "evidence_predicates": [{"id": "p_action"}, {"id": "p_object"}],
+                "suggested_fix": "Add an explicit rule for this action or treat it as unsupported in the domain model.",
+            }
+        ],
+    )
+
+    run_layer4_validation(
+        Layer4Inputs(
+            step_records_path=steps_path,
+            predicates_path=predicates_path,
+            constraints_path=constraints_path,
+            rule_coverage_path=diagnostics_path,
+            output_path=output_path,
+            config_path=config_path,
+        )
+    )
+
+    record = json.loads(output_path.read_text(encoding="utf-8").splitlines()[0])
+    assert record["status"] == "uncertain"
+    assert record["has_rule_coverage"] is False
+    assert record["produced_constraint_count"] == 0
+    assert record["warnings"][0]["warning_code"] == "no_applicable_rule"
+    assert record["trace"]["warnings"] == record["warnings"]
+    with open(tmp_path / "step_validations.csv", newline="", encoding="utf-8") as f:
+        csv_record = next(csv.DictReader(f))
+    assert "no_applicable_rule" in csv_record["warnings"]
 
 
 def _predicate(predicate_id: str, step_id: str, name: str, args: list[str]) -> dict[str, object]:
@@ -165,3 +232,40 @@ def _write_constraints_csv(path: Path, rows: list[dict[str, object]]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({**row, "args": json.dumps(row["args"]), "evidence_predicate_ids": "[]"})
+
+
+def _write_rule_coverage_csv(path: Path, rows: list[dict[str, object]]) -> None:
+    fieldnames = [
+        "step_id",
+        "step_index",
+        "action_name",
+        "object_args",
+        "predicate_count",
+        "matched_rule_count",
+        "produced_constraint_count",
+        "has_expected_effect",
+        "has_requirement",
+        "has_incompatibility",
+        "has_meaningful_evidence",
+        "has_rule_coverage",
+        "warning_code",
+        "warning_message",
+        "evidence_predicates",
+        "suggested_fix",
+    ]
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(
+                {
+                    **row,
+                    "object_args": json.dumps(row["object_args"]),
+                    "evidence_predicates": json.dumps(row["evidence_predicates"]),
+                    "has_expected_effect": str(row["has_expected_effect"]).lower(),
+                    "has_requirement": str(row["has_requirement"]).lower(),
+                    "has_incompatibility": str(row["has_incompatibility"]).lower(),
+                    "has_meaningful_evidence": str(row["has_meaningful_evidence"]).lower(),
+                    "has_rule_coverage": str(row["has_rule_coverage"]).lower(),
+                }
+            )

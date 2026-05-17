@@ -116,6 +116,28 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
                 "safety_requirements": [],
                 "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
             },
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s3",
+                "source_event_id": "event_3",
+                "index": 3,
+                "status": "uncertain",
+                "confidence": 0.9,
+                "conf": 0.9,
+                "evidence_predicates": [_predicate("p6", "s3", "hasAction", ["s3", "remove"])],
+                "evidence_constraints": [],
+                "warnings": [{"warning_code": "no_applicable_rule", "action_name": "remove"}],
+                "diagnostics": {
+                    "rule_coverage": {
+                        "has_rule_coverage": False,
+                        "matched_rule_count": 0,
+                        "produced_constraint_count": 0,
+                        "has_expected_effect": False,
+                        "action_name": "remove",
+                    }
+                },
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
         ],
     )
 
@@ -142,6 +164,13 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
     assert step["clip_result_id"] == "run::od_only::test_p1::03_assy_0_1"
     assert step["archive_name"] == "test_p1"
     assert step["clip"] == "03_assy_0_1"
+    unsupported_step = nodes_by_id["Step::s3"]["properties"]
+    assert unsupported_step["warning_count"] == 1
+    assert unsupported_step["warnings"][0]["warning_code"] == "no_applicable_rule"
+    assert unsupported_step["has_rule_coverage"] is False
+    assert unsupported_step["produced_constraint_count"] == 0
+    assert unsupported_step["unsupported_action"] is True
+    assert unsupported_step["unsupported_action_name"] == "remove"
     assert predicate["display_name"] == "usesObject"
     assert predicate["display_label"] == "usesObject(s1, base)"
     assert constraint["display_name"] == "requires installed"
@@ -149,14 +178,14 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
     assert rule["display_name"] == "rule_inferred_precondition"
     assert entity["display_name"] == "base"
     assert source["display_name"] == "test:test.csv"
-    assert result["node_counts"]["Step"] == 2
+    assert result["node_counts"]["Step"] == 3
     assert result["node_counts"]["Rule"] == 2
-    assert result["edge_counts"]["NEXT"] == 1
+    assert result["edge_counts"]["NEXT"] == 2
     assert result["edge_counts"]["DEPENDS_ON"] == 1
     assert result["edge_counts"]["PRODUCES"] == 2
     assert result["edge_counts"]["REQUIRES"] == 1
     assert result["edge_counts"]["SUPPORTED_BY"] == 1
-    assert result["step_status_counts"] == {"accepted": 1, "uncertain": 1}
+    assert result["step_status_counts"] == {"accepted": 1, "uncertain": 2}
     assert (output_dir / "procedural_reasoning_graph_nodes.csv").exists()
     assert (output_dir / "procedural_reasoning_graph_edges.csv").exists()
     with open(output_dir / "procedural_reasoning_graph_nodes.csv", newline="", encoding="utf-8") as f:

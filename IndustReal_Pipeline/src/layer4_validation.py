@@ -21,6 +21,7 @@ class Layer4Inputs:
     constraints_path: Path
     output_path: Path
     config_path: Path | None = DEFAULT_CONFIG_PATH
+    rule_coverage_path: Path | None = None
     tau_acc: float | None = None
     tau_unc: float | None = None
 
@@ -29,12 +30,15 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
     steps = _read_records(Path(inputs.step_records_path))
     predicates = _read_records(Path(inputs.predicates_path))
     constraints = _read_records(Path(inputs.constraints_path))
+    rule_coverage_path = inputs.rule_coverage_path or Path(inputs.constraints_path).with_name("rule_coverage_diagnostics.csv")
+    rule_coverage = _read_records(rule_coverage_path) if rule_coverage_path.exists() else []
     validation_config = _load_validation_config(inputs.config_path)
     tau_acc = float(inputs.tau_acc if inputs.tau_acc is not None else validation_config["tau_acc"])
     tau_unc = float(inputs.tau_unc if inputs.tau_unc is not None else validation_config["tau_unc"])
 
     predicates_by_step = _group_by_step(predicates)
     constraints_by_step = _group_by_step(constraints)
+    diagnostics_by_step = _group_by_step(rule_coverage)
     ordered_steps = sorted(steps, key=_step_sort_key)
 
     validation_records: list[dict[str, Any]] = []
@@ -46,10 +50,12 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
             continue
         step_predicates = predicates_by_step.get(step_id, [])
         step_constraints = constraints_by_step.get(step_id, [])
+        step_diagnostics = diagnostics_by_step.get(step_id, [])
         record = _validate_step(
             step,
             step_predicates,
             step_constraints,
+            step_diagnostics,
             effect_history,
             tau_acc=tau_acc,
             tau_unc=tau_unc,
@@ -75,6 +81,8 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
         "step_validations_csv": str(csv_path),
         "explanation_traces_path": str(trace_path),
         "validation_config_path": str(inputs.config_path) if inputs.config_path else None,
+        "rule_coverage_diagnostics_path": str(rule_coverage_path) if rule_coverage_path.exists() else None,
+        "warnings": sum(len(item.get("warnings", [])) for item in validation_records),
         "tau_acc": tau_acc,
         "tau_unc": tau_unc,
         "status_counts": _count_by(validation_records, "status"),
@@ -88,6 +96,7 @@ def _validate_step(
     step: dict[str, Any],
     predicates: list[dict[str, Any]],
     constraints: list[dict[str, Any]],
+    diagnostics: list[dict[str, Any]],
     effect_history: dict[tuple[Any, ...], dict[str, Any]],
     *,
     tau_acc: float,
@@ -96,6 +105,8 @@ def _validate_step(
     step_id = str(step.get("id") or step.get("step_id") or "")
     evidence_predicates = [_predicate_ref(item) for item in predicates]
     evidence_constraints = [_constraint_ref(item, support=_same_step_constraint_support()) for item in constraints]
+    rule_coverage = _rule_coverage_summary(diagnostics, constraints)
+    warnings = _warnings_from_rule_coverage(rule_coverage)
     requirements = [item for item in constraints if _is_requirement(item)]
     incompatibilities = [
         item
@@ -131,6 +142,8 @@ def _validate_step(
 
     if incompatibilities:
         status = "rejected"
+    elif warnings and not rule_coverage.get("has_rule_coverage"):
+        status = "uncertain"
     elif not missing_requirements and comparable_confidence >= tau_acc:
         status = "accepted"
     elif partial_support and comparable_confidence >= tau_unc:
@@ -148,6 +161,8 @@ def _validate_step(
         ],
         "dependency_evidence": dependency_support,
         "missing_requirements": missing_requirements,
+        "warnings": warnings,
+        "diagnostics": {"rule_coverage": rule_coverage, "warnings": warnings},
         "status": status,
         "confidence": confidence,
     }
@@ -169,6 +184,14 @@ def _validate_step(
         ],
         "evidence_predicates": evidence_predicates,
         "evidence_constraints": evidence_constraints,
+        "warnings": warnings,
+        "diagnostics": {"rule_coverage": rule_coverage, "warnings": warnings},
+        "has_rule_coverage": rule_coverage.get("has_rule_coverage"),
+        "matched_rule_count": rule_coverage.get("matched_rule_count"),
+        "produced_constraint_count": rule_coverage.get("produced_constraint_count"),
+        "has_expected_effect": rule_coverage.get("has_expected_effect"),
+        "unsupported_action": bool(warnings),
+        "unsupported_action_name": rule_coverage.get("action_name") if warnings else None,
         "trace_id": step_id,
         # Backward-compatible aliases for existing downstream readers.
         "supported_requires": supported_requirements,
@@ -190,6 +213,54 @@ def _validate_step(
         ],
         "trace": trace,
     }
+
+
+def _rule_coverage_summary(
+    diagnostics: list[dict[str, Any]],
+    constraints: list[dict[str, Any]],
+) -> dict[str, Any]:
+    diagnostic = diagnostics[0] if diagnostics else {}
+    produced_constraint_count = _parse_int(diagnostic.get("produced_constraint_count"))
+    if produced_constraint_count is None:
+        produced_constraint_count = len(constraints)
+    matched_rule_count = _parse_int(diagnostic.get("matched_rule_count"))
+    if matched_rule_count is None:
+        matched_rule_count = len({str(item.get("rule_id")) for item in constraints if item.get("rule_id")})
+    return {
+        "step_id": diagnostic.get("step_id"),
+        "step_index": _parse_int(diagnostic.get("step_index")),
+        "action_name": diagnostic.get("action_name"),
+        "object_args": diagnostic.get("object_args") if isinstance(diagnostic.get("object_args"), list) else _json_or_empty_list(diagnostic.get("object_args")),
+        "predicate_count": _parse_int(diagnostic.get("predicate_count")) or 0,
+        "matched_rule_count": matched_rule_count,
+        "produced_constraint_count": produced_constraint_count,
+        "has_expected_effect": _parse_bool(diagnostic.get("has_expected_effect")) if diagnostic else any(item.get("name") == "produces" for item in constraints),
+        "has_requirement": _parse_bool(diagnostic.get("has_requirement")) if diagnostic else any(_is_requirement(item) for item in constraints),
+        "has_incompatibility": _parse_bool(diagnostic.get("has_incompatibility")) if diagnostic else any(item.get("status") == "incompatibility" for item in constraints),
+        "has_meaningful_evidence": _parse_bool(diagnostic.get("has_meaningful_evidence")) if diagnostic else None,
+        "has_rule_coverage": _parse_bool(diagnostic.get("has_rule_coverage")) if diagnostic else bool(constraints),
+        "warning_code": diagnostic.get("warning_code") or "",
+        "warning_message": diagnostic.get("warning_message") or "",
+        "evidence_predicates": diagnostic.get("evidence_predicates") if isinstance(diagnostic.get("evidence_predicates"), list) else _json_or_empty_list(diagnostic.get("evidence_predicates")),
+        "suggested_fix": diagnostic.get("suggested_fix") or "",
+    }
+
+
+def _warnings_from_rule_coverage(rule_coverage: dict[str, Any]) -> list[dict[str, Any]]:
+    warning_code = rule_coverage.get("warning_code")
+    if not warning_code:
+        return []
+    return [
+        {
+            "warning_code": warning_code,
+            "warning_message": rule_coverage.get("warning_message"),
+            "action_name": rule_coverage.get("action_name"),
+            "step_id": rule_coverage.get("step_id"),
+            "step_index": rule_coverage.get("step_index"),
+            "evidence_predicates": rule_coverage.get("evidence_predicates", []),
+            "suggested_fix": rule_coverage.get("suggested_fix"),
+        }
+    ]
 
 
 def _support_for_required_condition(
@@ -371,7 +442,7 @@ def _load_config(path: Path) -> dict[str, Any]:
 
 def _parse_csv_record(row: dict[str, str]) -> dict[str, Any]:
     parsed: dict[str, Any] = dict(row)
-    for key in ("args", "evidence_predicate_ids"):
+    for key in ("args", "evidence_predicate_ids", "object_args", "evidence_predicates"):
         if parsed.get(key):
             parsed[key] = json.loads(parsed[key])
     for key in ("conf", "threshold"):
@@ -417,6 +488,13 @@ def _write_validation_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "incompatibilities",
         "evidence_predicates",
         "evidence_constraints",
+        "warnings",
+        "has_rule_coverage",
+        "matched_rule_count",
+        "produced_constraint_count",
+        "has_expected_effect",
+        "unsupported_action",
+        "unsupported_action_name",
         "trace_id",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -438,6 +516,28 @@ def _parse_float(value: Any) -> float | None:
     if value is None or value == "":
         return None
     return float(value)
+
+
+def _parse_int(value: Any) -> int | None:
+    if value is None or value == "":
+        return None
+    return int(value)
+
+
+def _parse_bool(value: Any) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    if value is None or value == "":
+        return None
+    return str(value).strip().lower() in {"1", "true", "yes"}
+
+
+def _json_or_empty_list(value: Any) -> list[Any]:
+    if not value:
+        return []
+    if isinstance(value, list):
+        return value
+    return json.loads(value)
 
 
 def _count_by(rows: list[dict[str, Any]], key: str) -> dict[str, int]:

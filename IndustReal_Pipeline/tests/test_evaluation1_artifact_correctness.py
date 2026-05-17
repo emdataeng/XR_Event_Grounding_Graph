@@ -81,6 +81,14 @@ def write_minimal_artifacts(ctx: evaluation1.EvaluationContext) -> None:
         ],
         ["constraint_id", "step_id", "name", "kind", "args", "conf", "rule_id", "status"],
     )
+    write_csv(
+        ctx.reasoning_dir / "rule_coverage_diagnostics.csv",
+        [
+            {"step_id": "step_0", "step_index": "0", "action_name": "install", "object_args": "[\"base\"]", "predicate_count": "1", "matched_rule_count": "1", "produced_constraint_count": "1", "has_expected_effect": "true", "has_requirement": "false", "has_incompatibility": "false", "has_meaningful_evidence": "true", "has_rule_coverage": "true", "warning_code": "", "warning_message": "", "evidence_predicates": "[]", "suggested_fix": ""},
+            {"step_id": "step_1", "step_index": "1", "action_name": "install", "object_args": "[\"bracket\"]", "predicate_count": "1", "matched_rule_count": "1", "produced_constraint_count": "1", "has_expected_effect": "false", "has_requirement": "true", "has_incompatibility": "false", "has_meaningful_evidence": "true", "has_rule_coverage": "true", "warning_code": "", "warning_message": "", "evidence_predicates": "[]", "suggested_fix": ""},
+        ],
+        ["step_id", "step_index", "action_name", "object_args", "predicate_count", "matched_rule_count", "produced_constraint_count", "has_expected_effect", "has_requirement", "has_incompatibility", "has_meaningful_evidence", "has_rule_coverage", "warning_code", "warning_message", "evidence_predicates", "suggested_fix"],
+    )
     validations = [
         {"step_id": "step_0", "status": "accepted", "index": 0, "confidence": 1.0, "trace": {"step_id": "step_0", "status": "accepted", "confidence": 1.0, "predicate_evidence": [], "constraint_evidence": [], "missing_requirements": [], "incompatibility_evidence": [], "dependency_evidence": []}},
         {"step_id": "step_1", "status": "accepted", "index": 1, "confidence": 0.8, "trace": {"step_id": "step_1", "status": "accepted", "confidence": 0.8, "predicate_evidence": [], "constraint_evidence": [], "missing_requirements": [], "incompatibility_evidence": [], "dependency_evidence": []}},
@@ -124,6 +132,36 @@ def test_valid_artifacts_pass_core_checks(tmp_path: Path) -> None:
     assert checks["Predicate records produced"]["status"] == "PASS"
     assert checks["Input order preserved"]["status"] == "PASS"
     assert checks["Rejected-step dependency rule respected"]["status"] == "PASS"
+
+
+def test_evaluation1_accepts_uncovered_step_when_warning_reaches_validation_and_graph(tmp_path: Path) -> None:
+    ctx = make_context(tmp_path)
+    write_minimal_artifacts(ctx)
+    write_csv(
+        ctx.reasoning_dir / "rule_coverage_diagnostics.csv",
+        [
+            {"step_id": "step_0", "step_index": "0", "action_name": "install", "object_args": "[\"base\"]", "predicate_count": "1", "matched_rule_count": "1", "produced_constraint_count": "1", "has_expected_effect": "true", "has_requirement": "false", "has_incompatibility": "false", "has_meaningful_evidence": "true", "has_rule_coverage": "true", "warning_code": "", "warning_message": "", "evidence_predicates": "[]", "suggested_fix": ""},
+            {"step_id": "step_1", "step_index": "1", "action_name": "remove", "object_args": "[\"front_wheel_assy\"]", "predicate_count": "2", "matched_rule_count": "0", "produced_constraint_count": "0", "has_expected_effect": "false", "has_requirement": "false", "has_incompatibility": "false", "has_meaningful_evidence": "true", "has_rule_coverage": "false", "warning_code": "no_applicable_rule", "warning_message": "Step has predicate evidence but no Layer 3 rule produced constraints.", "evidence_predicates": "[]", "suggested_fix": "Add an explicit rule for this action or treat it as unsupported in the domain model."},
+        ],
+        ["step_id", "step_index", "action_name", "object_args", "predicate_count", "matched_rule_count", "produced_constraint_count", "has_expected_effect", "has_requirement", "has_incompatibility", "has_meaningful_evidence", "has_rule_coverage", "warning_code", "warning_message", "evidence_predicates", "suggested_fix"],
+    )
+    validations = [
+        {"step_id": "step_0", "status": "accepted", "index": 0, "confidence": 1.0, "trace": {"step_id": "step_0", "status": "accepted", "confidence": 1.0, "predicate_evidence": [], "constraint_evidence": [], "missing_requirements": [], "incompatibility_evidence": [], "dependency_evidence": [], "warnings": [], "diagnostics": {}}},
+        {"step_id": "step_1", "status": "uncertain", "index": 1, "confidence": 0.8, "warnings": [{"warning_code": "no_applicable_rule"}], "diagnostics": {"rule_coverage": {"has_rule_coverage": False}}, "has_rule_coverage": False, "trace": {"step_id": "step_1", "status": "uncertain", "confidence": 0.8, "predicate_evidence": [], "constraint_evidence": [], "missing_requirements": [], "incompatibility_evidence": [], "dependency_evidence": [], "warnings": [{"warning_code": "no_applicable_rule"}], "diagnostics": {"rule_coverage": {"has_rule_coverage": False}}}},
+    ]
+    write_jsonl(ctx.reasoning_dir / "validation_records.jsonl", validations)
+    graph_nodes = [
+        {"id": "Step::step_0", "type": "Step", "properties": json.dumps({"step_id": "step_0", "index": 0})},
+        {"id": "Step::step_1", "type": "Step", "properties": json.dumps({"step_id": "step_1", "index": 1, "warning_count": 1, "has_rule_coverage": False})},
+    ]
+    write_csv(ctx.graph_dir / "procedural_reasoning_graph_nodes.csv", graph_nodes, ["id", "type", "properties"])
+    result = evaluation1.evaluate(ctx)
+    checks = checks_by_name(result)
+    assert checks["Layer 3 constraints produced"]["status"] == "PASS"
+    assert checks["Layer 4 validation records produced"]["status"] == "PASS"
+    assert checks["Graph export produced"]["status"] == "PASS"
+    assert checks["Rule coverage diagnostics"]["status"] == "WARNING"
+    assert checks["Rule coverage diagnostics"]["message"] == "One unsupported removal action was detected and reported with a rule-coverage warning."
 
 
 def test_invalid_step_records_report_missing_input_step(tmp_path: Path) -> None:
