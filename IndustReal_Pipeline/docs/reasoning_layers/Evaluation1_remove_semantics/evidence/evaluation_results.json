@@ -1,0 +1,48 @@
+{
+  "evaluation": "Evaluation1_remove_semantics",
+  "scope": "Layer 4 active-state semantics for remove actions",
+  "run_id": "raw_cad_dataset__all_test_clips",
+  "mode": "od_only",
+  "archive": "test_p1",
+  "clip": "03_assy_0_1",
+  "step_records": 11,
+  "predicates": 106,
+  "constraints": 28,
+  "validation_records": 11,
+  "status_counts": {
+    "accepted": 7,
+    "uncertain": 4
+  },
+  "historical_effects": 11,
+  "active_effects_after_run": 10,
+  "invalidated_effects": 1,
+  "remove_step": {
+    "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
+    "step_index": 9,
+    "status": "accepted",
+    "required_condition": {
+      "name": "installed",
+      "args": [
+        "front_wheel_assy",
+        "front_chassis"
+      ]
+    },
+    "supporting_step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+    "supporting_effect_status": "accepted",
+    "support_provisional": false,
+    "invalidated_condition": {
+      "name": "installed",
+      "args": [
+        "front_wheel_assy",
+        "front_chassis"
+      ]
+    },
+    "invalidating_effect": {
+      "name": "removed",
+      "args": [
+        "front_wheel_assy",
+        "front_chassis"
+      ]
+    }
+  }
+}

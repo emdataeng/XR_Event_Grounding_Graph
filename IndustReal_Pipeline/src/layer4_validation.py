@@ -43,7 +43,9 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
 
     validation_records: list[dict[str, Any]] = []
     explanation_traces: list[dict[str, Any]] = []
-    effect_history: dict[tuple[Any, ...], dict[str, Any]] = {}
+    historical_effects: list[dict[str, Any]] = []
+    active_effects: dict[tuple[Any, ...], dict[str, Any]] = {}
+    effect_history_rows: list[dict[str, Any]] = []
     for step in ordered_steps:
         step_id = str(step.get("id") or step.get("step_id") or "")
         if not step_id:
@@ -56,22 +58,30 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
             step_predicates,
             step_constraints,
             step_diagnostics,
-            effect_history,
+            active_effects,
             tau_acc=tau_acc,
             tau_unc=tau_unc,
         )
+        invalidated_effects = _apply_produced_effects(
+            record,
+            step_constraints,
+            historical_effects,
+            active_effects,
+        )
+        record["invalidated_effects"] = invalidated_effects
+        record["trace"]["invalidated_effects"] = invalidated_effects
         validation_records.append(record)
         explanation_traces.append(record["trace"])
-        for constraint in step_constraints:
-            if record["status"] != "rejected" and constraint.get("name") == "produces":
-                effect_history[_condition_key(constraint)] = constraint
+        effect_history_rows.extend(_effect_history_rows_for_step(record, step_constraints, invalidated_effects))
 
     output_path = Path(inputs.output_path)
     trace_path = output_path.with_name("explanation_traces.json")
     csv_path = output_path.with_name("step_validations.csv")
+    effect_history_path = output_path.with_name("effect_history_diagnostics.csv")
     _write_jsonl(output_path, validation_records)
     _write_json(trace_path, explanation_traces)
     _write_validation_csv(csv_path, validation_records)
+    _write_effect_history_csv(effect_history_path, effect_history_rows)
     return {
         "step_records": len(steps),
         "predicates": len(predicates),
@@ -80,6 +90,7 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
         "output_path": str(output_path),
         "step_validations_csv": str(csv_path),
         "explanation_traces_path": str(trace_path),
+        "effect_history_diagnostics_csv": str(effect_history_path),
         "validation_config_path": str(inputs.config_path) if inputs.config_path else None,
         "rule_coverage_diagnostics_path": str(rule_coverage_path) if rule_coverage_path.exists() else None,
         "warnings": sum(len(item.get("warnings", [])) for item in validation_records),
@@ -88,7 +99,9 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
         "status_counts": _count_by(validation_records, "status"),
         "supported_requirements": sum(len(item.get("supported_requirements", [])) for item in validation_records),
         "missing_requirements": sum(len(item.get("missing_requirements", [])) for item in validation_records),
-        "history_effects": len(effect_history),
+        "historical_effects": len(historical_effects),
+        "active_effects": len(active_effects),
+        "invalidated_effects": sum(len(item.get("invalidated_effects", [])) for item in validation_records),
     }
 
 
@@ -97,7 +110,7 @@ def _validate_step(
     predicates: list[dict[str, Any]],
     constraints: list[dict[str, Any]],
     diagnostics: list[dict[str, Any]],
-    effect_history: dict[tuple[Any, ...], dict[str, Any]],
+    active_effects: dict[tuple[Any, ...], dict[str, Any]],
     *,
     tau_acc: float,
     tau_unc: float,
@@ -116,8 +129,9 @@ def _validate_step(
     supported_requirements = []
     missing_requirements = []
     dependency_support = []
+    provisional_dependency_support = []
     for constraint in requirements:
-        support = _support_for_required_condition(constraint, predicates, effect_history)
+        support = _support_for_required_condition(constraint, predicates, active_effects)
         if support is None:
             missing_requirements.append(_constraint_ref(constraint, support=None))
         else:
@@ -130,6 +144,8 @@ def _validate_step(
                         "supporting_effect": support,
                     }
                 )
+                if support.get("provisional"):
+                    provisional_dependency_support.append(support)
 
     confidence_values = [
         _parse_float(item.get("conf"))
@@ -143,6 +159,10 @@ def _validate_step(
     if incompatibilities:
         status = "rejected"
     elif warnings and not rule_coverage.get("has_rule_coverage"):
+        status = "uncertain"
+    elif missing_requirements:
+        status = "uncertain" if partial_support and comparable_confidence >= tau_unc else "rejected"
+    elif _is_remove_step(constraints) and provisional_dependency_support:
         status = "uncertain"
     elif not missing_requirements and comparable_confidence >= tau_acc:
         status = "accepted"
@@ -161,6 +181,7 @@ def _validate_step(
         ],
         "dependency_evidence": dependency_support,
         "missing_requirements": missing_requirements,
+        "invalidated_effects": [],
         "warnings": warnings,
         "diagnostics": {"rule_coverage": rule_coverage, "warnings": warnings},
         "status": status,
@@ -215,6 +236,112 @@ def _validate_step(
     }
 
 
+def _apply_produced_effects(
+    record: dict[str, Any],
+    constraints: list[dict[str, Any]],
+    historical_effects: list[dict[str, Any]],
+    active_effects: dict[tuple[Any, ...], dict[str, Any]],
+) -> list[dict[str, Any]]:
+    produced = [item for item in constraints if item.get("name") == "produces"]
+    invalidated_effects: list[dict[str, Any]] = []
+    step_status = str(record.get("status") or "")
+    for constraint in produced:
+        effect_record = _effect_record(constraint, record)
+        historical_effects.append(effect_record)
+        if step_status == "rejected":
+            continue
+        condition = _condition_ref(constraint)
+        if condition.get("name") == "removed":
+            invalidated = _invalidate_installed_effect(
+                constraint,
+                record,
+                active_effects,
+            )
+            invalidated_effects.extend(invalidated)
+        active_effects[_condition_key(constraint)] = effect_record
+    return invalidated_effects
+
+
+def _effect_record(constraint: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": "previous_produced_effect",
+        "constraint_id": constraint.get("constraint_id"),
+        "step_id": constraint.get("step_id"),
+        "producer_status": record.get("status"),
+        "provisional": record.get("status") == "uncertain",
+        "args": _constraint_args(constraint),
+        "condition": _condition_ref(constraint),
+        "conf": _parse_float(constraint.get("conf")),
+    }
+
+
+def _invalidate_installed_effect(
+    removing_constraint: dict[str, Any],
+    record: dict[str, Any],
+    active_effects: dict[tuple[Any, ...], dict[str, Any]],
+) -> list[dict[str, Any]]:
+    args = _constraint_args(removing_constraint)
+    if len(args) < 4:
+        return []
+    installed_key = ("installed", args[2], args[3])
+    active_effect = active_effects.pop(installed_key, None)
+    if not active_effect:
+        return []
+    return [
+        {
+            "condition": {"name": "installed", "args": [args[2], args[3]]},
+            "produced_by_step_id": active_effect.get("step_id"),
+            "produced_by_constraint_id": active_effect.get("constraint_id"),
+            "producer_status": active_effect.get("producer_status"),
+            "invalidated_by_step_id": record.get("step_id"),
+            "invalidated_by_effect": _condition_ref(removing_constraint),
+            "invalidated_by_constraint_id": removing_constraint.get("constraint_id"),
+        }
+    ]
+
+
+def _effect_history_rows_for_step(
+    record: dict[str, Any],
+    constraints: list[dict[str, Any]],
+    invalidated_effects: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    for constraint in constraints:
+        if constraint.get("name") != "produces":
+            continue
+        condition = _condition_ref(constraint)
+        rows.append(
+            {
+                "step_id": record.get("step_id"),
+                "step_index": record.get("index"),
+                "status": record.get("status"),
+                "event": "produced_effect",
+                "condition_name": condition.get("name"),
+                "condition_args": json.dumps(condition.get("args", []), ensure_ascii=False),
+                "constraint_id": constraint.get("constraint_id"),
+                "related_step_id": "",
+                "active_after_step": str(record.get("status") != "rejected").lower(),
+                "notes": "",
+            }
+        )
+    for item in invalidated_effects:
+        rows.append(
+            {
+                "step_id": record.get("step_id"),
+                "step_index": record.get("index"),
+                "status": record.get("status"),
+                "event": "invalidated_effect",
+                "condition_name": item.get("condition", {}).get("name"),
+                "condition_args": json.dumps(item.get("condition", {}).get("args", []), ensure_ascii=False),
+                "constraint_id": item.get("invalidated_by_constraint_id"),
+                "related_step_id": item.get("produced_by_step_id"),
+                "active_after_step": "false",
+                "notes": "Historical effect retained but removed from active support.",
+            }
+        )
+    return rows
+
+
 def _rule_coverage_summary(
     diagnostics: list[dict[str, Any]],
     constraints: list[dict[str, Any]],
@@ -266,16 +393,18 @@ def _warnings_from_rule_coverage(rule_coverage: dict[str, Any]) -> list[dict[str
 def _support_for_required_condition(
     constraint: dict[str, Any],
     predicates: list[dict[str, Any]],
-    effect_history: dict[tuple[Any, ...], dict[str, Any]],
+    active_effects: dict[tuple[Any, ...], dict[str, Any]],
 ) -> dict[str, Any] | None:
     key = _condition_key(constraint)
-    if _can_use_dependency_support(constraint) and key in effect_history:
-        effect = effect_history[key]
+    if _can_use_dependency_support(constraint) and key in active_effects:
+        effect = active_effects[key]
         return {
             "type": "previous_produced_effect",
             "constraint_id": effect.get("constraint_id"),
             "step_id": effect.get("step_id"),
-            "args": _constraint_args(effect),
+            "producer_status": effect.get("producer_status"),
+            "provisional": bool(effect.get("provisional")),
+            "args": list(effect.get("args", []) or []),
             "condition": _condition_ref(effect),
         }
     if _requires_previous_effect(constraint):
@@ -345,6 +474,8 @@ def _condition_key(constraint: dict[str, Any]) -> tuple[Any, ...]:
 
 
 def _condition_ref(item: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(item.get("condition"), dict):
+        return dict(item["condition"])
     args = _constraint_args(item)
     if not args:
         return {"name": item.get("name"), "args": []}
@@ -484,6 +615,7 @@ def _write_validation_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "confidence",
         "supported_requirements",
         "missing_requirements",
+        "invalidated_effects",
         "dependency_support",
         "incompatibilities",
         "evidence_predicates",
@@ -550,3 +682,33 @@ def _count_by(rows: list[dict[str, Any]], key: str) -> dict[str, int]:
 
 def _norm(value: Any) -> str:
     return "".join(char.lower() for char in str(value or "") if char.isalnum())
+
+
+def _is_remove_step(constraints: list[dict[str, Any]]) -> bool:
+    for constraint in constraints:
+        if constraint.get("name") != "produces":
+            continue
+        condition = _condition_ref(constraint)
+        if condition.get("name") == "removed":
+            return True
+    return False
+
+
+def _write_effect_history_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+    fieldnames = [
+        "step_id",
+        "step_index",
+        "status",
+        "event",
+        "condition_name",
+        "condition_args",
+        "constraint_id",
+        "related_step_id",
+        "active_after_step",
+        "notes",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)

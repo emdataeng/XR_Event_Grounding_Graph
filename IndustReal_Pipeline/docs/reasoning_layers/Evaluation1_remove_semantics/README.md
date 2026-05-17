@@ -19,3 +19,9 @@ This evidence only covers Layer 3 rule inference for remove actions. It does not
 - `inferred_constraints.csv`: Layer 3 constraints generated with the remove rules enabled.
 - `rule_coverage_diagnostics.csv`: Per-step rule coverage diagnostics generated with the remove rules enabled.
 - `layer3_remove_rule_check.md`: Human-readable summary of the remove-action rule check.
+- `validation_records.jsonl`: Layer 4 validation records with active-state remove semantics enabled.
+- `step_validations.csv`: Tabular Layer 4 validation output.
+- `explanation_traces.json`: Layer 4 explanation traces.
+- `effect_history_diagnostics.csv`: Produced-effect and invalidated-effect diagnostics.
+- `layer4_remove_validation_check.md`: Human-readable summary of the Layer 4 remove validation check.
+- `evidence/evaluation_results.json`: Machine-readable summary of the post-change Layer 4 run.
