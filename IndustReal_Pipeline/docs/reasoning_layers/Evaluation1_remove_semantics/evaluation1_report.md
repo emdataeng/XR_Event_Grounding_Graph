@@ -2,7 +2,7 @@
 
 - Evaluated run ID: `raw_cad_dataset__all_test_clips`
 - Evaluated clip/result ID: `raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1`
-- Timestamp: `2026-05-17T20:25:26+00:00`
+- Timestamp: `2026-05-18T09:50:41+00:00`
 - Neo4j input directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\neo4j\raw_cad_dataset__all_test_clips`
 - Reasoning directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\docs\reasoning_layers\Evaluation1_remove_semantics`
 - Graph directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\docs\reasoning_layers\Evaluation1_remove_semantics\procedural_reasoning_graph`
@@ -17,7 +17,7 @@
 | Layer 3 constraints produced | PASS | `inferred_constraints.csv` | 28 constraints produced; names: {'produces': 11, 'requires': 13, 'requiresSafety': 3, 'requiresTool': 1}. |
 | Layer 4 validation records produced | PASS | `validation_records.jsonl` | 11 validation records include statuses. |
 | Explanation traces produced | PASS | `explanation_traces.json` | Validation decisions include trace information. |
-| Graph export produced | PASS | `procedural_reasoning_graph.*` | Graph export contains 202 nodes and 525 edges. |
+| Graph export produced | PASS | `procedural_reasoning_graph.*` | Graph export contains 202 nodes and 526 edges. |
 | Input order preserved | PASS | `procedural_reasoning_graph_edges.csv` | 10 NEXT edges follow validation order. |
 | Rejected-step dependency rule respected | PASS | `procedural_reasoning_graph_edges.csv` | 10 DEPENDS_ON edges avoid rejected-step support. |
 
@@ -33,7 +33,7 @@
 | validation_records | 11 |
 | explanation_traces | 11 |
 | graph_nodes | 202 |
-| graph_edges | 525 |
+| graph_edges | 526 |
 
 ## Failures And Warnings
 
@@ -51,9 +51,9 @@
 | `validation_records.jsonl` | True | 11 | Layer 4 validation records |
 | `step_validations.csv` | True | 11 | Layer 4 tabular validation view |
 | `explanation_traces.json` | True | 11 | Layer 4 explanations |
-| `procedural_reasoning_graph.json` | True | 727 | graph export |
+| `procedural_reasoning_graph.json` | True | 728 | graph export |
 | `procedural_reasoning_graph_nodes.csv` | True | 202 | graph node export |
-| `procedural_reasoning_graph_edges.csv` | True | 525 | graph edge export |
+| `procedural_reasoning_graph_edges.csv` | True | 526 | graph edge export |
 
 ## Interpretation
 

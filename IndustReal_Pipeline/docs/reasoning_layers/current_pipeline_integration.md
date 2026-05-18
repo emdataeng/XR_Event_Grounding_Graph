@@ -251,18 +251,36 @@ warning_message: Step has predicate evidence but no Layer 3 rule produced constr
 
 This is intentionally diagnostic rather than a fabricated semantic rule. For example, the current rule set does not define remove-action semantics, so `hasAction(remove)` with `usesObject(front_wheel_assy)` is marked as unsupported by the current rule coverage instead of being assigned invented remove dependencies or effects.
 
-Layer 4 walks the ordered steps and maintains an accumulated history of previous `produces(...)` effects. For each step, it checks requirement constraints such as `requires(...)`, `requiresSafety(...)`, and `requiresTool(...)` against:
+Layer 4 walks the ordered steps and maintains two views of previous `produces(...)` effects:
+
+```text
+historical produced effects  all produced effects retained for traceability
+active produced effects      non-rejected effects still available to support later requirements
+```
+
+For each step, it checks requirement constraints such as `requires(...)`, `requiresSafety(...)`, and `requiresTool(...)` against:
 
 ```text
 same-step predicates
-previous produced effects
+active previous produced effects
 ```
 
 If a requirement is supported by a previous effect, the validation record links it to the earlier producing constraint. Domain requirement predicates such as `hasRequiredCondition(...)`, `hasSafetyRequirement(...)`, and `hasRequiredTool(...)` state that a condition is required; they are not treated as evidence that the condition was satisfied.
 
+When an accepted or uncertain step produces `removed(component, target)`, Layer 4 invalidates the matching active `installed(component, target)` effect. The installed effect remains in the historical record, but it is removed from active support so later requirements cannot use it. Rejected steps do not contribute active effects, so their produced effects are marked inactive and cannot support later requirements.
+
+Layer 4 exposes this lifecycle explicitly through `produced_effect_lifecycle` records. Each produced effect receives:
+
+```text
+effect_lifecycle_status: active | invalidated | inactive_rejected
+invalidated_by_constraint_id
+```
+
+`active` means the produced effect is still available after the complete validation pass. `invalidated` means a later produced effect removed it from the active support set. `inactive_rejected` means the producing step was rejected, so the effect is preserved historically but never entered the active support set.
+
 If no support is found, the requirement is recorded as missing. A step is `accepted` only when no requirements are missing and its confidence meets `validation.tau_acc` from `config/thesis_rules.yaml`. A step with partial support and confidence above `validation.tau_unc` is marked `uncertain`. Compatibility constraints still act as hard violations and mark a step `rejected`.
 
-Layer 4 propagates rule coverage warnings into `validation_records.jsonl`, `step_validations.csv`, and `explanation_traces.json`. A step with meaningful evidence but no applicable Layer 3 rule is marked `uncertain` rather than silently accepted, unless a separate hard incompatibility rejects it. Validation records expose this through `warnings`, `diagnostics.rule_coverage`, `has_rule_coverage`, `matched_rule_count`, `produced_constraint_count`, `has_expected_effect`, `unsupported_action`, and `unsupported_action_name`.
+Layer 4 propagates rule coverage warnings and effect lifecycle provenance into `validation_records.jsonl`, `step_validations.csv`, and `explanation_traces.json`. A step with meaningful evidence but no applicable Layer 3 rule is marked `uncertain` rather than silently accepted, unless a separate hard incompatibility rejects it. Validation records expose this through `warnings`, `diagnostics.rule_coverage`, `has_rule_coverage`, `matched_rule_count`, `produced_constraint_count`, `has_expected_effect`, `unsupported_action`, `unsupported_action_name`, `invalidated_effects`, and `produced_effect_lifecycle`.
 
 ## Procedural Reasoning Graph
 
@@ -336,9 +354,20 @@ produced_constraint_count
 has_expected_effect
 unsupported_action
 unsupported_action_name
+invalidates_effect_count
+invalidated_effects
 ```
 
 For the sample remove step, these properties make the graph visibly show that `remove` was observed but is not covered by the current Layer 3 rule set.
+
+Produced-effect Constraint nodes expose lifecycle fields when Layer 4 provides them:
+
+```text
+effect_lifecycle_status: active | invalidated | inactive_rejected
+invalidated_by_constraint_id
+```
+
+For example, an earlier `produces(installed, wheel, hub)` Constraint can be marked `effect_lifecycle_status="invalidated"` and `invalidated_by_constraint_id` can point to the later `produces(removed, wheel, hub)` Constraint. The invalidating step and invalidating effect details are intentionally not duplicated on the invalidated node; they can be reached through graph relationships.
 
 Edge types:
 
@@ -351,6 +380,7 @@ PRODUCES        Step -> Constraint for produced_effects
 REQUIRES        Step -> Constraint for requires / requiresTool / requiresSafety
 DEPENDS_ON      later Step -> earlier Step when a requirement is supported by a previous produced effect
 SUPPORTED_BY    Constraint -> Predicate or Constraint support evidence
+INVALIDATED_BY  invalidated produced-effect Constraint -> invalidating produced-effect Constraint
 DERIVED_FROM    Constraint -> Rule and Predicate -> Source
 HAS_ENTITY      Predicate or Constraint -> Entity
 ```

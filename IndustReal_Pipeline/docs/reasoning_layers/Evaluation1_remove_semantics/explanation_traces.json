@@ -212,6 +212,31 @@
         }
       }
     ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0",
+          "installed",
+          "base",
+          "workspace"
+        ],
+        "condition": {
+          "args": [
+            "base",
+            "workspace"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_0_in",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0",
+        "type": "previous_produced_effect"
+      }
+    ],
     "status": "accepted",
     "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0",
     "warnings": []
@@ -496,6 +521,31 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1",
+          "installed",
+          "rear_chassis",
+          "base"
+        ],
+        "condition": {
+          "args": [
+            "rear_chassis",
+            "base"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_1_in",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1",
+        "type": "previous_produced_effect"
       }
     ],
     "status": "accepted",
@@ -937,6 +987,31 @@
         }
       }
     ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
+          "installed",
+          "front_rear_chassis_pin",
+          "rear_chassis"
+        ],
+        "condition": {
+          "args": [
+            "front_rear_chassis_pin",
+            "rear_chassis"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_in",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "uncertain",
+        "provisional": true,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
+        "type": "previous_produced_effect"
+      }
+    ],
     "status": "uncertain",
     "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
     "warnings": []
@@ -1221,6 +1296,31 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3",
+          "installed",
+          "front_chassis",
+          "base"
+        ],
+        "condition": {
+          "args": [
+            "front_chassis",
+            "base"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_3_in",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3",
+        "type": "previous_produced_effect"
       }
     ],
     "status": "accepted",
@@ -1662,6 +1762,31 @@
         }
       }
     ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
+          "installed",
+          "front_chassis_pin",
+          "front_chassis"
+        ],
+        "condition": {
+          "args": [
+            "front_chassis_pin",
+            "front_chassis"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_in",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "uncertain",
+        "provisional": true,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
+        "type": "previous_produced_effect"
+      }
+    ],
     "status": "uncertain",
     "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
     "warnings": []
@@ -2101,6 +2226,31 @@
         }
       }
     ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
+          "installed",
+          "rear_rear_chassis_pin",
+          "rear_chassis"
+        ],
+        "condition": {
+          "args": [
+            "rear_rear_chassis_pin",
+            "rear_chassis"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_in",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "uncertain",
+        "provisional": true,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
+        "type": "previous_produced_effect"
+      }
+    ],
     "status": "uncertain",
     "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
     "warnings": []
@@ -2406,6 +2556,31 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6",
+          "installed",
+          "front_bracket",
+          "front_chassis"
+        ],
+        "condition": {
+          "args": [
+            "front_bracket",
+            "front_chassis"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_6_in",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6",
+        "type": "previous_produced_effect"
       }
     ],
     "status": "accepted",
@@ -2785,6 +2960,31 @@
         }
       }
     ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
+          "installed",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "condition": {
+          "args": [
+            "front_bracket_screw",
+            "front_bracket"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_in",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "uncertain",
+        "provisional": true,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
+        "type": "previous_produced_effect"
+      }
+    ],
     "status": "uncertain",
     "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
     "warnings": []
@@ -3090,6 +3290,31 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+          "installed",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "condition": {
+          "args": [
+            "front_wheel_assy",
+            "front_chassis"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_in",
+        "effect_lifecycle_status": "invalidated",
+        "invalidated_by_constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::c::effect_remove_component_from_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_9_re",
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+        "type": "previous_produced_effect"
       }
     ],
     "status": "accepted",
@@ -3421,6 +3646,31 @@
         }
       }
     ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
+          "removed",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "condition": {
+          "args": [
+            "front_wheel_assy",
+            "front_chassis"
+          ],
+          "name": "removed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::c::effect_remove_component_from_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_9_re",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
+        "type": "previous_produced_effect"
+      }
+    ],
     "status": "accepted",
     "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
     "warnings": []
@@ -3726,6 +3976,31 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
+          "installed",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "condition": {
+          "args": [
+            "rear_wheel_assy",
+            "rear_chassis"
+          ],
+          "name": "installed"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_i",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
+        "type": "previous_produced_effect"
       }
     ],
     "status": "accepted",

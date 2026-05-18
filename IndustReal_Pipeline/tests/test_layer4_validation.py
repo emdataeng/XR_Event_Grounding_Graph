@@ -106,6 +106,7 @@ def test_layer4_writes_thesis_records_and_uses_only_prior_effects_for_preconditi
         "dependency_evidence",
         "missing_requirements",
         "invalidated_effects",
+        "produced_effect_lifecycle",
         "warnings",
         "diagnostics",
         "status",
@@ -177,6 +178,21 @@ def test_layer4_remove_invalidates_active_installed_effect_but_preserves_history
             "invalidated_by_constraint_id": "c_remove_effect",
         }
     ]
+    assert by_step["install_wheel"]["produced_effect_lifecycle"] == [
+        {
+            "type": "previous_produced_effect",
+            "constraint_id": "c_install_effect",
+            "step_id": "install_wheel",
+            "producer_status": "accepted",
+            "provisional": False,
+            "args": ["install_wheel", "installed", "front_wheel_assy", "front_chassis"],
+            "condition": {"name": "installed", "args": ["front_wheel_assy", "front_chassis"]},
+            "conf": 0.9,
+            "effect_lifecycle_status": "invalidated",
+            "invalidated_by_constraint_id": "c_remove_effect",
+        }
+    ]
+    assert by_step["remove_wheel"]["produced_effect_lifecycle"][0]["effect_lifecycle_status"] == "active"
     assert by_step["later_needs_wheel"]["status"] == "rejected"
     assert by_step["later_needs_wheel"]["missing_requirements"][0]["constraint_id"] == "c_later_req"
     diagnostics = list(csv.DictReader((tmp_path / "effect_history_diagnostics.csv").open(newline="", encoding="utf-8")))

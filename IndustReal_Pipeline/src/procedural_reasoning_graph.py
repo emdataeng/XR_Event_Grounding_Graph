@@ -44,6 +44,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
     source_nodes: dict[str, str] = {}
     entity_types: dict[str, set[str]] = {}
     condition_names = _collect_condition_names(included_records)
+    effect_lifecycle = _collect_effect_lifecycle(included_records)
 
     for record in included_records:
         step_id = str(record.get("step_id") or record.get("id") or "")
@@ -130,7 +131,11 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
             builder.add_node(
                 constraint_node_id,
                 "Constraint",
-                _constraint_properties(constraint, _constraint_support_status(record, constraint)),
+                _constraint_properties(
+                    constraint,
+                    _constraint_support_status(record, constraint),
+                    effect_lifecycle.get(str(constraint.get("constraint_id") or "")),
+                ),
             )
             builder.add_edge(step_node_id, constraint_node_id, "HAS_CONSTRAINT", {})
 
@@ -164,6 +169,15 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
             for evidence_id in _evidence_predicate_ids(constraint):
                 target = predicate_nodes.get(evidence_id) or _node_id("Predicate", evidence_id)
                 builder.add_edge(constraint_node_id, target, "SUPPORTED_BY", {"support_type": "evidence_predicate"})
+
+        for invalidation in invalidated_effects:
+            produced_constraint_id = _blank_to_none(invalidation.get("produced_by_constraint_id"))
+            invalidating_constraint_id = _blank_to_none(invalidation.get("invalidated_by_constraint_id"))
+            if not produced_constraint_id or not invalidating_constraint_id:
+                continue
+            produced_node = constraint_nodes.get(produced_constraint_id) or _node_id("Constraint", produced_constraint_id)
+            invalidating_node = constraint_nodes.get(invalidating_constraint_id) or _node_id("Constraint", invalidating_constraint_id)
+            builder.add_edge(produced_node, invalidating_node, "INVALIDATED_BY", {})
 
         for dependency in _dependency_items(record):
             support = dependency.get("supporting_effect") if isinstance(dependency, dict) else None
@@ -353,10 +367,15 @@ def _predicate_properties(predicate: dict[str, Any]) -> dict[str, Any]:
     )
 
 
-def _constraint_properties(constraint: dict[str, Any], support_status: str | None) -> dict[str, Any]:
+def _constraint_properties(
+    constraint: dict[str, Any],
+    support_status: str | None,
+    lifecycle: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     name = str(constraint.get("name") or "")
     args = _args(constraint)
     display_name = _constraint_display_name(name, args)
+    lifecycle = lifecycle or {}
     return _clean_properties(
         {
             "constraint_id": constraint.get("constraint_id"),
@@ -372,6 +391,8 @@ def _constraint_properties(constraint: dict[str, Any], support_status: str | Non
             "support": constraint.get("support"),
             "status": constraint.get("status"),
             "support_status": support_status,
+            "effect_lifecycle_status": lifecycle.get("effect_lifecycle_status"),
+            "invalidated_by_constraint_id": lifecycle.get("invalidated_by_constraint_id"),
         }
     )
 
@@ -601,6 +622,56 @@ def _condition_ref(constraint: dict[str, Any]) -> dict[str, Any]:
     if constraint.get("name") == "requiresTool":
         return {"name": "requiresTool", "args": args[1:]}
     return {"name": args[1] if len(args) > 1 else constraint.get("name"), "args": args[2:]}
+
+
+def _collect_effect_lifecycle(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    lifecycle: dict[str, dict[str, Any]] = {}
+    for record in records:
+        record_status = str(record.get("status") or "")
+        for constraint in _constraints_for_record(record):
+            if constraint.get("name") != "produces":
+                continue
+            constraint_id = _blank_to_none(constraint.get("constraint_id"))
+            if not constraint_id:
+                continue
+            lifecycle.setdefault(
+                constraint_id,
+                {
+                    "constraint_id": constraint_id,
+                    "effect_lifecycle_status": "inactive_rejected"
+                    if record_status == "rejected"
+                    else "active",
+                },
+            )
+
+    for record in records:
+        for item in list(record.get("produced_effect_lifecycle", []) or []):
+            if not isinstance(item, dict):
+                continue
+            constraint_id = _blank_to_none(item.get("constraint_id"))
+            if not constraint_id:
+                continue
+            lifecycle[constraint_id] = {
+                "constraint_id": constraint_id,
+                "effect_lifecycle_status": item.get("effect_lifecycle_status"),
+                "invalidated_by_constraint_id": item.get("invalidated_by_constraint_id"),
+            }
+
+    for record in records:
+        for item in list(record.get("invalidated_effects", []) or []):
+            if not isinstance(item, dict):
+                continue
+            produced_constraint_id = _blank_to_none(item.get("produced_by_constraint_id"))
+            if not produced_constraint_id:
+                continue
+            lifecycle.setdefault(produced_constraint_id, {"constraint_id": produced_constraint_id})
+            lifecycle[produced_constraint_id].update(
+                {
+                    "effect_lifecycle_status": "invalidated",
+                    "invalidated_by_constraint_id": item.get("invalidated_by_constraint_id"),
+                }
+            )
+    return lifecycle
 
 
 def _graph_counts(graph: dict[str, Any], records: list[dict[str, Any]]) -> dict[str, Any]:

@@ -220,6 +220,15 @@ def test_graph_exposes_remove_semantics_and_invalidated_effects(tmp_path: Path) 
                 "missing_requirements": [],
                 "dependency_support": [],
                 "invalidated_effects": [],
+                "produced_effect_lifecycle": [
+                    {
+                        "constraint_id": "c_install",
+                        "step_id": "s1",
+                        "condition": {"name": "installed", "args": ["wheel", "hub"]},
+                        "effect_lifecycle_status": "invalidated",
+                        "invalidated_by_constraint_id": "c_removed",
+                    }
+                ],
                 "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
             },
             {
@@ -265,8 +274,19 @@ def test_graph_exposes_remove_semantics_and_invalidated_effects(tmp_path: Path) 
                     {
                         "condition": {"name": "installed", "args": ["wheel", "hub"]},
                         "produced_by_step_id": "s1",
+                        "produced_by_constraint_id": "c_install",
                         "invalidated_by_step_id": "s2",
                         "invalidated_by_effect": {"name": "removed", "args": ["wheel", "hub"]},
+                        "invalidated_by_constraint_id": "c_removed",
+                    }
+                ],
+                "produced_effect_lifecycle": [
+                    {
+                        "constraint_id": "c_removed",
+                        "step_id": "s2",
+                        "condition": {"name": "removed", "args": ["wheel", "hub"]},
+                        "effect_lifecycle_status": "active",
+                        "invalidated_by_constraint_id": None,
                     }
                 ],
                 "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
@@ -285,6 +305,7 @@ def test_graph_exposes_remove_semantics_and_invalidated_effects(tmp_path: Path) 
                 "missing_requirements": [_constraint("c_after_remove_requires", "requires", "inferred_precondition", ["s3", "installed", "wheel", "hub"])],
                 "dependency_support": [],
                 "invalidated_effects": [],
+                "produced_effect_lifecycle": [],
                 "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
             },
             {
@@ -301,6 +322,15 @@ def test_graph_exposes_remove_semantics_and_invalidated_effects(tmp_path: Path) 
                 "missing_requirements": [],
                 "dependency_support": [],
                 "invalidated_effects": [],
+                "produced_effect_lifecycle": [
+                    {
+                        "constraint_id": "c_rejected_install",
+                        "step_id": "s4",
+                        "condition": {"name": "installed", "args": ["axle", "hub"]},
+                        "effect_lifecycle_status": "inactive_rejected",
+                        "invalidated_by_constraint_id": None,
+                    }
+                ],
                 "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
             },
             {
@@ -317,6 +347,7 @@ def test_graph_exposes_remove_semantics_and_invalidated_effects(tmp_path: Path) 
                 "missing_requirements": [_constraint("c_rejected_support_requires", "requires", "inferred_precondition", ["s5", "installed", "axle", "hub"])],
                 "dependency_support": [],
                 "invalidated_effects": [],
+                "produced_effect_lifecycle": [],
                 "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
             },
         ],
@@ -332,10 +363,15 @@ def test_graph_exposes_remove_semantics_and_invalidated_effects(tmp_path: Path) 
     remove_step = nodes_by_id["Step::s2"]["properties"]
     assert remove_step["invalidates_effect_count"] == 1
     assert remove_step["invalidated_effects"][0]["condition"] == {"name": "installed", "args": ["wheel", "hub"]}
+    assert nodes_by_id["Constraint::c_install"]["properties"]["effect_lifecycle_status"] == "invalidated"
+    assert nodes_by_id["Constraint::c_install"]["properties"]["invalidated_by_constraint_id"] == "c_removed"
+    assert nodes_by_id["Constraint::c_removed"]["properties"]["effect_lifecycle_status"] == "active"
+    assert nodes_by_id["Constraint::c_rejected_install"]["properties"]["effect_lifecycle_status"] == "inactive_rejected"
     assert nodes_by_id["Constraint::c_remove_requires"]["properties"]["display_name"] == "requires installed"
     assert nodes_by_id["Constraint::c_removed"]["properties"]["display_name"] == "produces removed"
     assert _has_edge(edges, "Step::s2", "Constraint::c_remove_requires", "REQUIRES")
     assert _has_edge(edges, "Step::s2", "Constraint::c_removed", "PRODUCES")
+    assert _has_edge(edges, "Constraint::c_install", "Constraint::c_removed", "INVALIDATED_BY")
     depends_on_install = _edge(edges, "Step::s2", "Step::s1", "DEPENDS_ON")
     assert depends_on_install["properties"]["provisional"] is False
     assert not _has_edge(edges, "Step::s3", "Step::s1", "DEPENDS_ON")

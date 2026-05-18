@@ -56,7 +56,7 @@
       "check_id": "E1.6",
       "check_name": "Graph export produced",
       "evidence_file": "evidence/graph_export_details.json",
-      "message": "Graph export contains 202 nodes and 525 edges.",
+      "message": "Graph export contains 202 nodes and 526 edges.",
       "severity": "critical",
       "status": "PASS"
     },
@@ -86,7 +86,7 @@
     "constraints": 28,
     "events": 659,
     "explanation_traces": 11,
-    "graph_edges": 525,
+    "graph_edges": 526,
     "graph_nodes": 202,
     "predicates": 106,
     "rule_coverage_diagnostics": 11,
@@ -148,5 +148,5 @@
     "validations": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\docs\\reasoning_layers\\Evaluation1_remove_semantics\\validation_records.jsonl"
   },
   "run_id": "raw_cad_dataset__all_test_clips",
-  "timestamp": "2026-05-17T20:25:26+00:00"
+  "timestamp": "2026-05-18T09:50:41+00:00"
 }

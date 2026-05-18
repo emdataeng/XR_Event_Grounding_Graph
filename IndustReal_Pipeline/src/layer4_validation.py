@@ -45,6 +45,7 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
     explanation_traces: list[dict[str, Any]] = []
     historical_effects: list[dict[str, Any]] = []
     active_effects: dict[tuple[Any, ...], dict[str, Any]] = {}
+    produced_effect_lifecycle: list[dict[str, Any]] = []
     effect_history_rows: list[dict[str, Any]] = []
     for step in ordered_steps:
         step_id = str(step.get("id") or step.get("step_id") or "")
@@ -67,12 +68,23 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
             step_constraints,
             historical_effects,
             active_effects,
+            produced_effect_lifecycle,
         )
         record["invalidated_effects"] = invalidated_effects
         record["trace"]["invalidated_effects"] = invalidated_effects
         validation_records.append(record)
         explanation_traces.append(record["trace"])
         effect_history_rows.extend(_effect_history_rows_for_step(record, step_constraints, invalidated_effects))
+
+    lifecycle_by_step: dict[str, list[dict[str, Any]]] = {}
+    for effect in produced_effect_lifecycle:
+        step_id = str(effect.get("step_id") or "")
+        if step_id:
+            lifecycle_by_step.setdefault(step_id, []).append(effect)
+    for record in validation_records:
+        step_lifecycle = [dict(item) for item in lifecycle_by_step.get(str(record.get("step_id") or ""), [])]
+        record["produced_effect_lifecycle"] = step_lifecycle
+        record["trace"]["produced_effect_lifecycle"] = step_lifecycle
 
     output_path = Path(inputs.output_path)
     trace_path = output_path.with_name("explanation_traces.json")
@@ -101,6 +113,7 @@ def run_layer4_validation(inputs: Layer4Inputs) -> dict[str, Any]:
         "missing_requirements": sum(len(item.get("missing_requirements", [])) for item in validation_records),
         "historical_effects": len(historical_effects),
         "active_effects": len(active_effects),
+        "produced_effect_lifecycle": len(produced_effect_lifecycle),
         "invalidated_effects": sum(len(item.get("invalidated_effects", [])) for item in validation_records),
     }
 
@@ -182,6 +195,7 @@ def _validate_step(
         "dependency_evidence": dependency_support,
         "missing_requirements": missing_requirements,
         "invalidated_effects": [],
+        "produced_effect_lifecycle": [],
         "warnings": warnings,
         "diagnostics": {"rule_coverage": rule_coverage, "warnings": warnings},
         "status": status,
@@ -241,6 +255,7 @@ def _apply_produced_effects(
     constraints: list[dict[str, Any]],
     historical_effects: list[dict[str, Any]],
     active_effects: dict[tuple[Any, ...], dict[str, Any]],
+    produced_effect_lifecycle: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     produced = [item for item in constraints if item.get("name") == "produces"]
     invalidated_effects: list[dict[str, Any]] = []
@@ -248,8 +263,11 @@ def _apply_produced_effects(
     for constraint in produced:
         effect_record = _effect_record(constraint, record)
         historical_effects.append(effect_record)
+        produced_effect_lifecycle.append(effect_record)
         if step_status == "rejected":
+            effect_record["effect_lifecycle_status"] = "inactive_rejected"
             continue
+        effect_record["effect_lifecycle_status"] = "active"
         condition = _condition_ref(constraint)
         if condition.get("name") == "removed":
             invalidated = _invalidate_installed_effect(
@@ -272,6 +290,8 @@ def _effect_record(constraint: dict[str, Any], record: dict[str, Any]) -> dict[s
         "args": _constraint_args(constraint),
         "condition": _condition_ref(constraint),
         "conf": _parse_float(constraint.get("conf")),
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": None,
     }
 
 
@@ -287,6 +307,8 @@ def _invalidate_installed_effect(
     active_effect = active_effects.pop(installed_key, None)
     if not active_effect:
         return []
+    active_effect["effect_lifecycle_status"] = "invalidated"
+    active_effect["invalidated_by_constraint_id"] = removing_constraint.get("constraint_id")
     return [
         {
             "condition": {"name": "installed", "args": [args[2], args[3]]},
@@ -620,6 +642,7 @@ def _write_validation_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         "incompatibilities",
         "evidence_predicates",
         "evidence_constraints",
+        "produced_effect_lifecycle",
         "warnings",
         "has_rule_coverage",
         "matched_rule_count",
