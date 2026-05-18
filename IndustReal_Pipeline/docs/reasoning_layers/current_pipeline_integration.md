@@ -21,7 +21,7 @@ existing graph CSVs
   -> Layer 3 rule inference
   -> inferred_constraints.csv
   -> Layer 4 validation
-  -> validation_records.jsonl + step_validations.csv + explanation_traces.json
+  -> validation_records.jsonl + step_validations.csv + explanation_traces.json + effect_history_diagnostics.csv
   -> procedural_reasoning_graph
   -> procedural_reasoning_graph.json + procedural_reasoning_graph_nodes.csv + procedural_reasoning_graph_edges.csv
   -> Neo4j procedural graph import
@@ -191,6 +191,7 @@ It writes:
 validation_records.jsonl
 step_validations.csv
 explanation_traces.json
+effect_history_diagnostics.csv
 ```
 
 Rules are also stored in `config/thesis_rules.yaml`, under:
@@ -249,7 +250,9 @@ warning_code: no_applicable_rule
 warning_message: Step has predicate evidence but no Layer 3 rule produced constraints.
 ```
 
-This is intentionally diagnostic rather than a fabricated semantic rule. For example, the current rule set does not define remove-action semantics, so `hasAction(remove)` with `usesObject(front_wheel_assy)` is marked as unsupported by the current rule coverage instead of being assigned invented remove dependencies or effects.
+This is intentionally diagnostic rather than a fabricated semantic rule. For example, if a future action has predicate evidence but no matching Layer 3 rule, the step is marked as unsupported by the current rule coverage instead of being assigned invented dependencies or effects.
+
+The current rule set does define remove-action semantics. A `remove` action over a configured component can produce a precondition requiring the component to be installed and an expected `removed(component, target)` effect. Layer 4 then uses that removed effect to invalidate the matching active installed effect.
 
 Layer 4 walks the ordered steps and maintains two views of previous `produces(...)` effects:
 
@@ -292,7 +295,7 @@ The primary graph-builder input is:
 validation_records.jsonl
 ```
 
-Optional inputs such as `step_records.jsonl`, `predicates.jsonl`, and `inferred_constraints.csv` are accepted by the script for metadata enrichment. The builder relies on `validation_records.jsonl` for validation status, predicate evidence, constraint evidence, produced effects, dependency support, missing requirements, incompatibilities, and trace information. When `--step-records` is provided, Step nodes are enriched with source metadata from the adapter step records, including `clip_result_id`, `run_id`, `mode`, `archive_name`, and `clip`.
+Optional inputs such as `step_records.jsonl`, `predicates.jsonl`, and `inferred_constraints.csv` are accepted by the script. The current builder uses `step_records.jsonl` for Step metadata enrichment and relies on `validation_records.jsonl` for validation status, predicate evidence, constraint evidence, produced effects, produced-effect lifecycle, dependency support, missing requirements, incompatibilities, and trace information. When `--step-records` is provided, Step nodes are enriched with source metadata from the adapter step records, including `clip_result_id`, `run_id`, `mode`, `archive_name`, and `clip`.
 
 The graph JSON has this shape:
 
@@ -358,7 +361,7 @@ invalidates_effect_count
 invalidated_effects
 ```
 
-For the sample remove step, these properties make the graph visibly show that `remove` was observed but is not covered by the current Layer 3 rule set.
+For the sample remove step, these properties make the graph visibly show which installed effect was invalidated by the remove action.
 
 Produced-effect Constraint nodes expose lifecycle fields when Layer 4 provides them:
 
@@ -367,7 +370,17 @@ effect_lifecycle_status: active | invalidated | inactive_rejected
 invalidated_by_constraint_id
 ```
 
-For example, an earlier `produces(installed, wheel, hub)` Constraint can be marked `effect_lifecycle_status="invalidated"` and `invalidated_by_constraint_id` can point to the later `produces(removed, wheel, hub)` Constraint. The invalidating step and invalidating effect details are intentionally not duplicated on the invalidated node; they can be reached through graph relationships.
+For example, an earlier `produces(installed, wheel, hub)` Constraint can be marked `effect_lifecycle_status="invalidated"` and `invalidated_by_constraint_id` can point to the later `produces(removed, wheel, hub)` Constraint.
+
+The graph also materializes this relationship with an `INVALIDATED_BY` edge between Constraint nodes:
+
+```text
+(:Constraint {name: "produces", effect_lifecycle_status: "invalidated"})
+  -[:INVALIDATED_BY]->
+(:Constraint {name: "produces"})
+```
+
+The edge direction reads as "this produced effect was invalidated by that produced effect." The invalidating step and invalidating effect details are intentionally not duplicated on the invalidated node; they can be reached by following `INVALIDATED_BY` to the invalidating Constraint and then following the incoming `PRODUCES` edge back to its Step.
 
 Edge types:
 
@@ -426,7 +439,7 @@ notes
 
 `source` records which CSV file and fields produced the predicate.
 
-The reasoning-record contract is stable: the adapter writes `step_records.jsonl` and `predicates.jsonl`, Layer 3 writes `inferred_constraints.csv`, and Layer 4 writes `validation_records.jsonl` plus human/debug views in `step_validations.csv` and `explanation_traces.json`. The procedural graph export writes JSON plus node/edge CSV files, and node properties include presentation helpers such as `display_name`, `display_label`, and `short_id`.
+The reasoning-record contract is stable: the adapter writes `step_records.jsonl` and `predicates.jsonl`, Layer 3 writes `inferred_constraints.csv` plus `rule_coverage_diagnostics.csv`, and Layer 4 writes `validation_records.jsonl` plus human/debug views in `step_validations.csv`, `explanation_traces.json`, and `effect_history_diagnostics.csv`. Validation records include requirement support, missing requirements, dependency support, `invalidated_effects`, and `produced_effect_lifecycle`. The procedural graph export writes JSON plus node/edge CSV files, and node properties include presentation helpers such as `display_name`, `display_label`, and `short_id`.
 
 Configured domain components use the domain individual `name` in predicate arguments, such as `base`, while generic classes stay class-like, such as `Base` or `Chassis`. Labels remain separate through `hasLabel(base, "base")`.
 
