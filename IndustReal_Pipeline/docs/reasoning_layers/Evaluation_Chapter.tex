@@ -45,29 +45,101 @@ The evaluation uses these files to check whether the reasoning pipeline behaves 
 \section{Evaluation 1: Pipeline artifact correctness}
 \label{sec:evaluation-artifact-correctness}
 
-The first evaluation checks whether the implemented pipeline produces the expected artifacts and whether the artifacts satisfy basic consistency conditions. This evaluation verifies that each pipeline stage can be inspected independently and that no reasoning stage depends on hidden state.
+The first evaluation checks whether the implemented pipeline produces the expected
+artifacts and whether these artifacts satisfy basic consistency conditions. This
+evaluation verifies that each pipeline stage can be inspected independently and
+that no reasoning stage depends on hidden state.
+
+The evaluated sample uses the IndustReal clip \texttt{03\_assy\_0\_1} in the
+\texttt{od\_only} mode.
 
 \begin{table}[htbp]
 \centering
 \caption{Pipeline artifact checks.}
 \label{tab:evaluation-artifact-checks}
-\begin{tabular}{p{0.32\textwidth} p{0.48\textwidth} p{0.12\textwidth}}
+\begin{tabular}{p{0.22\textwidth} p{0.34\textwidth} p{0.36\textwidth}}
 \toprule
 Check & Expected condition & Result \\
 \midrule
-Step records produced & Each input step is represented in \path{step_records.jsonl}. & TODO \\
-Predicate records produced & Each step has associated symbolic predicate evidence where available. & TODO \\
-Layer 3 constraints produced & Rule inference writes \path{inferred_constraints.csv}. & TODO \\
-Layer 4 validation records produced & Each step has a validation record and status. & TODO \\
-Explanation traces produced & Validation decisions include trace information. & TODO \\
-Graph export produced & Graph JSON and node/edge CSV files are written. & TODO \\
-Input order preserved & \texttt{NEXT} edges follow the validation index. & TODO \\
-Rejected-step dependency rule respected & Rejected steps do not support later \texttt{DEPENDS\_ON} edges. & TODO \\
+Step records produced & Each input step is represented in \path{step_records.jsonl}. & 11 step records cover 11 input steps. \\
+Predicate records produced & Each step has associated symbolic predicate evidence where available. & 106 predicates reference valid step records. \\
+Layer 3 constraints produced & Rule inference writes \path{inferred_constraints.csv}. & 26 constraints produced: 10 \texttt{produces}, 12 \texttt{requires}, 3 \texttt{requiresSafety}, and 1 \texttt{requiresTool}. \\
+Layer 4 validation records produced & Each step has a validation record and status. & 11 validation records include statuses. \\
+Explanation traces produced & Validation decisions include trace information. & Each validation decision includes trace information. \\
+Graph export produced & Graph JSON and node/edge CSV files are written. & Graph export contains 198 nodes and 513 edges. \\
+Input order preserved & \texttt{NEXT} edges follow the validation index. & 10 \texttt{NEXT} edges follow validation order. \\
+Rejected-step dependency rule respected & Rejected steps do not support later \texttt{DEPENDS\_ON} edges. & 9 \texttt{DEPENDS\_ON} edges avoid rejected-step support. \\
+Rule coverage diagnostics & Steps with predicate evidence but no matching Layer 3 rule are explicitly reported. & One unsupported removal action was detected and reported with a rule-coverage warning. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-This evaluation addresses RQ1 by confirming that the implemented representation supports the complete reasoning chain from step records and predicates to validation records and graph outputs.
+\begin{table}[htbp]
+\centering
+\caption{Input step sequence used in Evaluation 1.}
+\label{tab:evaluation1-input-steps}
+\begin{tabular}{p{0.10\textwidth} p{0.18\textwidth} p{0.62\textwidth}}
+\toprule
+Index & Source frame & Input step description \\
+\midrule
+0 & 709 & Install base \\
+1 & 709 & Install rear chassis \\
+2 & 709 & Install front rear chassis pin \\
+3 & 1187 & Install front chassis \\
+4 & 1187 & Install front chassis pin \\
+5 & 1788 & Install rear rear chassis pin \\
+6 & 1788 & Install front bracket \\
+7 & 1788 & Install front bracket screw \\
+8 & 1788 & Install front wheel assy \\
+9 & 2735 & Remove front wheel assy \\
+10 & 2735 & Install rear wheel assy \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+To complement the artifact-level checks for the evaluated sample, the input step sequence in \Cref{tab:evaluation1-input-steps} is compared with the generated procedural reasoning graph shown in \Cref{fig:evaluation1-procedural-graph}. The figure focuses on the validated step nodes and on the two relations most relevant to this evaluation: temporal ordering through \texttt{NEXT} edges and inferred
+procedural dependencies through \texttt{DEPENDS\_ON} edges. For this evaluated sample, the visual inspection supports the artifact checks by showing that the exported graph preserves the input step order and represents dependency links without allowing rejected steps to support later steps.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{Figures/Eval01_03_ass_0_1_Step_NEXT_DEPENDS_none_rejected_unsupported_remove_action.png}
+\caption{Procedural reasoning graph generated for Evaluation 1, showing validated step nodes, temporal \texttt{NEXT} edges, and inferred \texttt{DEPENDS\_ON} edges. The removal action (Step 9) is preserved as a step in the temporal sequence, but no \texttt{DEPENDS\_ON} edge is inferred for it because removal-specific rules are not
+defined in the current rule set.}
+\label{fig:evaluation1-procedural-graph}
+\end{figure}
+
+The graph also shows the Layer 4 validation status of each step. Steps marked as \texttt{uncertain} are not graph-export errors; they indicate that the validation stage preserved cases where the available evidence or inferred support was insufficient for full acceptance. In this evaluation, the status labels are used to
+check artifact propagation rather than to analyze the correctness of each decision.
+
+\subsection{Rule coverage diagnostics}
+\label{sec:evaluation-rule-coverage-diagnostics}
+
+The artifact checks also include a rule-coverage diagnostic for steps that contain
+symbolic predicate evidence but do not trigger any Layer 3 rule. This distinction is
+important because the absence of inferred constraints can have two different
+meanings. It may mean that the step genuinely has no procedural dependency in the
+current sample, but it may also mean that the current rule base does not yet cover
+the observed action type.
+
+This situation occurs for the removal action in \Cref{tab:evaluation1-input-steps},
+where Step~9 is described as \textit{Remove front wheel assy}. The step is present in
+the input sequence and has symbolic evidence, but the current rule configuration
+does not define removal-specific reasoning rules. Consequently, the pipeline does
+not infer dependency constraints for this step. Instead of treating this absence as
+implicit success, the evaluation records it as a rule-coverage warning. This makes
+the limitation of the current rule set explicit in the generated artifacts.
+
+The diagnostic is useful for traceability because it separates unsupported actions
+from validated dependency decisions. In other words, the pipeline can still preserve
+the step in the temporal graph through \texttt{NEXT} edges, while also indicating
+that no Layer 3 rule was available to infer procedural requirements or effects for
+that action. This prevents observed but unsupported actions from passing through
+the reasoning chain without an explicit trace.
+
+This evaluation contributes to RQ1 by confirming that the implemented
+representation supports an inspectable reasoning chain from step records and
+symbolic predicates to inferred constraints, validation records, explanation
+traces, graph outputs, and rule-coverage diagnostics.
 
 \section{Evaluation 2: Constraint inference coverage}
 \label{sec:evaluation-constraint-coverage}
@@ -187,8 +259,3 @@ Fourth, the graph is evaluated as an explanation and inspection artifact. It is 
 \label{sec:evaluation-summary}
 
 The evaluation focuses on the reasoning contribution of this thesis. It checks that the implemented pipeline produces the expected artifacts, that Layer 3 enriches symbolic predicates with procedural constraints, that Layer 4 responds correctly to missing, uncertain, and incompatible evidence, and that the final graph exposes validation status, dependencies, evidence, and provenance. This evaluation supports the academic claim that the thesis contributes a traceable reasoning layer for validating and enriching ordered procedural artifacts, rather than a perception system or a complete XR guidance application.
-
-\section{Data collection protocol and labeling plan}
-\label{sec:data-protocol}
-
-The dataset consists of XR recordings of controlled assembly scenarios, including both successful and faulty executions. Scenarios are defined to capture variability in object placement, alignment, and interaction patterns where predicate confidence and conflicting interpretations are systematically varied. Annotation focuses on step boundaries and outcome labels, without requiring detailed geometric ground truth. Data is split across sessions and operators to reduce leakage, and consistency checks are applied to ensure annotation quality.

@@ -9,6 +9,7 @@ import pytest
 from src.procedural_neo4j_import import (
     clear_graph_cypher,
     edge_import_cypher,
+    legacy_constraint_drop_cyphers,
     load_procedural_graph,
     neo4j_identifier,
     normalize_graph,
@@ -85,9 +86,16 @@ def test_rejects_unsafe_neo4j_identifiers() -> None:
 
 
 def test_import_cyphers_use_only_semantic_node_labels_and_graph_properties() -> None:
-    assert "MERGE (n:Step {prg_id: r.id})" in node_import_cypher("Step")
+    assert "MERGE (n:Step {graph_name: r.props.graph_name, prg_id: r.id})" in node_import_cypher("Step")
     assert "ProceduralReasoningGraphNode" not in node_import_cypher("Step")
     assert "MATCH (a {graph_name: r.graph_name, prg_id: r.source})" in edge_import_cypher("DEPENDS_ON")
     assert "MATCH (b {graph_name: r.graph_name, prg_id: r.target})" in edge_import_cypher("DEPENDS_ON")
     assert "[rel:DEPENDS_ON" in edge_import_cypher("DEPENDS_ON")
     assert clear_graph_cypher() == "MATCH (n {graph_name: $graph_name}) DETACH DELETE n"
+
+
+def test_legacy_constraint_drop_cyphers_are_scoped_to_known_constraint_names() -> None:
+    cyphers = legacy_constraint_drop_cyphers(["Step", "Rule"])
+    assert "DROP CONSTRAINT prg_step_prg_id IF EXISTS" in cyphers
+    assert "DROP CONSTRAINT prg_rule_prg_id IF EXISTS" in cyphers
+    assert "DROP CONSTRAINT prg_common_prg_id IF EXISTS" in cyphers

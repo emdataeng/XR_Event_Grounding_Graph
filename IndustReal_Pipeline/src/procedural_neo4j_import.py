@@ -42,9 +42,18 @@ def constraint_cyphers(node_types: list[str]) -> list[str]:
     for node_type in sorted(set(node_types)):
         label = neo4j_identifier(node_type)
         cyphers.append(
-            f"CREATE CONSTRAINT prg_{label.lower()}_prg_id IF NOT EXISTS "
-            f"FOR (n:{label}) REQUIRE n.prg_id IS UNIQUE"
+            f"CREATE CONSTRAINT prg_{label.lower()}_graph_prg_id IF NOT EXISTS "
+            f"FOR (n:{label}) REQUIRE (n.graph_name, n.prg_id) IS UNIQUE"
         )
+    return cyphers
+
+
+def legacy_constraint_drop_cyphers(node_types: list[str]) -> list[str]:
+    cyphers = []
+    for node_type in sorted(set(node_types)):
+        label = neo4j_identifier(node_type)
+        cyphers.append(f"DROP CONSTRAINT prg_{label.lower()}_prg_id IF EXISTS")
+    cyphers.append("DROP CONSTRAINT prg_common_prg_id IF EXISTS")
     return cyphers
 
 
@@ -59,7 +68,7 @@ def node_import_cypher(node_type: str) -> str:
     label = neo4j_identifier(node_type)
     return (
         f"UNWIND $rows AS r "
-        f"MERGE (n:{label} {{prg_id: r.id}}) "
+        f"MERGE (n:{label} {{graph_name: r.props.graph_name, prg_id: r.id}}) "
         "SET n += r.props"
     )
 

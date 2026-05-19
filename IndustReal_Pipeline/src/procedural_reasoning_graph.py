@@ -24,6 +24,7 @@ class ProceduralReasoningGraphInputs:
     predicates_path: Path | None = None
     constraints_path: Path | None = None
     exclude_rejected: bool = False
+    graph_name: str = GRAPH_NAME
 
 
 def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> dict[str, Any]:
@@ -243,7 +244,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
 
     graph = {
         "schema_version": SCHEMA_VERSION,
-        "graph_name": GRAPH_NAME,
+        "graph_name": inputs.graph_name or GRAPH_NAME,
         "nodes": sorted(builder.nodes.values(), key=lambda item: (item["type"], item["id"])),
         "edges": sorted(builder.edges.values(), key=lambda item: (item["type"], item["source"], item["target"], _stable_json(item["properties"]))),
     }
@@ -261,7 +262,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
     return {
         **counts,
         "schema_version": SCHEMA_VERSION,
-        "graph_name": GRAPH_NAME,
+        "graph_name": graph["graph_name"],
         "validations_path": str(inputs.validations_path),
         "step_records_path": str(inputs.step_records_path) if inputs.step_records_path else None,
         "output_path": str(graph_path),

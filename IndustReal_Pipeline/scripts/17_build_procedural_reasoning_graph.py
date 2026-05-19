@@ -23,6 +23,7 @@ def main() -> None:
     parser.add_argument("--step-records", type=Path, default=None)
     parser.add_argument("--predicates", type=Path, default=None)
     parser.add_argument("--constraints", type=Path, default=None)
+    parser.add_argument("--graph-name", type=str, default="procedural_reasoning_graph")
     parser.add_argument("--exclude-rejected", action="store_true")
     args = parser.parse_args()
 
@@ -34,6 +35,7 @@ def main() -> None:
             predicates_path=args.predicates,
             constraints_path=args.constraints,
             exclude_rejected=args.exclude_rejected,
+            graph_name=args.graph_name,
         )
     )
     print(json.dumps(result, indent=2))

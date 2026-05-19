@@ -430,6 +430,37 @@ def test_graph_marks_uncertain_dependency_support_as_provisional(tmp_path: Path)
     assert _edge(graph["edges"], "Step::s2", "Step::s1", "DEPENDS_ON")["properties"]["provisional"] is True
 
 
+def test_builds_graph_with_custom_graph_name(tmp_path: Path) -> None:
+    validations_path = tmp_path / "validation_records.jsonl"
+    output_dir = tmp_path / "graph"
+    _write_jsonl(
+        validations_path,
+        [
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s1",
+                "source_event_id": "event_1",
+                "index": 1,
+                "status": "accepted",
+                "confidence": 0.9,
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            }
+        ],
+    )
+
+    result = build_procedural_reasoning_graph(
+        ProceduralReasoningGraphInputs(
+            validations_path=validations_path,
+            output_dir=output_dir,
+            graph_name="procedural_reasoning_graph::clip_a",
+        )
+    )
+
+    graph = json.loads((output_dir / "procedural_reasoning_graph.json").read_text(encoding="utf-8"))
+    assert result["graph_name"] == "procedural_reasoning_graph::clip_a"
+    assert graph["graph_name"] == "procedural_reasoning_graph::clip_a"
+
+
 def _has_edge(edges: list[dict[str, object]], source: str, target: str, edge_type: str) -> bool:
     return any(edge["source"] == source and edge["target"] == target and edge["type"] == edge_type for edge in edges)
 
