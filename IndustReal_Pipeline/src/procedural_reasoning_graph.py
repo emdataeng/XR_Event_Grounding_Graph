@@ -59,6 +59,8 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
         step_node_id = _node_id("Step", step_id)
         step_nodes[step_id] = step_node_id
         step_status[step_id] = str(record.get("status") or "")
+        action = step_record.get("action") if isinstance(step_record.get("action"), dict) else {}
+        object_props = _step_object_properties(step_record)
         builder.add_node(
             step_node_id,
             "Step",
@@ -73,11 +75,14 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
                     "source_event_id": record.get("source_event_id"),
                     "index": record.get("index"),
                     "status": record.get("status"),
+                    "action_name": action.get("name"),
+                    "action_event_type": action.get("event_type"),
+                    "action_description": action.get("description"),
+                    **object_props,
                     "display_name": _step_display_name(record),
                     "display_label": _step_display_label(record),
                     "short_id": _short_event_id(record.get("source_event_id") or step_id),
-                    "confidence": record.get("confidence"),
-                    "conf": record.get("conf"),
+                    "confidence": record.get("confidence") if record.get("confidence") is not None else record.get("conf"),
                     "schema_version": record.get("schema_version"),
                     "warning_count": len(warnings),
                     "warnings": warnings,
@@ -325,6 +330,30 @@ def _dependency_items(record: dict[str, Any]) -> list[dict[str, Any]]:
         *list(record.get("dependency_support", []) or []),
         *list(trace.get("dependency_evidence", []) or []),
     ]
+
+
+def _step_object_properties(step_record: dict[str, Any]) -> dict[str, Any]:
+    objects = step_record.get("objects")
+    if not isinstance(objects, list):
+        return {}
+    object_ids: list[str] = []
+    object_labels: list[str] = []
+    object_types: list[str] = []
+    for item in objects:
+        if not isinstance(item, dict):
+            continue
+        if item.get("id") not in (None, ""):
+            object_ids.append(str(item.get("id")))
+        if item.get("label") not in (None, ""):
+            object_labels.append(str(item.get("label")))
+        if item.get("type") not in (None, ""):
+            object_types.append(str(item.get("type")))
+    return {
+        "object_ids": object_ids,
+        "object_labels": object_labels,
+        "object_types": object_types,
+        "object_summary": ", ".join(object_labels or object_types or object_ids),
+    }
 
 
 def _dedupe_items(items: Iterable[dict[str, Any]], key_field: str) -> list[dict[str, Any]]:

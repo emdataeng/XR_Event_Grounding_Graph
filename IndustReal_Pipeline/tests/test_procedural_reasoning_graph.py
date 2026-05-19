@@ -26,6 +26,8 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
                 "mode": "od_only",
                 "archive_name": "test_p1",
                 "clip": "03_assy_0_1",
+                "action": {"name": "install", "event_type": "INSTALL", "description": "Install base"},
+                "objects": [{"id": "component::base", "label": "base", "type": "base"}],
             },
             {
                 "id": "s2",
@@ -34,6 +36,8 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
                 "mode": "od_only",
                 "archive_name": "test_p1",
                 "clip": "03_assy_0_1",
+                "action": {"name": "install", "event_type": "INSTALL", "description": "Install bracket"},
+                "objects": [{"id": "component::bracket", "label": "bracket", "type": "bracket"}],
             },
         ],
     )
@@ -164,6 +168,12 @@ def test_builds_procedural_reasoning_graph_from_validation_records(tmp_path: Pat
     assert step["clip_result_id"] == "run::od_only::test_p1::03_assy_0_1"
     assert step["archive_name"] == "test_p1"
     assert step["clip"] == "03_assy_0_1"
+    assert step["action_name"] == "install"
+    assert step["action_event_type"] == "INSTALL"
+    assert step["action_description"] == "Install base"
+    assert step["object_labels"] == ["base"]
+    assert step["object_summary"] == "base"
+    assert "conf" not in step
     unsupported_step = nodes_by_id["Step::s3"]["properties"]
     assert unsupported_step["warning_count"] == 1
     assert unsupported_step["warnings"][0]["warning_code"] == "no_applicable_rule"
