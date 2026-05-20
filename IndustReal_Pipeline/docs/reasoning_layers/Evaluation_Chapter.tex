@@ -348,7 +348,7 @@ perturbation.
 \caption{Layer 4 validation response in the selected clip and controlled confidence perturbation.}
 \label{tab:evaluation-validation-response}
 \small
-\begin{tabular}{p{0.24\textwidth} p{0.34\textwidth} p{0.14\textwidth} p{0.18\textwidth}}
+\begin{tabular}{p{0.22\textwidth} p{0.36\textwidth} p{0.08\textwidth} p{0.20\textwidth}}
 \toprule
 Scenario & Evidence inspected & Result & Supporting artifact \\
 \midrule
@@ -397,14 +397,21 @@ the Layer 4 artifacts.
 \section{Evaluation 4: Procedural graph traceability}
 \label{sec:evaluation-graph-traceability}
 
+The fourth evaluation examines whether the procedural reasoning graph exposes the
+traceability required by the thesis objective.
+
 \paragraph{Goal:}
-The fourth evaluation examines whether the procedural reasoning graph provides
-the traceability required by the thesis objective. The goal is to check whether a
-validation outcome can be inspected through the graph by following links from a
-step to its predicates, inferred constraints, dependency support, rule
-provenance, and produced-effect lifecycle.
+Instead of measure the graph coverage over the dataset, the goal is to check whether the validation behavior inspected in Evaluation 3 can also be followed in the graph by traversing from a step to its predicates, inferred constraints, dependency support, rule provenance, and produced-effect lifecycle.
+ 
 
 \paragraph{Description:}
+The evaluation uses the same \texttt{08\_assy\_0\_1} clip in the
+\texttt{od\_plus\_psr\_error\_hints} mode as Evaluation 3. This choice makes the
+connection between validation behavior and graph traceability explicit: the same
+steps, dependencies, rejected actions, removal effects, and invalidated effects
+that were inspected in Layer 4 are now inspected in the exported procedural
+reasoning graph. 
+
 The procedural reasoning graph is evaluated as an explanation and inspection
 artifact. The graph should preserve the input order through \texttt{NEXT} edges
 and expose reasoning-derived relations through edges such as \texttt{REQUIRES},
