@@ -45,13 +45,18 @@ The evaluation uses these files to check whether the reasoning pipeline behaves 
 \section{Evaluation 1: Pipeline artifact correctness}
 \label{sec:evaluation-artifact-correctness}
 
-The first evaluation checks whether the implemented pipeline produces the expected
-artifacts and whether these artifacts satisfy basic consistency conditions. This
-evaluation verifies that each pipeline stage can be inspected independently and
+This evaluation verifies that each pipeline stage can be inspected independently and
 that no reasoning stage depends on hidden state.
 
-The evaluated sample uses the IndustReal clip \texttt{03\_assy\_0\_1} in the
-\texttt{od\_only} mode.
+\paragraph{Goal:}
+To check if the implemented pipeline produces the expected artifacts and whether these artifacts satisfy basic consistency conditions. 
+
+\paragraph{Description:}
+The evaluation was done on the IndustReal clip \path{03_assy_0_1} in the \path{od_only} mode.
+
+\paragraph{Results:}
+The content of the produced artifacts is summarized in \cref{tab:evaluation-artifact-checks}.
+To complement the artifact-level checks for the evaluated sample, the input step sequence in \Cref{tab:evaluation1-input-steps} is compared with the generated procedural reasoning graph shown in \Cref{fig:evaluation1-procedural-graph}. The figure focuses on the validated step nodes and on the two relations most relevant to this evaluation: temporal ordering through \texttt{NEXT} edges and inferred procedural dependencies through \texttt{DEPENDS\_ON} edges. 
 
 \begin{table}[htbp]
 \centering
@@ -97,14 +102,14 @@ Index & Source frame & Input step description \\
 \end{tabular}
 \end{table}
 
-To complement the artifact-level checks for the evaluated sample, the input step sequence in \Cref{tab:evaluation1-input-steps} is compared with the generated procedural reasoning graph shown in \Cref{fig:evaluation1-procedural-graph}. The figure focuses on the validated step nodes and on the two relations most relevant to this evaluation: temporal ordering through \texttt{NEXT} edges and inferred
-procedural dependencies through \texttt{DEPENDS\_ON} edges. For this evaluated sample, the visual inspection supports the artifact checks by showing that the exported graph preserves the input step order and represents dependency links without allowing rejected steps to support later steps.
+
+\paragraph{Analysis:}
+For this evaluated sample, the visual inspection supports the artifact checks by showing that the exported graph preserves the input step order and represents dependency links without allowing rejected steps to support later steps.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.95\textwidth]{Figures/Eval01_03_ass_0_1_Step_NEXT_DEPENDS_none_rejected_unsupported_remove_action.png}
-\caption{Procedural reasoning graph generated for Evaluation 1, showing validated step nodes, temporal \texttt{NEXT} edges, and inferred \texttt{DEPENDS\_ON} edges. The removal action (Step 9) is preserved as a step in the temporal sequence, but no \texttt{DEPENDS\_ON} edge is inferred for it because removal-specific rules are not
-defined in the current rule set.}
+\caption{Procedural reasoning graph generated for Evaluation 1, showing validated step nodes, temporal \texttt{NEXT} edges, and inferred \texttt{DEPENDS\_ON} edges. The removal action (Step 9) is preserved as a step in the temporal sequence, but no \texttt{DEPENDS\_ON} edge is inferred for it because removal-specific rules were not defined in the baseline rule set used for this artifact-correctness check.}
 \label{fig:evaluation1-procedural-graph}
 \end{figure}
 
@@ -114,20 +119,10 @@ check artifact propagation rather than to analyze the correctness of each decisi
 \subsection{Rule coverage diagnostics}
 \label{sec:evaluation-rule-coverage-diagnostics}
 
-The artifact checks also include a rule-coverage diagnostic for steps that contain
-symbolic predicate evidence but do not trigger any Layer 3 rule. This distinction is
-important because the absence of inferred constraints can have two different
-meanings. It may mean that the step genuinely has no procedural dependency in the
-current sample, but it may also mean that the current rule base does not yet cover
-the observed action type.
+The artifact checks also include a rule-coverage diagnostic for steps that contain symbolic predicate evidence but do not trigger any Layer 3 rule. This distinction is important because the absence of inferred constraints can have two different meanings. It may mean that the step genuinely has no procedural dependency in the current sample, but it may also mean that the current rule base does not yet cover the observed action type.
 
 This situation occurs for the removal action in \Cref{tab:evaluation1-input-steps},
-where Step~9 is described as \textit{Remove front wheel assy}. The step is present in
-the input sequence and has symbolic evidence, but the current rule configuration
-does not define removal-specific reasoning rules. Consequently, the pipeline does
-not infer dependency constraints for this step. Instead of treating this absence as
-implicit success, the evaluation records it as a rule-coverage warning. This makes
-the limitation of the current rule set explicit in the generated artifacts.
+where Step~9 is described as \textit{Remove front wheel assy}. The step is present in the input sequence and has symbolic evidence, but the baseline rule configuration used in this check did not define removal-specific reasoning rules. Consequently, the pipeline does not infer dependency constraints for this step. Instead of treating this absence as implicit success, the evaluation records it as a rule-coverage warning. This makes the limitation of the current rule set explicit in the generated artifacts.
 
 The diagnostic is useful for traceability because it separates unsupported actions
 from validated dependency decisions. In other words, the pipeline can still preserve
@@ -144,79 +139,285 @@ traces, graph outputs, and rule-coverage diagnostics.
 \section{Evaluation 2: Constraint inference coverage}
 \label{sec:evaluation-constraint-coverage}
 
-The second evaluation checks whether Layer 3 enriches the input predicates with procedural constraints. The goal is not to evaluate perception accuracy, but to verify that the rule layer derives the expected types of procedural knowledge from the available symbolic facts.
+The second evaluation checks whether Layer 3 enriches symbolic predicate records
+with procedural constraints, regardless of the perception accuracy or the final validation status of each step. 
+
+\paragraph{Goal:}
+To verify that the rule layer derives requirements, expected effects, tool requirements, safety requirements, removal effects, and incompatibility constraints from the available symbolic facts. 
+
+\paragraph{Description:}
+The evaluation was run over 38 reasoning-layer outputs from IndustReal: 19 produced in the \texttt{od\_only} mode and 19 produced in the \texttt{od\_plus\_psr\_error\_hints} mode. In the latter mode, the upstream oracle pipeline was allowed to use annotations from \texttt{PSR\_labels\_with\_errors.csv} when such annotations were present. Therefore, the mode label does not imply that every corresponding clip contains an error.
+
+\paragraph{Results:}
+For readability, \Cref{tab:evaluation-constraint-coverage} reports a representative subset using
+two clips, each evaluated both without and with error-hint input. 
 
 \begin{table}[htbp]
 \centering
 \caption{Constraint inference coverage for selected evaluation clips.}
 \label{tab:evaluation-constraint-coverage}
-\begin{tabular}{p{0.24\textwidth}rrrrrr}
+\small
+\begin{tabular}{p{0.18\textwidth}crrrrrr}
 \toprule
-Clip & Predicates & Requires & Produces & Tools & Safety & Incompat. \\
+Clip & \makecell{Error hints\\enabled} & Predicates & Requires & Produces & Tools & Safety & Incompat. \\
 \midrule
-TODO & TODO & TODO & TODO & TODO & TODO & TODO \\
-TODO & TODO & TODO & TODO & TODO & TODO & TODO \\
-TODO & TODO & TODO & TODO & TODO & TODO & TODO \\
+\texttt{03\_assy\_0\_1} & No  & 106 & 13 & 11 & 1 & 3 & 0 \\
+\texttt{03\_assy\_0\_1} & Yes & 106 & 13 & 11 & 1 & 3 & 0 \\
+\texttt{03\_assy\_1\_3} & No  & 113 & 14 & 12 & 1 & 3 & 0 \\
+\texttt{03\_assy\_1\_3} & Yes & 154 & 17 & 14 & 1 & 4 & 2 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The expected result is that Layer 3 derives constraints that are not directly present as step labels. For example, an input step involving an installation action and a component can lead to a produced effect, while component-level domain knowledge can lead to required tools, safety requirements, or implicit assembly conditions.
-
-This evaluation addresses RQ1 and RQ2 by showing that symbolic predicates can be transformed into explicit procedural constraints with associated confidence and provenance.
-
-\section{Evaluation 3: Validation behavior under controlled evidence changes}
-\label{sec:evaluation-controlled-perturbations}
-
-The third evaluation examines whether Layer 4 behaves as expected when evidence is incomplete, uncertain, or contradictory. This is evaluated through controlled perturbations of the reasoning inputs. Each perturbation modifies one aspect of the evidence while keeping the remaining pipeline structure unchanged.
+The selected clips illustrate how the same rule layer responds to different
+upstream evidence. For \texttt{03\_assy\_0\_1}, enabling error hints does not change
+the inferred constraint counts because this clip does not contain explicit error
+events. In contrast, \texttt{03\_assy\_1\_3} contains additional evidence when the
+error-hint mode is enabled. This increases the number of predicates and inferred
+constraints, including two incompatibility constraints derived from explicit
+error actions. To make the coverage numbers interpretable, \Cref{tab:evaluation-constraint-examples} shows representative Layer 3 outputs from \texttt{03\_assy\_1\_3} with error hints
+enabled. 
 
 \begin{table}[htbp]
 \centering
-\caption{Controlled validation scenarios.}
-\label{tab:evaluation-controlled-scenarios}
-\begin{tabular}{p{0.25\textwidth} p{0.35\textwidth} p{0.30\textwidth}}
+\caption{Representative Layer 3 constraint inference examples from \texttt{03\_assy\_1\_3} with error hints enabled.}
+\label{tab:evaluation-constraint-examples}
+\scriptsize
+\begin{tabular}{p{0.09\textwidth} p{0.20\textwidth} p{0.40\textwidth} p{0.23\textwidth}}
 \toprule
-Scenario & Modification & Expected behavior \\
+Event & Rule case & Inferred constraints & Interpretation \\
 \midrule
-Baseline & Use the unmodified adapter and Layer 3 outputs. & Steps are classified according to available requirements, effects, and confidence values. \\
-Missing requirement & Remove or suppress a produced effect needed by a later step. & The later step records a missing requirement and becomes uncertain or rejected depending on the validation policy. \\
-Reduced confidence & Lower the confidence of selected supporting predicates. & Derived constraints and validation outcomes receive lower confidence; accepted steps may become uncertain. \\
-Compatibility violation & Inject or activate an incompatible action or object relation. & The affected step is rejected due to a hard incompatibility. \\
-Rejected dependency & Force an earlier supporting step to be rejected. & Produced effects from the rejected step are not used to support later dependencies. \\
+0 &
+Install base &
+\texttt{produces(installed, base, workspace)} &
+The base step creates an initial installed-state effect. \\
+
+2 &
+Install chassis pin &
+\texttt{requires(installed, rear\_chassis, base)}\newline
+\texttt{produces(installed, front\_rear\_chassis\_pin, rear\_chassis)}\newline
+\texttt{requires(aligned, front\_rear\_chassis\_pin, rear\_chassis)}\newline
+\texttt{requiresSafety(secured, base, workspace)} &
+One step can generate a precondition, an effect, an assembly condition, and a safety requirement. \\
+
+3 &
+Error action &
+\texttt{incompatibleAction(front\_chassis, error)} &
+An explicit error action is converted into an incompatibility constraint. \\
+
+7 &
+Remove rear chassis &
+\texttt{requires(installed, rear\_chassis, base)}\newline
+\texttt{produces(removed, rear\_chassis, base)} &
+Removal is represented as a state-changing action with a required installed state and a removed effect. \\
+
+11 &
+Install front bracket screw &
+\texttt{requires(installed, front\_bracket, front\_chassis)}\newline
+\texttt{produces(installed, front\_bracket\_screw, front\_bracket)}\newline
+\texttt{requiresTool(screwdriver)} &
+Domain knowledge about screws adds a tool requirement. \\
+
+14 &
+Error action &
+\texttt{incompatibleAction(rear\_wheel\_assy, error)} &
+A second explicit error action is also represented as an incompatibility. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-For each scenario, the validation output is inspected using \path{validation_records.jsonl}, \path{step_validations.csv}, and \path{explanation_traces.json}. The expected outcome is not simply a change in the status label, but a traceable explanation of why the status changed.
+\paragraph{Analysis:}
+The examples in \Cref{tab:evaluation-constraint-examples} show what the coverage
+counts represent. Layer 3 does not merely copy upstream step labels; it uses action
+predicates, component type information, installation targets, and domain rules to
+infer additional procedural structure. For example, Event~2 generates a
+precondition, an expected effect, an assembly condition, and a safety requirement
+from one installation step. Events~3 and~14 show how error-hint evidence is
+converted into explicit incompatibility constraints, while Event~7 shows how a
+removal action is represented through both a required installed state and a
+produced removed state.
+
+Across all evaluated clips, Layer 3 produced 1673 inferred constraints from 6568
+predicate records. The aggregate counts were 643 \texttt{produces} constraints,
+776 \texttt{requires} constraints, 67 \texttt{requiresTool} constraints,
+171 \texttt{requiresSafety} constraints, and 16 incompatibility constraints.
+Remove-action semantics were covered for all observed removal steps: all 149
+removal steps had both a corresponding \texttt{requires(... installed ...)}
+constraint and a \texttt{produces(... removed ...)} constraint.
+
+This evaluation therefore contributes to RQ1 and RQ2 by showing that symbolic
+predicates can be transformed into explicit procedural constraints with associated
+confidence and provenance. The result also shows that error-hint evidence and
+removal actions are not treated as raw labels only, but are converted into explicit
+reasoning artifacts that can be used by later validation and graph-construction
+stages.
+
+
+\section{Evaluation 3: Step validation and effect-lifecycle behavior}
+\label{sec:evaluation-validation-behavior}
+
+The third evaluation examines whether Layer 4 uses the constraints inferred by
+Layer 3 in a semantically consistent way when validating procedural steps. While
+Evaluation 2 measures whether constraints are inferred, this evaluation checks
+how those constraints affect validation outcomes, dependency support, and the
+lifecycle of produced effects.
+
+\paragraph{Goal:}
+The goal is to inspect whether requirements are supported by active previous
+effects, whether rejected steps are excluded from dependency support, whether
+removal actions invalidate earlier installed effects, and whether validation
+statuses are consistent with the configured confidence thresholds and hard
+incompatibility rules. The evaluation also checks whether lowering supporting
+confidence can change an otherwise accepted step into an \texttt{uncertain} step
+without introducing a hard incompatibility.
+
+\paragraph{Description:}
+The evaluation uses the IndustReal clip \texttt{08\_assy\_0\_1} in the
+\texttt{od\_plus\_psr\_error\_hints} mode. This clip was selected because the
+coverage analysis in Evaluation 2 showed that it contains the types of inferred
+constraints needed to exercise Layer 4 behavior, including requirements, produced
+effects, tool and safety requirements, removal effects, and incompatibility
+constraints.
+
+The evaluation focuses on the validation artifacts produced by Layer 4:
+\path{validation_records.jsonl}, \path{step_validations.csv},
+\path{explanation_traces.json}, and \path{effect_history_diagnostics.csv}. These artifacts are inspected to determine whether validation decisions are
+consistent with the inferred constraints and whether the evidence relevant to the
+selected validation scenarios is recorded explicitly. A controlled confidence perturbation is also applied to a copy of the reasoning artifacts. This perturbation is used only to test threshold-sensitive behavior.
+
+The validation scenarios are summarized in
+\Cref{tab:evaluation-validation-scenarios}.
+
+The distinction between a missing requirement and a dependency is important in
+this evaluation. A \texttt{requires(...)} constraint expresses a condition that a
+step needs. Layer 4 then searches earlier active \texttt{produces(...)} effects to
+determine whether the requirement is supported. If support is found, the step can
+receive dependency support and the graph can later expose this through a
+\texttt{DEPENDS\_ON} edge. If no active support is found, for example because the
+only possible producing step was rejected or because the effect was invalidated
+by a removal action, the requirement is recorded as missing.
+
 
 \begin{table}[htbp]
 \centering
-\caption{Validation response to controlled evidence changes.}
+\caption{Layer 4 validation behaviors evaluated in Evaluation 3.}
+\label{tab:evaluation-validation-scenarios}
+\begin{tabular}{p{0.26\textwidth} p{0.38\textwidth} p{0.26\textwidth}}
+\toprule
+Behavior & Validation question & Expected outcome \\
+\midrule
+Requirement support &
+When a step has a \texttt{requires(...)} constraint, does Layer 4 find a matching active earlier \texttt{produces(...)} effect? &
+Supported requirements are recorded in dependency support; unsupported requirements are recorded as missing. \\
+
+Hard incompatibility &
+When Layer 3 infers an \texttt{incompatibleAction(...)} constraint, does Layer 4 treat it as a hard violation? &
+The affected step is marked \texttt{rejected}. \\
+
+Rejected-step isolation &
+Can a produced effect from a rejected step support a later requirement? &
+Rejected steps remain in the trace, but their produced effects are not active support for later steps. \\
+
+Removal invalidation &
+When a step produces \texttt{removed(component, target)}, is the earlier active \texttt{installed(component, target)} effect invalidated? &
+The installed effect remains historical but is not available as active support after removal. \\
+
+Reduced confidence &
+If selected supporting confidence values are lowered below the acceptance threshold, does the status change? &
+The affected step becomes \texttt{uncertain} when evidence remains plausible but insufficient for acceptance. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\paragraph{Results:}
+The selected clip produced 34 validation records: 18 steps were classified as
+\texttt{accepted}, 10 as \texttt{uncertain}, and 6 as \texttt{rejected}. The
+effect-lifecycle diagnostics contained 20 active effects, 8 invalidated effects,
+and 4 effects marked as \texttt{inactive\_rejected}. These results indicate that
+Layer 4 did not treat all produced effects as permanently valid; rejected and
+invalidated effects were preserved in the trace but excluded from active support.
+
+The scenario-level results are summarized in
+\Cref{tab:evaluation-validation-response}. The table separates naturally observed
+validation behavior in the selected clip from the controlled confidence
+perturbation.
+
+\begin{table}[htbp]
+\centering
+\caption{Layer 4 validation response in the selected clip and controlled confidence perturbation.}
 \label{tab:evaluation-validation-response}
-\begin{tabular}{p{0.22\textwidth} p{0.22\textwidth} p{0.22\textwidth} p{0.24\textwidth}}
+\small
+\begin{tabular}{p{0.24\textwidth} p{0.34\textwidth} p{0.14\textwidth} p{0.18\textwidth}}
 \toprule
-Scenario & Baseline status & Perturbed status & Explanation trace change \\
+Scenario & Evidence inspected & Result & Supporting artifact \\
 \midrule
-Missing requirement & TODO & TODO & TODO \\
-Reduced confidence & TODO & TODO & TODO \\
-Compatibility violation & TODO & TODO & TODO \\
-Rejected dependency & TODO & TODO & TODO \\
+Requirement support &
+45 requirements inspected; 27 were supported and 18 were recorded as missing. &
+PASS &
+\path{requirement_support_results.csv} \\
+
+Hard incompatibility &
+2 incompatibility constraints inspected; both affected steps were rejected with trace evidence. &
+PASS &
+\path{incompatibility_results.csv} \\
+
+Rejected-step isolation &
+6 rejected steps inspected; no rejected step was used as later dependency support. &
+PASS &
+\path{rejected_step_isolation_results.csv} \\
+
+Removal invalidation &
+10 removal effects inspected; no invalidation inconsistencies were found. &
+PASS &
+\path{removal_invalidation_results.csv} \\
+
+Reduced confidence &
+1 controlled perturbation was applied; an accepted step became \texttt{uncertain} after confidence reduction. &
+PASS &
+\path{reduced_confidence_results.csv} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-This evaluation addresses RQ2 and RQ3. It tests whether uncertainty and missing evidence affect validation outcomes in the intended way, and whether the implementation prevents unsupported or rejected evidence from being used as dependency support.
+The results show that the validation layer reacts to different evidence
+conditions in the intended way. Requirements are either linked to active support
+or recorded as missing; hard incompatibilities cause rejection; rejected steps do
+not support later dependencies; removal effects invalidate matching installed
+effects; and confidence reduction can change an accepted step into an
+\texttt{uncertain} step without introducing a hard incompatibility.
+
+This evaluation contributes to RQ2 and RQ3 by testing whether uncertainty,
+incompatibility evidence, missing active support, and state invalidation affect
+validation outcomes in the intended way. The evaluation does not claim exhaustive
+explanation completeness for every validation record. Instead, it checks whether
+the evidence needed to explain the selected validation behaviors is present in
+the Layer 4 artifacts.
 
 \section{Evaluation 4: Procedural graph traceability}
 \label{sec:evaluation-graph-traceability}
 
-The fourth evaluation examines whether the procedural reasoning graph provides the traceability required by the thesis objective. The graph should preserve the provided order through \texttt{NEXT} edges and expose reasoning-derived relations through edges such as \texttt{REQUIRES}, \texttt{PRODUCES}, \texttt{DEPENDS\_ON}, \texttt{HAS\_PREDICATE}, \texttt{HAS\_CONSTRAINT}, \texttt{SUPPORTED\_BY}, and \texttt{DERIVED\_FROM}.
+\paragraph{Goal:}
+The fourth evaluation examines whether the procedural reasoning graph provides
+the traceability required by the thesis objective. The goal is to check whether a
+validation outcome can be inspected through the graph by following links from a
+step to its predicates, inferred constraints, dependency support, rule
+provenance, and produced-effect lifecycle.
+
+\paragraph{Description:}
+The procedural reasoning graph is evaluated as an explanation and inspection
+artifact. The graph should preserve the input order through \texttt{NEXT} edges
+and expose reasoning-derived relations through edges such as \texttt{REQUIRES},
+\texttt{PRODUCES}, \texttt{DEPENDS\_ON}, \texttt{HAS\_PREDICATE},
+\texttt{HAS\_CONSTRAINT}, \texttt{SUPPORTED\_BY}, and \texttt{DERIVED\_FROM}.
+For removal actions, the graph should also expose effect lifecycle information
+through produced-effect constraint nodes and \texttt{INVALIDATED\_BY} relations.
 
 \begin{table}[htbp]
 \centering
 \caption{Procedural reasoning graph traceability checks.}
 \label{tab:evaluation-graph-traceability}
-\begin{tabular}{p{0.34\textwidth} p{0.46\textwidth} p{0.12\textwidth}}
+\begin{tabular}{p{0.32\textwidth} p{0.48\textwidth} p{0.12\textwidth}}
 \toprule
 Check & Expected condition & Result \\
 \midrule
@@ -227,11 +428,23 @@ Missing requirement visibility & Missing requirements are represented in the val
 Evidence traceability & Step statuses can be traced to predicates and constraints. & TODO \\
 Rule provenance & Derived constraints can be linked to the rule that produced them. & TODO \\
 Rejected-step isolation & Rejected steps do not support later dependency edges. & TODO \\
+Provisional dependency visibility & Dependencies supported by uncertain prior steps are marked as provisional. & TODO \\
+Effect invalidation visibility & Invalidated produced effects are linked to the later effect that invalidated them through \texttt{INVALIDATED\_BY}. & TODO \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-This evaluation addresses RQ4 by checking whether the graph supports explanation-oriented inspection. A successful result means that a validation outcome can be traced from the step node to the evidence and rules that support or contradict it.
+\paragraph{Results:}
+The expected result is that the procedural reasoning graph makes the validation
+decision inspectable rather than only storing a final status label. A successful
+trace should allow the reader to start from a step node and follow the graph to
+the predicates, constraints, rules, dependency support, missing requirements, or
+invalidated effects that explain the validation outcome.
+
+This evaluation contributes to RQ4 by checking whether the graph supports
+explanation-oriented inspection. It also supports RQ1 by verifying that the
+procedural representation preserves both temporal order and reasoning-derived
+relations, rather than representing the procedure as a flat sequence of labels.
 
 \section{Relation to IndustReal-based upstream evaluation}
 \label{sec:evaluation-industreal-relation}
@@ -259,3 +472,4 @@ Fourth, the graph is evaluated as an explanation and inspection artifact. It is 
 \label{sec:evaluation-summary}
 
 The evaluation focuses on the reasoning contribution of this thesis. It checks that the implemented pipeline produces the expected artifacts, that Layer 3 enriches symbolic predicates with procedural constraints, that Layer 4 responds correctly to missing, uncertain, and incompatible evidence, and that the final graph exposes validation status, dependencies, evidence, and provenance. This evaluation supports the academic claim that the thesis contributes a traceable reasoning layer for validating and enriching ordered procedural artifacts, rather than a perception system or a complete XR guidance application.
+
