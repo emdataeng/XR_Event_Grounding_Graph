@@ -77,6 +77,29 @@ def test_normalize_graph_carries_graph_metadata_to_nodes() -> None:
     assert props["schema_version"] == "1.0"
     assert props["node_type"] == "Step"
     assert props["prg_id"] == "Step::s1"
+    assert normalized["nodes"][0]["labels"] == ["Step"]
+
+
+def test_normalize_graph_derives_step_status_labels() -> None:
+    normalized = normalize_graph(
+        {
+            "schema_version": "1.0",
+            "graph_name": "procedural_reasoning_graph",
+            "nodes": [
+                {"id": "Step::a", "type": "Step", "properties": {"step_id": "a", "status": "accepted"}},
+                {"id": "Step::u", "type": "Step", "properties": {"step_id": "u", "status": "uncertain"}},
+                {"id": "Step::r", "type": "Step", "properties": {"step_id": "r", "status": "rejected"}},
+                {"id": "Constraint::c", "type": "Constraint", "properties": {"status": "rejected"}},
+            ],
+            "edges": [],
+        }
+    )
+
+    labels_by_id = {node["id"]: node["labels"] for node in normalized["nodes"]}
+    assert labels_by_id["Step::a"] == ["Step", "StepAccepted"]
+    assert labels_by_id["Step::u"] == ["Step", "StepUncertain"]
+    assert labels_by_id["Step::r"] == ["Step", "StepRejected"]
+    assert labels_by_id["Constraint::c"] == ["Constraint"]
 
 
 def test_rejects_unsafe_neo4j_identifiers() -> None:
@@ -85,9 +108,14 @@ def test_rejects_unsafe_neo4j_identifiers() -> None:
         neo4j_identifier("Bad Label")
 
 
-def test_import_cyphers_use_only_semantic_node_labels_and_graph_properties() -> None:
+def test_import_cyphers_use_semantic_and_status_node_labels() -> None:
     assert "MERGE (n:Step {graph_name: r.props.graph_name, prg_id: r.id})" in node_import_cypher("Step")
     assert "ProceduralReasoningGraphNode" not in node_import_cypher("Step")
+    assert "REMOVE n:StepAccepted:StepUncertain:StepRejected" in node_import_cypher("Step")
+    assert "SET n:StepAccepted" in node_import_cypher("Step")
+    assert "SET n:StepUncertain" in node_import_cypher("Step")
+    assert "SET n:StepRejected" in node_import_cypher("Step")
+    assert "StepAccepted" not in node_import_cypher("Constraint")
     assert "MATCH (a {graph_name: r.graph_name, prg_id: r.source})" in edge_import_cypher("DEPENDS_ON")
     assert "MATCH (b {graph_name: r.graph_name, prg_id: r.target})" in edge_import_cypher("DEPENDS_ON")
     assert "[rel:DEPENDS_ON" in edge_import_cypher("DEPENDS_ON")

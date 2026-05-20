@@ -14,6 +14,11 @@ EDGE_CSV = "procedural_reasoning_graph_edges.csv"
 GRAPH_JSON = "procedural_reasoning_graph.json"
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+STEP_STATUS_LABELS = {
+    "accepted": "StepAccepted",
+    "uncertain": "StepUncertain",
+    "rejected": "StepRejected",
+}
 
 
 def load_procedural_graph(path: Path) -> dict[str, Any]:
@@ -66,10 +71,19 @@ def clear_graph_cypher() -> str:
 
 def node_import_cypher(node_type: str) -> str:
     label = neo4j_identifier(node_type)
+    status_label_setters = ""
+    if label == "Step":
+        status_label_setters = (
+            "REMOVE n:StepAccepted:StepUncertain:StepRejected "
+            "FOREACH (_ IN CASE WHEN r.props.status = 'accepted' THEN [1] ELSE [] END | SET n:StepAccepted) "
+            "FOREACH (_ IN CASE WHEN r.props.status = 'uncertain' THEN [1] ELSE [] END | SET n:StepUncertain) "
+            "FOREACH (_ IN CASE WHEN r.props.status = 'rejected' THEN [1] ELSE [] END | SET n:StepRejected) "
+        )
     return (
         f"UNWIND $rows AS r "
         f"MERGE (n:{label} {{graph_name: r.props.graph_name, prg_id: r.id}}) "
-        "SET n += r.props"
+        "SET n += r.props "
+        f"{status_label_setters}"
     )
 
 
@@ -115,7 +129,12 @@ def _normalize_node(node: dict[str, Any], graph_name: str, schema_version: Any =
             "graph_name": graph_name,
         }
     )
-    return {"id": node_id, "type": node_type, "props": neo4j_props(props)}
+    return {
+        "id": node_id,
+        "type": node_type,
+        "props": neo4j_props(props),
+        "labels": _neo4j_labels_for_node(node_type, props),
+    }
 
 
 def _normalize_edge(edge: dict[str, Any], graph_name: str) -> dict[str, Any]:
@@ -139,6 +158,15 @@ def _normalize_edge(edge: dict[str, Any], graph_name: str) -> dict[str, Any]:
         "edge_key": edge_key,
         "props": neo4j_props(props),
     }
+
+
+def _neo4j_labels_for_node(node_type: str, props: dict[str, Any]) -> list[str]:
+    labels = [node_type]
+    if node_type == "Step":
+        status_label = STEP_STATUS_LABELS.get(str(props.get("status") or "").lower())
+        if status_label:
+            labels.append(status_label)
+    return labels
 
 
 def _edge_key(source: str, target: str, edge_type: str, properties: dict[str, Any]) -> str:

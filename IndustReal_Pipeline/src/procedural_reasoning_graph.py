@@ -25,6 +25,7 @@ class ProceduralReasoningGraphInputs:
     constraints_path: Path | None = None
     exclude_rejected: bool = False
     graph_name: str = GRAPH_NAME
+    short_labels: bool = False
 
 
 def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> dict[str, Any]:
@@ -80,7 +81,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
                     "action_description": action.get("description"),
                     **object_props,
                     "display_name": _step_display_name(record),
-                    "display_label": _step_display_label(record),
+                    "display_label": _step_display_label(record, short=inputs.short_labels),
                     "short_id": _short_event_id(record.get("source_event_id") or step_id),
                     "confidence": record.get("confidence") if record.get("confidence") is not None else record.get("conf"),
                     "schema_version": record.get("schema_version"),
@@ -274,6 +275,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
         "nodes_csv_path": str(nodes_csv_path),
         "edges_csv_path": str(edges_csv_path),
         "excluded_rejected": bool(inputs.exclude_rejected),
+        "short_labels": bool(inputs.short_labels),
     }
 
 
@@ -460,10 +462,24 @@ def _step_display_name(record: dict[str, Any]) -> str:
     return f"Step {index}" if index is not None else "Step"
 
 
-def _step_display_label(record: dict[str, Any]) -> str:
+def _step_display_label(record: dict[str, Any], *, short: bool = False) -> str:
+    if short:
+        index = record.get("index")
+        prefix = f"S{index}" if index is not None else "S"
+        status_code = _step_status_code(record.get("status"))
+        return f"{prefix} [{status_code}]" if status_code else prefix
     name = _step_display_name(record)
     status = _blank_to_none(record.get("status"))
     return f"{name} [{status}]" if status else name
+
+
+def _step_status_code(status: Any) -> str | None:
+    mapping = {
+        "accepted": "A",
+        "uncertain": "U",
+        "rejected": "R",
+    }
+    return mapping.get(str(status or "").lower())
 
 
 def _constraint_display_name(name: str, args: list[Any]) -> str:

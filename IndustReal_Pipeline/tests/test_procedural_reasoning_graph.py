@@ -471,6 +471,59 @@ def test_builds_graph_with_custom_graph_name(tmp_path: Path) -> None:
     assert graph["graph_name"] == "procedural_reasoning_graph::clip_a"
 
 
+def test_builds_graph_with_short_step_display_labels(tmp_path: Path) -> None:
+    validations_path = tmp_path / "validation_records.jsonl"
+    output_dir = tmp_path / "graph"
+    _write_jsonl(
+        validations_path,
+        [
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s0",
+                "source_event_id": "event_0",
+                "index": 0,
+                "status": "accepted",
+                "confidence": 0.9,
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s1",
+                "source_event_id": "event_1",
+                "index": 1,
+                "status": "uncertain",
+                "confidence": 0.5,
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+            {
+                "schema_version": "thesis_layer4_validation.v1",
+                "step_id": "s2",
+                "source_event_id": "event_2",
+                "index": 2,
+                "status": "rejected",
+                "confidence": 0.2,
+                "trace": {"predicate_evidence": [], "constraint_evidence": [], "dependency_evidence": []},
+            },
+        ],
+    )
+
+    result = build_procedural_reasoning_graph(
+        ProceduralReasoningGraphInputs(
+            validations_path=validations_path,
+            output_dir=output_dir,
+            short_labels=True,
+        )
+    )
+
+    graph = json.loads((output_dir / "procedural_reasoning_graph.json").read_text(encoding="utf-8"))
+    nodes_by_id = {node["id"]: node for node in graph["nodes"]}
+    assert nodes_by_id["Step::s0"]["properties"]["display_label"] == "S0 [A]"
+    assert nodes_by_id["Step::s1"]["properties"]["display_label"] == "S1 [U]"
+    assert nodes_by_id["Step::s2"]["properties"]["display_label"] == "S2 [R]"
+    assert nodes_by_id["Step::s0"]["properties"]["display_name"] == "Step 0"
+    assert result["short_labels"] is True
+
+
 def _has_edge(edges: list[dict[str, object]], source: str, target: str, edge_type: str) -> bool:
     return any(edge["source"] == source and edge["target"] == target and edge["type"] == edge_type for edge in edges)
 
