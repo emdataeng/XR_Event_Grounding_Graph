@@ -16,6 +16,10 @@ The flow is:
 
 ```text
 existing graph CSVs
+  -> optional UI graph-data export
+  -> platform/data/graph-data.js
+
+existing graph CSVs
   -> Layer 3 reasoning adapter
   -> step_records.jsonl + predicates.jsonl
   -> Layer 3 rule inference
@@ -35,7 +39,10 @@ scripts/15_run_layer3_inference.py
 scripts/16_run_layer4_validation.py
 scripts/17_build_procedural_reasoning_graph.py
 scripts/18_import_procedural_reasoning_graph_neo4j.py
+scripts/19_build_graph_data_js.py
 ```
+
+`scripts/19_build_graph_data_js.py` is a downstream UI export helper. It reads the regular per-clip result JSON files under `results/` together with the Neo4j CSV export under `results/neo4j/<run_id>/`, then writes `platform/data/graph-data.js` as `window.INDUSTREAL_DATA = {...}` for the browser UI. It does not feed the Layer 3 or Layer 4 reasoning artifacts.
 
 Current implementation modules:
 
@@ -548,6 +555,17 @@ Import the procedural reasoning graph into Neo4j:
 .venv\Scripts\python.exe scripts\18_import_procedural_reasoning_graph_neo4j.py `
   --graph results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
 ```
+
+Build the browser UI graph data from the IndustReal result JSON files and Neo4j CSV export:
+
+```powershell
+.venv\Scripts\python.exe scripts\19_build_graph_data_js.py `
+  --neo4j-dir results\neo4j\raw_cad_dataset__all_test_clips `
+  --results-dir results `
+  --output ..\platform\data\graph-data.js
+```
+
+The default output path is also `..\platform\data\graph-data.js` relative to this repository. Override `--run-id`, `--mode`, or `--archive` when building UI data for a different Neo4j export or result naming convention.
 
 Verify Neo4j labels after import:
 
