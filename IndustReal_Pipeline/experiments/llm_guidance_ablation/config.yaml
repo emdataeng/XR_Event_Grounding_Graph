@@ -1,0 +1,34 @@
+# OpenAI-compatible API settings. LM Studio defaults to http://localhost:1234/v1.
+api_base_url: "http://localhost:1234/v1"
+api_key: "lm-studio"
+model_name: "local-model-name"
+temperature: 0.2
+max_tokens: 512
+
+dataset:
+  default_kind: "industreal"
+  default_clip_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1"
+  available_kinds:
+    - "industreal"
+    - "custom"
+
+input_paths:
+  industreal_root: "results\\neo4j\\raw_cad_dataset__all_test_clips"
+  generated_steps: "PLACEHOLDER\\path\\to\\generated_steps.json"
+  domain_config: "PLACEHOLDER\\path\\to\\domain_config.yaml"
+  thesis_rules: "PLACEHOLDER\\path\\to\\thesis_rules.yaml"
+  procedural_reasoning_graph: "PLACEHOLDER\\path\\to\\procedural_reasoning_graph.json"
+  test_cases: "experiments\\llm_guidance_ablation\\test_cases\\novice_questions.yaml"
+
+output_paths:
+  root: "experiments\\llm_guidance_ablation\\outputs"
+  responses: "experiments\\llm_guidance_ablation\\outputs\\responses.jsonl"
+  evaluations: "experiments\\llm_guidance_ablation\\outputs\\evaluations.jsonl"
+
+pipeline_scripts:
+  - "scripts\\14_build_layer3_reasoning_adapter.py"
+  - "scripts\\15_run_layer3_inference.py"
+  - "scripts\\16_run_layer4_validation.py"
+  - "scripts\\17_build_procedural_reasoning_graph.py"
+  - "scripts\\18_import_procedural_reasoning_graph_neo4j.py"
+  - "scripts\\19_build_graph_data_js.py"
