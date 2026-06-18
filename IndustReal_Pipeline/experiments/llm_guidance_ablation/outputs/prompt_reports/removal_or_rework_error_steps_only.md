@@ -1,13 +1,10 @@
-# Prompt Report: case_002_possible_wrong_part
+# Prompt Report: removal_or_rework_error
 
-Generated at: 2026-06-18T16:36:57.447808+00:00
-
-## Case
+Generated at: 2026-06-18T19:08:54.185605+00:00
 
 - Condition: `steps_only`
-- Case id: `case_002_possible_wrong_part`
-- Step id: `raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_002`
-- Operator question: This part looks similar to another one. How can I check whether it is the correct component?
+- Risk type: `removal_or_rework_error`
+- Cases in this report: `2`
 
 ## API Request Settings
 
@@ -24,7 +21,7 @@ Generated at: 2026-06-18T16:36:57.447808+00:00
 - Thesis rules included: `no`
 - Procedural reasoning graph included: `no`
 
-For the current `steps_only` condition, no full list of steps is sent unless it is present in the configured generated-steps artifact and matches the test case `step_id`.
+For the current `steps_only` condition, the prompt includes the ordered step list loaded from the configured `generated_steps` artifact. The current test case step is marked with `[CURRENT]` when its `step_id` matches a record in that file.
 
 ## OpenAI-Compatible Chat Messages
 
@@ -44,7 +41,7 @@ You are an assistant helping a novice assembly operator. Answer using only the p
 
 ```text
 Current step id:
-raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_002
+raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_009
 
 Generated procedural steps:
 Available assembly steps:
@@ -62,7 +59,7 @@ Available assembly steps:
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
   - time_window: start_frame=709, end_frame=1187
   - confidence: 1.0
-- Step 2: Install front rear chassis pin [CURRENT]
+- Step 2: Install front rear chassis pin
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
   - acted_on_object: front rear chassis pin
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1
@@ -111,7 +108,7 @@ Available assembly steps:
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
   - time_window: start_frame=1788, end_frame=2735
   - confidence: 1.0
-- Step 9: Remove front wheel assy
+- Step 9: Remove front wheel assy [CURRENT]
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
   - acted_on_object: front wheel assy
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8
@@ -127,20 +124,45 @@ Available assembly steps:
   - confidence: 1.0
 
 Operator question:
-This part looks similar to another one. How can I check whether it is the correct component?
+I may have removed the wrong part. What should I check before continuing?
 ```
 
 ## LM Studio Compatibility Fallback
 
-Some LM Studio model templates reject the `system` role. If that happens, the client retries with a single `user` message containing the same instruction and question content:
+Some LM Studio model templates reject the `system` role. If that happens, the client retries with a single `user` message instead of separate `system` and `user` messages.
+
+The fallback message has two sections:
+
+- `Instructions`: contains the same system prompt shown in Message 1.
+- `User question`: contains the same current step id, generated procedural steps, and operator question shown in Message 2.
+
+No additional evaluation metadata is added in the fallback path.
+
+
+## Case: rework_001_remove_step_confusion
+
+- Step id: `raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_009`
+- Operator question: This step says remove the front wheel assembly. Should I really take it off now?
+
+### OpenAI-Compatible Chat Messages
+
+These are the nominal chat messages sent by the experiment runner for this case.
+
+#### Message 1
+
+- Role: `system`
 
 ```text
-Instructions:
 You are an assistant helping a novice assembly operator. Answer using only the procedural step context provided. Do not infer missing assembly steps from general knowledge. Be concise, practical, and safety-aware. If the provided step context is ambiguous, say what is uncertain.
+```
 
-User question:
+#### Message 2
+
+- Role: `user`
+
+```text
 Current step id:
-raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_002
+raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_009
 
 Generated procedural steps:
 Available assembly steps:
@@ -158,7 +180,7 @@ Available assembly steps:
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
   - time_window: start_frame=709, end_frame=1187
   - confidence: 1.0
-- Step 2: Install front rear chassis pin [CURRENT]
+- Step 2: Install front rear chassis pin
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
   - acted_on_object: front rear chassis pin
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1
@@ -207,7 +229,7 @@ Available assembly steps:
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
   - time_window: start_frame=1788, end_frame=2735
   - confidence: 1.0
-- Step 9: Remove front wheel assy
+- Step 9: Remove front wheel assy [CURRENT]
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
   - acted_on_object: front wheel assy
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8
@@ -223,15 +245,135 @@ Available assembly steps:
   - confidence: 1.0
 
 Operator question:
-This part looks similar to another one. How can I check whether it is the correct component?
+This step says remove the front wheel assembly. Should I really take it off now?
 ```
 
-## Evaluation Metadata Not Sent To LLM
+### Evaluation Metadata Not Sent To LLM
 
 These fields are saved in experiment outputs for evaluation only.
 
-- Risk type: `component_confusion`
+- Risk type: `removal_or_rework_error`
 - Expected answer elements:
-  - compare the component against the step requirement
-  - use available identifiers or visual features
-  - avoid installing an uncertain component
+  - identify that the current action is remove
+  - confirm the acted-on object
+  - recommend following the current step if it matches the instructions
+
+## Case: rework_002_removed_wrong_part
+
+- Step id: `raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_009`
+- Operator question: I may have removed the wrong part. What should I check before continuing?
+
+### OpenAI-Compatible Chat Messages
+
+These are the nominal chat messages sent by the experiment runner for this case.
+
+#### Message 1
+
+- Role: `system`
+
+```text
+You are an assistant helping a novice assembly operator. Answer using only the procedural step context provided. Do not infer missing assembly steps from general knowledge. Be concise, practical, and safety-aware. If the provided step context is ambiguous, say what is uncertain.
+```
+
+#### Message 2
+
+- Role: `user`
+
+```text
+Current step id:
+raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_009
+
+Generated procedural steps:
+Available assembly steps:
+- Step 0: Install base
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0
+  - acted_on_object: base
+  - previous_step_id: none
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1
+  - time_window: start_frame=709, end_frame=1187
+  - confidence: 1.0
+- Step 1: Install rear chassis
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1
+  - acted_on_object: rear chassis
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
+  - time_window: start_frame=709, end_frame=1187
+  - confidence: 1.0
+- Step 2: Install front rear chassis pin
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
+  - acted_on_object: front rear chassis pin
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3
+  - time_window: start_frame=709, end_frame=1187
+  - confidence: 1.0
+- Step 3: Install front chassis
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3
+  - acted_on_object: front chassis
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4
+  - time_window: start_frame=1187, end_frame=1788
+  - confidence: 1.0
+- Step 4: Install front chassis pin
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4
+  - acted_on_object: front chassis pin
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5
+  - time_window: start_frame=1187, end_frame=1788
+  - confidence: 1.0
+- Step 5: Install rear rear chassis pin
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5
+  - acted_on_object: rear rear chassis pin
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6
+  - time_window: start_frame=1788, end_frame=2735
+  - confidence: 1.0
+- Step 6: Install front bracket
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6
+  - acted_on_object: front bracket
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7
+  - time_window: start_frame=1788, end_frame=2735
+  - confidence: 1.0
+- Step 7: Install front bracket screw
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7
+  - acted_on_object: front bracket screw
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8
+  - time_window: start_frame=1788, end_frame=2735
+  - confidence: 1.0
+- Step 8: Install front wheel assy
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8
+  - acted_on_object: front wheel assy
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
+  - time_window: start_frame=1788, end_frame=2735
+  - confidence: 1.0
+- Step 9: Remove front wheel assy [CURRENT]
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
+  - acted_on_object: front wheel assy
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8
+  - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10
+  - time_window: start_frame=2735, end_frame=None
+  - confidence: 1.0
+- Step 10: Install rear wheel assy
+  - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10
+  - acted_on_object: rear wheel assy
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
+  - next_step_id: none
+  - time_window: start_frame=2735, end_frame=None
+  - confidence: 1.0
+
+Operator question:
+I may have removed the wrong part. What should I check before continuing?
+```
+
+### Evaluation Metadata Not Sent To LLM
+
+These fields are saved in experiment outputs for evaluation only.
+
+- Risk type: `removal_or_rework_error`
+- Expected answer elements:
+  - identify the intended acted-on object
+  - compare the removed part with the current step
+  - recommend resolving the mismatch before proceeding
+

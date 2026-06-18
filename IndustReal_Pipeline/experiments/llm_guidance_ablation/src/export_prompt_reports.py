@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from context_builders import PromptCondition, build_context
-from run_experiment import load_artifacts, load_config, load_test_cases, resolve_configured_path
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
@@ -29,55 +28,57 @@ def export_prompt_reports(
     config: dict[str, Any],
     condition: PromptCondition,
     output_dir: Path | None = None,
+    test_cases: list[dict[str, Any]] | None = None,
+    artifacts: dict[str, Any] | None = None,
 ) -> list[Path]:
-    """Write one Markdown file per test case documenting the LLM request."""
+    """Write one Markdown file per risk type documenting LLM requests."""
     if condition is not PromptCondition.STEPS_ONLY:
         raise NotImplementedError(
             f"{condition.value} prompt reports are not implemented yet. Use --condition steps_only."
         )
 
-    test_cases = load_test_cases(config)
-    artifacts = load_artifacts(config)
-    report_dir = output_dir or resolve_configured_path("experiments/llm_guidance_ablation/outputs/prompt_reports")
+    if test_cases is None or artifacts is None:
+        from run_experiment import load_artifacts, load_test_cases
+
+        test_cases = load_test_cases(config)
+        artifacts = load_artifacts(config)
+
+    report_dir = output_dir or (EXPERIMENT_ROOT / "outputs" / "prompt_reports")
     report_dir.mkdir(parents=True, exist_ok=True)
 
     written_paths = []
-    for test_case in test_cases:
-        context = build_context(condition, test_case, artifacts)
-        path = report_dir / f"{_slug(test_case.get('case_id', 'case'))}_{condition.value}.md"
+    for risk_type, grouped_cases in _group_cases_by_risk_type(test_cases).items():
+        path = report_dir / f"{_slug(risk_type)}_{condition.value}.md"
         path.write_text(
-            render_prompt_report(config, condition, test_case, context, artifacts),
+            render_prompt_report_group(config, condition, risk_type, grouped_cases, artifacts),
             encoding="utf-8",
         )
         written_paths.append(path)
     return written_paths
 
 
-def render_prompt_report(
+def render_prompt_report_group(
     config: dict[str, Any],
     condition: PromptCondition,
-    test_case: dict[str, Any],
-    context: dict[str, str],
+    risk_type: str,
+    test_cases: list[dict[str, Any]],
     artifacts: dict[str, Any],
 ) -> str:
-    """Render a single prompt report as Markdown."""
+    """Render one Markdown report containing all prompts for a risk type."""
     generated_steps = artifacts.get("generated_steps")
     generated_steps_loaded = bool(generated_steps)
-    fallback_template = artifacts["prompt_templates"]["lm_studio_fallback"]["user_template"]
-    fallback_user_prompt = fallback_template.format_map(
-        {"system_prompt": context["system_prompt"], "user_prompt": context["user_prompt"]}
-    )
+    case_sections = []
+    for test_case in test_cases:
+        context = build_context(condition, test_case, artifacts)
+        case_sections.append(render_prompt_case_section(test_case, context))
 
-    return f"""# Prompt Report: {test_case.get("case_id")}
+    return f"""# Prompt Report: {risk_type}
 
 Generated at: {datetime.now(timezone.utc).isoformat()}
 
-## Case
-
 - Condition: `{condition.value}`
-- Case id: `{test_case.get("case_id")}`
-- Step id: `{test_case.get("step_id")}`
-- Operator question: {test_case.get("question")}
+- Risk type: `{risk_type}`
+- Cases in this report: `{len(test_cases)}`
 
 ## API Request Settings
 
@@ -94,7 +95,7 @@ Generated at: {datetime.now(timezone.utc).isoformat()}
 - Thesis rules included: `no`
 - Procedural reasoning graph included: `no`
 
-For the current `steps_only` condition, no full list of steps is sent unless it is present in the configured generated-steps artifact and matches the test case `step_id`.
+For the current `steps_only` condition, the prompt includes the ordered step list loaded from the configured `generated_steps` artifact. The current test case step is marked with `[CURRENT]` when its `step_id` matches a record in that file.
 
 ## OpenAI-Compatible Chat Messages
 
@@ -118,13 +119,48 @@ These are the nominal chat messages sent by the experiment runner.
 
 ## LM Studio Compatibility Fallback
 
-Some LM Studio model templates reject the `system` role. If that happens, the client retries with a single `user` message containing the same instruction and question content:
+Some LM Studio model templates reject the `system` role. If that happens, the client retries with a single `user` message instead of separate `system` and `user` messages.
+
+The fallback message has two sections:
+
+- `Instructions`: contains the same system prompt shown in Message 1.
+- `User question`: contains the same current step id, generated procedural steps, and operator question shown in Message 2.
+
+No additional evaluation metadata is added in the fallback path.
+
+{''.join(case_sections)}
+"""
+
+
+def render_prompt_case_section(test_case: dict[str, Any], context: dict[str, str]) -> str:
+    """Render one test case section inside a grouped prompt report."""
+    return f"""
+## Case: {test_case.get("case_id")}
+
+- Step id: `{test_case.get("step_id")}`
+- Operator question: {test_case.get("question")}
+
+### OpenAI-Compatible Chat Messages
+
+These are the nominal chat messages sent by the experiment runner for this case.
+
+#### Message 1
+
+- Role: `system`
 
 ```text
-{fallback_user_prompt}
+{context["system_prompt"]}
 ```
 
-## Evaluation Metadata Not Sent To LLM
+#### Message 2
+
+- Role: `user`
+
+```text
+{context["user_prompt"]}
+```
+
+### Evaluation Metadata Not Sent To LLM
 
 These fields are saved in experiment outputs for evaluation only.
 
@@ -141,6 +177,15 @@ def _render_expected_elements(elements: Any) -> str:
     return "\n".join(f"  - {element}" for element in elements)
 
 
+def _group_cases_by_risk_type(test_cases: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """Group flattened test cases by risk type while preserving order."""
+    grouped_cases: dict[str, list[dict[str, Any]]] = {}
+    for test_case in test_cases:
+        risk_type = str(test_case.get("risk_type") or "unclassified")
+        grouped_cases.setdefault(risk_type, []).append(test_case)
+    return grouped_cases
+
+
 def _slug(value: Any) -> str:
     """Create a filesystem-friendly filename fragment."""
     text = str(value or "case").lower()
@@ -152,6 +197,8 @@ def main() -> None:
     """CLI entry point."""
     try:
         args = parse_args()
+        from run_experiment import load_config
+
         output_dir = Path(args.output_dir) if args.output_dir else None
         paths = export_prompt_reports(load_config(args.config), PromptCondition(args.condition), output_dir)
     except Exception as exc:

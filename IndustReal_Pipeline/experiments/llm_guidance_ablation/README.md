@@ -74,6 +74,8 @@ This folder currently contains the first working runner for the `steps_only` con
 
 Run settings live in `configs/config.yaml`. Prompt templates live in `configs/prompts.yaml`, including the normal chat prompts and the LM Studio fallback message used when a model template rejects the `system` role.
 
+Operator prompts for the novice test cases live in `configs/novice_questions.yaml`. They are grouped by `risk_type` so cases can be removed or curated easily. The `question` field is sent to the LLM as the operator question; `risk_type` and `expected_answer_elements` are evaluation-only fields and must not be sent to the LLM.
+
 ## Planned Commands
 
 From `experiments/llm_guidance_ablation`, run the first implemented condition:
@@ -88,9 +90,25 @@ From the repository root, the equivalent command is:
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition steps_only --config experiments\llm_guidance_ablation\configs\config.yaml
 ```
 
-The runner writes a timestamped JSONL file under `outputs/`. Output filenames use local time with a timezone offset, for example `responses_steps_only_20260618T184039+0200.jsonl`. Each row includes `risk_type` and `expected_answer_elements` for evaluation, but those fields are not included in prompts sent to the LLM.
+## Run Artifacts
 
-Export report-ready Markdown files showing the prompt content for each test case:
+The runner writes a timestamped JSONL response file under `outputs/`. Output filenames use local time with a timezone offset, for example:
+
+```text
+outputs/responses_steps_only_20260618T184039+0200.jsonl
+```
+
+Each JSONL row includes `risk_type` and `expected_answer_elements` for evaluation, but those fields are not included in prompts sent to the LLM.
+
+Every successful experiment run automatically writes a matching prompt-report snapshot under `outputs/prompt_reports/` using the same condition and timestamp:
+
+```text
+outputs/prompt_reports/steps_only_20260618T184039+0200/
+```
+
+Those Markdown reports show the exact prompt content associated with the response file from that run. Reports are grouped by `risk_type`, so each Markdown file contains the prompts for one risk category.
+
+The standalone exporter below can still be used when you want to regenerate prompt reports without calling the LLM. By default, it writes to `outputs/prompt_reports/` rather than a timestamped run folder:
 
 ```powershell
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\export_prompt_reports.py --condition steps_only --config experiments\llm_guidance_ablation\configs\config.yaml

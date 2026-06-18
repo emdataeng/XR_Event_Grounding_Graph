@@ -18,7 +18,7 @@ input_paths:
   domain_config: "PLACEHOLDER\\path\\to\\domain_config.yaml"
   thesis_rules: "PLACEHOLDER\\path\\to\\thesis_rules.yaml"
   procedural_reasoning_graph: "PLACEHOLDER\\path\\to\\procedural_reasoning_graph.json"
-  test_cases: "experiments\\llm_guidance_ablation\\test_cases\\novice_questions.yaml"
+  test_cases: "experiments\\llm_guidance_ablation\\configs\\novice_questions.yaml"
 
 prompt_paths:
   prompts: "experiments\\llm_guidance_ablation\\configs\\prompts.yaml"

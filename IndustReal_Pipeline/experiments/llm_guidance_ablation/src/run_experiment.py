@@ -12,6 +12,7 @@ from typing import Any
 import yaml
 
 from context_builders import PromptCondition, build_context
+from export_prompt_reports import export_prompt_reports
 from lm_client import ask_llm, set_config_path
 
 
@@ -49,8 +50,29 @@ def load_test_cases(config: dict[str, Any]) -> list[dict[str, Any]]:
         data = yaml.safe_load(handle) or {}
 
     test_cases = data.get("test_cases")
-    if not isinstance(test_cases, list):
-        raise ValueError(f"Expected 'test_cases' to be a list in {test_cases_path}")
+    if isinstance(test_cases, list):
+        return test_cases
+
+    risk_groups = data.get("risk_groups")
+    if isinstance(risk_groups, dict):
+        return flatten_risk_groups(risk_groups)
+
+    raise ValueError(f"Expected 'test_cases' list or 'risk_groups' mapping in {test_cases_path}")
+
+
+def flatten_risk_groups(risk_groups: dict[str, Any]) -> list[dict[str, Any]]:
+    """Flatten risk-grouped test cases while preserving the group as risk_type."""
+    test_cases = []
+    for risk_type, grouped_cases in risk_groups.items():
+        if not isinstance(grouped_cases, list):
+            raise ValueError(f"Expected risk group '{risk_type}' to contain a list of cases.")
+
+        for test_case in grouped_cases:
+            if not isinstance(test_case, dict):
+                raise ValueError(f"Expected each case in risk group '{risk_type}' to be a mapping.")
+            flattened_case = dict(test_case)
+            flattened_case.setdefault("risk_type", risk_type)
+            test_cases.append(flattened_case)
     return test_cases
 
 
@@ -112,7 +134,13 @@ def output_path_for_run(config: dict[str, Any], condition: PromptCondition, time
     return output_root / f"responses_{condition.value}_{timestamp}.jsonl"
 
 
-def run_experiment(condition: PromptCondition, config: dict[str, Any]) -> Path:
+def prompt_report_dir_for_run(config: dict[str, Any], condition: PromptCondition, timestamp: str) -> Path:
+    """Create the prompt report directory for a run."""
+    output_root = resolve_configured_path(config.get("output_paths", {}).get("root", "outputs"))
+    return output_root / "prompt_reports" / f"{condition.value}_{timestamp}"
+
+
+def run_experiment(condition: PromptCondition, config: dict[str, Any]) -> tuple[Path, Path]:
     """Run one prompting condition across all novice question test cases."""
     if condition is not PromptCondition.STEPS_ONLY:
         raise NotImplementedError(
@@ -123,6 +151,7 @@ def run_experiment(condition: PromptCondition, config: dict[str, Any]) -> Path:
     artifacts = load_artifacts(config)
     timestamp = local_timestamp_for_filename()
     output_path = output_path_for_run(config, condition, timestamp)
+    prompt_report_dir = prompt_report_dir_for_run(config, condition, timestamp)
 
     with output_path.open("w", encoding="utf-8") as handle:
         for test_case in test_cases:
@@ -140,7 +169,8 @@ def run_experiment(condition: PromptCondition, config: dict[str, Any]) -> Path:
             }
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-    return output_path
+    export_prompt_reports(config, condition, prompt_report_dir, test_cases, artifacts)
+    return output_path, prompt_report_dir
 
 
 def local_timestamp_for_filename() -> str:
@@ -155,7 +185,7 @@ def main() -> None:
         set_config_path(args.config)
         config = load_config(args.config)
         condition = PromptCondition(args.condition)
-        output_path = run_experiment(condition, config)
+        output_path, prompt_report_dir = run_experiment(condition, config)
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
@@ -170,6 +200,7 @@ def main() -> None:
         raise SystemExit(1) from exc
 
     print(f"Wrote responses to {output_path}")
+    print(f"Wrote prompt reports to {prompt_report_dir}")
 
 
 if __name__ == "__main__":
