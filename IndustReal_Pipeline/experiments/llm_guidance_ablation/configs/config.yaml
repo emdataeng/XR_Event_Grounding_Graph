@@ -1,7 +1,7 @@
 # OpenAI-compatible API settings. LM Studio defaults to http://localhost:1234/v1.
 api_base_url: "http://localhost:1234/v1"
 api_key: "lm-studio"
-model_name: "local-model-name"
+model_name: "mistralai/mistral-7b-instruct-v0.3"
 temperature: 0.2
 max_tokens: 512
 
@@ -14,11 +14,14 @@ dataset:
 
 input_paths:
   industreal_root: "results\\neo4j\\raw_cad_dataset__all_test_clips"
-  generated_steps: "PLACEHOLDER\\path\\to\\generated_steps.json"
+  generated_steps: "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\step_records.jsonl"
   domain_config: "PLACEHOLDER\\path\\to\\domain_config.yaml"
   thesis_rules: "PLACEHOLDER\\path\\to\\thesis_rules.yaml"
   procedural_reasoning_graph: "PLACEHOLDER\\path\\to\\procedural_reasoning_graph.json"
   test_cases: "experiments\\llm_guidance_ablation\\test_cases\\novice_questions.yaml"
+
+prompt_paths:
+  prompts: "experiments\\llm_guidance_ablation\\configs\\prompts.yaml"
 
 output_paths:
   root: "experiments\\llm_guidance_ablation\\outputs"

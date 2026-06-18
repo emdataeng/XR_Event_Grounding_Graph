@@ -9,10 +9,13 @@ from typing import Any
 import yaml
 
 
+EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
+
+
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for response evaluation."""
     parser = argparse.ArgumentParser(description="Evaluate generated ablation responses.")
-    parser.add_argument("--config", default="experiments/llm_guidance_ablation/config.yaml")
+    parser.add_argument("--config", default=str(EXPERIMENT_ROOT / "configs" / "config.yaml"))
     return parser.parse_args()
 
 
