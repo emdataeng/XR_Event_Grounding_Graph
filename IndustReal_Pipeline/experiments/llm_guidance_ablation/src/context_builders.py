@@ -6,6 +6,8 @@ import json
 from enum import Enum
 from typing import Any
 
+from graph_loader import extract_step_subgraph, serialize_graph_evidence
+
 
 class PromptCondition(str, Enum):
     """Supported experiment prompting conditions."""
@@ -71,15 +73,41 @@ def build_symbolic_domain_context(test_case: dict[str, Any], artifacts: dict[str
 
 
 def build_graph_grounded_context(test_case: dict[str, Any], artifacts: dict[str, Any] | None = None) -> dict[str, str]:
-    """Build prompts using generated steps plus procedural graph context.
+    """Build prompts using generated steps plus local procedural graph evidence."""
+    artifacts = artifacts or {}
+    step_id = str(test_case.get("step_id", "")).strip()
+    question = str(test_case.get("question", "")).strip()
+    if not step_id:
+        raise ValueError("Test case is missing required field: step_id")
+    if not question:
+        raise ValueError("Test case is missing required field: question")
 
-    Placeholder for the next milestone. It currently returns a minimal prompt
-    with a clear marker that graph grounding has not been implemented.
-    """
-    base_context = build_steps_only_context(test_case, artifacts)
-    prompts = _condition_prompts(artifacts or {}, "graph_grounded")
-    base_context["user_prompt"] += prompts["user_suffix_placeholder"]
-    return base_context
+    graph_evidence = graph_evidence_for_step(step_id, artifacts)
+    step_context = _step_list_artifact(artifacts)
+    prompts = _condition_prompts(artifacts, "graph_grounded")
+    system_prompt = prompts["system_with_context"] if step_context else prompts["system_missing_context"]
+    user_prompt = _render_template(
+        prompts["user_template"],
+        step_id=step_id,
+        step_context=step_context,
+        graph_evidence=graph_evidence,
+        question=question,
+    )
+    return {"system_prompt": system_prompt, "user_prompt": user_prompt}
+
+
+def graph_evidence_for_step(step_id: str, artifacts: dict[str, Any]) -> str:
+    """Extract and serialize the exact graph evidence inserted into a prompt."""
+    graph = artifacts.get("procedural_reasoning_graph")
+    if not isinstance(graph, dict):
+        raise ValueError("Required prompt artifact was not loaded: procedural_reasoning_graph")
+    step_hops = int(artifacts.get("step_hops", 1))
+    evidence_hops = int(artifacts.get("evidence_hops", 2))
+    subgraph = extract_step_subgraph(graph, step_id, step_hops, evidence_hops)
+    return (
+        f"Retrieval policy: step_hops={step_hops}, evidence_hops={evidence_hops}\n"
+        + serialize_graph_evidence(subgraph, current_step_id=step_id)
+    )
 
 
 def build_context(

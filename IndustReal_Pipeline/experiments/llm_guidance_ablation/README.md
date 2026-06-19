@@ -10,7 +10,7 @@ The framework is organized around three conditions:
 
 - `steps_only`: The LLM receives the frozen procedural step-list artifact together with the novice question.
 - `symbolic_domain`: The LLM receives the same frozen step-list artifact, a deterministic predicate window around the current step, and the complete raw text of `thesis_rules.yaml`.
-- `graph_grounded`: The LLM will receive the frozen procedural step list plus context retrieved from the procedural reasoning graph.
+- `graph_grounded`: The LLM receives the frozen procedural step list plus a local neighborhood retrieved from the procedural reasoning graph.
 
 Evaluation metadata such as `risk_type` and `expected_answer_elements` is used only after responses are generated. It must never be included in prompts sent to the LLM.
 
@@ -28,7 +28,7 @@ validation records, or the procedural reasoning graph. Apart from the rendered
 step-list artifact, the prompt contains only the prompt instructions, current step id,
 and novice question.
 
-Both implemented conditions must use the same `input_paths.step_list` artifact. This is the fairness invariant for the ablation: `symbolic_domain` differs only by adding predicates and rules.
+All three conditions use the same `input_paths.step_list` artifact. This is the fairness invariant for the ablation: the grounded conditions differ only in the additional evidence they provide.
 
 ```yaml
 input_paths:
@@ -38,6 +38,7 @@ input_paths:
 
 context_retrieval:
   step_hops: 1
+  evidence_hops: 2
 ```
 
 Generate or refresh the step-list artifact from `step_records.jsonl` with:
@@ -76,10 +77,40 @@ step. Predicate records are projected deterministically to the fields used for
 rule matching: `step_id`, `name`, `args`, and `conf`; verbose provenance, notes,
 and record identifiers are excluded to stay within the model context limit.
 
-The future `graph_grounded` condition should use the same `step_hops` value when
-extracting its subgraph. This controls the sequence neighborhood consistently
-across conditions, although graph hops and sequence hops must be reported as
-distinct retrieval semantics if the graph traversal follows non-sequence edges.
+### Graph Retrieval Budgets
+
+The `graph_grounded` condition uses two deterministic traversal budgets:
+
+- `step_hops` follows only `NEXT` edges between `Step` nodes. It uses the same
+  radius as the `symbolic_domain` predicate artifact, so both conditions cover
+  the same previous/current/next sequence window.
+- `evidence_hops` follows semantic relations from the original current step.
+  With the default value `2`, this includes paths such as
+  `Step -> Predicate -> Source` and `Step -> Constraint -> Rule`.
+
+The semantic edge allowlist includes `HAS_PREDICATE`, `HAS_CONSTRAINT`,
+`REQUIRES`, `PRODUCES`, `SUPPORTED_BY`, `DERIVED_FROM`, `USES`, `HAS_ENTITY`,
+`INVALIDATED_BY`, and `DEPENDS_ON`. Sequence neighbors and any other discovered
+`Step` nodes are included but not expanded semantically. `Entity`, `Rule`, and
+`Source` nodes are also terminal. This prevents `NEXT` chains, shared entities,
+and provenance branches from pulling unrelated portions of the graph into the
+prompt.
+
+Traversal is reproducible: nodes and edges are processed in sorted order,
+edges are deduplicated by source, relation, and target, and both hop limits are
+fixed in `config.yaml`. Graph-grounded prompt reports show the two budgets,
+node and relationship counts, and the exact serialized evidence sent to the
+LLM.
+
+The graph serializer uses a hybrid edge format. Every node is defined once with
+a compact alias such as `N27`. Most high-volume semantic edges use those aliases
+to control prompt size, for example `N27 -[HAS_PREDICATE]-> N10`. For `NEXT` and
+`DEPENDS_ON`, the endpoints also include short step identifiers, for example
+`N27<Step:event_1> -[NEXT]-> N29<Step:event_2>`. Direction and step identity are
+especially important for these ordering relationships, while expanding every
+predicate, constraint, entity, rule, and source label on every edge would add
+substantial repetition. The serializer does not generate a separate interpreted
+sequence summary; the graph relationships remain the authoritative evidence.
 
 ### Layer 2 to Layer 3 Boundary
 
@@ -138,7 +169,7 @@ The checked-in configuration uses temperature `0.0` to minimize sampling variati
 
 ## Current Status
 
-This folder contains working runners for `steps_only` and `symbolic_domain`. The `graph_grounded` context builder remains a placeholder for a later milestone.
+This folder contains working runners for `steps_only`, `symbolic_domain`, and `graph_grounded`.
 
 The `symbolic_domain` condition uses deterministic sequence-window retrieval rather than summarization: it selects predicates for the current step and configured neighboring steps, projects only rule-matching fields, and includes `thesis_rules.yaml` verbatim. This avoids introducing a separate summarization model into the ablation.
 
@@ -148,18 +179,20 @@ Operator prompts for the novice test cases live in `configs/novice_questions.yam
 
 ## Run Commands
 
-Run both implemented conditions sequentially with one command:
+Run all three conditions sequentially with one command:
 
 ```powershell
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition all --config experiments\llm_guidance_ablation\configs\config.yaml
 ```
 
-This runs `steps_only` first and `symbolic_domain` second. Each condition still receives its own timestamped response file, prompt-report directory, and communication log. If the first run fails, the command exits without starting the second run.
+This runs `steps_only`, `symbolic_domain`, and `graph_grounded` in that order. Each condition receives its own timestamped response file, prompt-report directory, and communication log.
 
-From `experiments/llm_guidance_ablation`, run the first implemented condition:
+From `experiments/llm_guidance_ablation`, run any condition with:
 
 ```powershell
 python src/run_experiment.py --condition steps_only
+python src/run_experiment.py --condition symbolic_domain
+python src/run_experiment.py --condition graph_grounded
 ```
 
 From the repository root, the equivalent command is:
@@ -168,7 +201,7 @@ From the repository root, the equivalent command is:
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition steps_only --config experiments\llm_guidance_ablation\configs\config.yaml
 ```
 
-Run with windowed symbolic predicates and full rules:
+From the repository root, run with windowed symbolic predicates and full rules:
 
 ```powershell
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition symbolic_domain --config experiments\llm_guidance_ablation\configs\config.yaml
@@ -202,7 +235,7 @@ Every successful experiment run automatically writes a matching prompt-report sn
 outputs/prompt_reports/steps_only_20260618T184039+0200/
 ```
 
-Those Markdown reports document the prompt content associated with the response file from that run. Reports are grouped by `risk_type`. To avoid repeating large invariant blocks, each file shows the system prompt, frozen step list, and thesis rules once, followed by only the step id, question, and selected predicates that vary for each case. Together these shared and case-specific sections reconstruct the content sent by the runner.
+Those Markdown reports document the prompt content associated with the response file from that run. Reports are grouped by `risk_type`. To avoid repeating large invariant blocks, each file shows shared context once, followed by the step id, question, and selected predicates or graph evidence that vary by case.
 
 Reports generated as part of a run also include the run-wide minimum, maximum, and average prompt interaction times and total experiment time. Standalone report exports state that runtime timing statistics are unavailable.
 
@@ -212,10 +245,10 @@ The standalone exporter below can still be used when you want to regenerate prom
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\export_prompt_reports.py --condition steps_only --config experiments\llm_guidance_ablation\configs\config.yaml
 ```
 
-The same exporter supports `--condition symbolic_domain`. The remaining planned condition is:
+The same exporter supports `--condition symbolic_domain` and `--condition graph_grounded`.
 
 ```powershell
-.venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition graph_grounded --config experiments\llm_guidance_ablation\configs\config.yaml
+.venv\Scripts\python.exe experiments\llm_guidance_ablation\src\export_prompt_reports.py --condition graph_grounded --config experiments\llm_guidance_ablation\configs\config.yaml
 ```
 
 Evaluate generated responses:

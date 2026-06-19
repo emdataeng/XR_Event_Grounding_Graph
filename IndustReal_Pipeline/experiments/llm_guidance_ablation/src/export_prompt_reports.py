@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from context_builders import PromptCondition, build_context, predicate_context_for_step
+from context_builders import PromptCondition, build_context, graph_evidence_for_step, predicate_context_for_step
+from graph_loader import extract_step_subgraph
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
@@ -33,16 +35,11 @@ def export_prompt_reports(
     run_statistics: dict[str, Any] | None = None,
 ) -> list[Path]:
     """Write one Markdown file per risk type documenting LLM requests."""
-    if condition not in {PromptCondition.STEPS_ONLY, PromptCondition.SYMBOLIC_DOMAIN}:
-        raise NotImplementedError(
-            f"{condition.value} prompt reports are not implemented yet. Use steps_only or symbolic_domain."
-        )
-
     if test_cases is None or artifacts is None:
         from run_experiment import load_artifacts, load_test_cases
 
         test_cases = load_test_cases(config)
-        artifacts = load_artifacts(config)
+        artifacts = load_artifacts(config, condition=condition)
 
     report_dir = output_dir or (EXPERIMENT_ROOT / "outputs" / "prompt_reports")
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -76,6 +73,7 @@ def render_prompt_report_group(
     """Render one Markdown report containing all prompts for a risk type."""
     step_list_loaded = bool(artifacts.get("step_list"))
     symbolic_domain_included = condition is PromptCondition.SYMBOLIC_DOMAIN
+    graph_grounded_included = condition is PromptCondition.GRAPH_GROUNDED
     shared_context = build_context(condition, test_cases[0], artifacts)
     case_sections = [render_prompt_case_section(test_case, condition, artifacts) for test_case in test_cases]
     shared_rules = _render_shared_rules(condition, artifacts)
@@ -104,11 +102,12 @@ Generated at: {datetime.now(timezone.utc).isoformat()}
 - Step-list artifact configured path: `{config.get("input_paths", {}).get("step_list")}`
 - Step-list artifact loaded: `{step_list_loaded}`
 - Windowed predicates included: `{'yes' if symbolic_domain_included else 'no'}`
-- Step-hop radius: `{artifacts.get("step_hops") if symbolic_domain_included else 'not applicable'}`
+- Sequence step-hop radius: `{artifacts.get("step_hops") if symbolic_domain_included or graph_grounded_included else 'not applicable'}`
+- Semantic evidence-hop radius: `{artifacts.get("evidence_hops") if graph_grounded_included else 'not applicable'}`
 - Thesis rules included: `{'yes' if symbolic_domain_included else 'no'}`
-- Procedural reasoning graph included: `no`
+- Procedural reasoning graph included: `{'yes' if graph_grounded_included else 'no'}`
 
-Both implemented conditions include the same frozen step-list artifact. The `symbolic_domain` condition additionally includes a deterministic predicate window around the current step and the complete `thesis_rules.yaml` file.
+All conditions include the same frozen step-list artifact. The `symbolic_domain` condition adds a deterministic predicate window and `thesis_rules.yaml`; `graph_grounded` adds a deterministic local graph neighborhood.
 
 ## Shared Prompt Content
 
@@ -166,6 +165,15 @@ def render_prompt_case_section(
 {predicate_context_for_step(str(test_case.get("step_id") or ""), artifacts)}
 ```
 """
+    elif condition is PromptCondition.GRAPH_GROUNDED:
+        subgraph = extract_step_subgraph(
+            artifacts["procedural_reasoning_graph"],
+            str(test_case.get("step_id") or ""),
+            int(artifacts.get("step_hops", 1)),
+            int(artifacts.get("evidence_hops", 2)),
+        )
+        evidence_text = graph_evidence_for_step(str(test_case.get("step_id") or ""), artifacts)
+        predicate_section = _render_graph_evidence_report(subgraph, evidence_text, artifacts)
     return f"""
 ## Case: {test_case.get("case_id")}
 
@@ -180,6 +188,48 @@ These fields are saved in experiment outputs for evaluation only.
 - Risk type: `{test_case.get("risk_type")}`
 - Expected answer elements:
 {_render_expected_elements(test_case.get("expected_answer_elements"))}
+"""
+
+
+def _render_graph_evidence_report(
+    subgraph: dict[str, Any],
+    evidence_text: str,
+    artifacts: dict[str, Any],
+) -> str:
+    """Present graph retrieval statistics and the exact LLM evidence block."""
+    node_counts = Counter(str(node.get("type") or "Unknown") for node in subgraph.get("nodes", []))
+    edge_counts = Counter(str(edge.get("type") or "UNKNOWN") for edge in subgraph.get("edges", []))
+    node_rows = "\n".join(f"| {name} | {count} |" for name, count in sorted(node_counts.items()))
+    edge_rows = "\n".join(f"| {name} | {count} |" for name, count in sorted(edge_counts.items()))
+    return f"""
+### Procedural Reasoning Subgraph
+
+The sequence traversal follows only `NEXT` edges. Semantic traversal starts
+from the current step, follows the fixed semantic edge allowlist, and treats
+neighboring steps, entities, rules, and sources as terminal nodes.
+
+- Sequence step hops: `{artifacts.get('step_hops')}`
+- Semantic evidence hops: `{artifacts.get('evidence_hops')}`
+- Selected nodes: `{len(subgraph.get('nodes', []))}`
+- Selected edges: `{len(subgraph.get('edges', []))}`
+
+#### Nodes By Type
+
+| Node type | Count |
+|---|---:|
+{node_rows or '| None | 0 |'}
+
+#### Relationships By Type
+
+| Relationship | Count |
+|---|---:|
+{edge_rows or '| None | 0 |'}
+
+#### Exact Graph Evidence Sent To The LLM
+
+```text
+{evidence_text}
+```
 """
 
 

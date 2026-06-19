@@ -14,6 +14,7 @@ import yaml
 
 from context_builders import PromptCondition, build_context
 from export_prompt_reports import export_prompt_reports
+from graph_loader import graph_artifact_path, load_procedural_reasoning_graph
 from lm_client import ask_llm, set_config_path
 
 
@@ -26,10 +27,11 @@ def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for an experiment run."""
     parser = argparse.ArgumentParser(description="Run an LLM guidance ablation condition.")
     parser.add_argument("--config", default=str(EXPERIMENT_ROOT / "configs" / "config.yaml"))
-    condition_choices = [PromptCondition.STEPS_ONLY.value, PromptCondition.SYMBOLIC_DOMAIN.value, ALL_CONDITIONS]
+    condition_choices = [condition.value for condition in PromptCondition] + [ALL_CONDITIONS]
     parser.add_argument("--condition", choices=condition_choices, required=True)
-    parser.add_argument("--industreal", metavar="CLIP_ID", help="Run against an IndustReal clip id.")
-    parser.add_argument("--dataset", help="Run against a non-IndustReal dataset identifier.")
+    dataset_group = parser.add_mutually_exclusive_group()
+    dataset_group.add_argument("--industreal", metavar="CLIP_ID", help="Run against an IndustReal clip id.")
+    dataset_group.add_argument("--dataset", help="Run against a non-IndustReal dataset identifier.")
     return parser.parse_args()
 
 
@@ -79,7 +81,11 @@ def flatten_risk_groups(risk_groups: dict[str, Any]) -> list[dict[str, Any]]:
     return test_cases
 
 
-def load_artifacts(config: dict[str, Any]) -> dict[str, Any]:
+def load_artifacts(
+    config: dict[str, Any],
+    dataset_id: str | None = None,
+    condition: PromptCondition | None = None,
+) -> dict[str, Any]:
     """Load the frozen step list and optional condition-specific artifacts."""
     artifacts = {"prompt_templates": load_prompt_templates(config)}
     # The frozen step list is shared verbatim so conditions differ only in the
@@ -95,12 +101,25 @@ def load_artifacts(config: dict[str, Any]) -> dict[str, Any]:
             continue
         artifacts[artifact_name] = artifact_path.read_text(encoding="utf-8")
 
-    predicate_context_path = resolve_configured_path(config["input_paths"]["predicate_contexts"])
-    if not predicate_context_path.exists():
-        raise FileNotFoundError(f"Predicate context artifact is missing: {predicate_context_path}")
-    with predicate_context_path.open("r", encoding="utf-8") as handle:
-        artifacts["predicate_contexts"] = json.load(handle)
+    if condition in {None, PromptCondition.SYMBOLIC_DOMAIN}:
+        predicate_context_path = resolve_configured_path(config["input_paths"]["predicate_contexts"])
+        if not predicate_context_path.exists():
+            raise FileNotFoundError(f"Predicate context artifact is missing: {predicate_context_path}")
+        with predicate_context_path.open("r", encoding="utf-8") as handle:
+            artifacts["predicate_contexts"] = json.load(handle)
     artifacts["step_hops"] = int(config.get("context_retrieval", {}).get("step_hops", 1))
+    artifacts["evidence_hops"] = int(config.get("context_retrieval", {}).get("evidence_hops", 2))
+
+    if condition in {None, PromptCondition.GRAPH_GROUNDED}:
+        configured_graph_path = str(config.get("input_paths", {}).get("procedural_reasoning_graph") or "").strip()
+        if configured_graph_path and "PLACEHOLDER" not in configured_graph_path:
+            graph_path = resolve_configured_path(configured_graph_path)
+        else:
+            selected_dataset = dataset_id or str(config.get("dataset", {}).get("default_clip_id") or "").strip()
+            graph_root = REPO_ROOT / "results" / "procedural_reasoning_graph"
+            graph_path = graph_artifact_path(graph_root, selected_dataset)
+        artifacts["procedural_reasoning_graph"] = load_procedural_reasoning_graph(graph_path)
+        artifacts["procedural_reasoning_graph_path"] = str(graph_path)
 
     # TODO: Filter rules by matched action or predicate vocabulary if the full
     # rule file becomes too large. Predicate context is already step-windowed.
@@ -185,15 +204,14 @@ def build_run_statistics(durations: list[float], total_seconds: float) -> dict[s
     }
 
 
-def run_experiment(condition: PromptCondition, config: dict[str, Any]) -> tuple[Path, Path, Path]:
+def run_experiment(
+    condition: PromptCondition,
+    config: dict[str, Any],
+    dataset_id: str | None = None,
+) -> tuple[Path, Path, Path]:
     """Run one prompting condition across all novice question test cases."""
-    if condition not in {PromptCondition.STEPS_ONLY, PromptCondition.SYMBOLIC_DOMAIN}:
-        raise NotImplementedError(
-            f"{condition.value} is not implemented yet. Use --condition steps_only or symbolic_domain."
-        )
-
     test_cases = load_test_cases(config)
-    artifacts = load_artifacts(config)
+    artifacts = load_artifacts(config, dataset_id=dataset_id, condition=condition)
     timestamp = local_timestamp_for_filename()
     output_path = output_path_for_run(config, condition, timestamp)
     prompt_report_dir = prompt_report_dir_for_run(config, condition, timestamp)
@@ -326,7 +344,7 @@ def local_timestamp_for_filename() -> str:
 def selected_conditions(value: str) -> list[PromptCondition]:
     """Expand the CLI condition value into the sequential runs to execute."""
     if value == ALL_CONDITIONS:
-        return [PromptCondition.STEPS_ONLY, PromptCondition.SYMBOLIC_DOMAIN]
+        return list(PromptCondition)
     return [PromptCondition(value)]
 
 
@@ -336,9 +354,10 @@ def main() -> None:
         args = parse_args()
         set_config_path(args.config)
         config = load_config(args.config)
+        dataset_id = args.industreal or args.dataset or config.get("dataset", {}).get("default_clip_id")
         run_outputs = []
         for condition in selected_conditions(args.condition):
-            run_outputs.append((condition, *run_experiment(condition, config)))
+            run_outputs.append((condition, *run_experiment(condition, config, dataset_id=dataset_id)))
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc

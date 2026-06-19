@@ -17,7 +17,8 @@ input_paths:
   step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
   predicate_contexts: "experiments\\llm_guidance_ablation\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
   thesis_rules: "config\\thesis_rules.yaml"
-  procedural_reasoning_graph: "PLACEHOLDER\\path\\to\\procedural_reasoning_graph.json"
+  # Leave empty to derive the path from the selected dataset/clip id.
+  procedural_reasoning_graph: ""
   test_cases: "experiments\\llm_guidance_ablation\\configs\\novice_questions.yaml"
 
 artifact_sources:
@@ -25,8 +26,10 @@ artifact_sources:
   predicates: "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\predicates.jsonl"
 
 context_retrieval:
-  # Shared neighborhood radius for symbolic_domain and future graph_grounded retrieval.
+  # Sequence radius used by the predicate artifact and NEXT-edge traversal.
   step_hops: 1
+  # Semantic radius from each Step selected by the sequence traversal.
+  evidence_hops: 2
 
 prompt_paths:
   prompts: "experiments\\llm_guidance_ablation\\configs\\prompts.yaml"
