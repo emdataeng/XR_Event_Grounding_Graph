@@ -19,9 +19,11 @@ existing graph CSVs
   -> optional UI graph-data export
   -> platform/data/graph-data.js
 
-existing graph CSVs
-  -> Layer 3 reasoning adapter
-  -> step_records.jsonl + predicates.jsonl
+existing graph CSVs + config/domain_config.yaml + config/thesis_rules.yaml
+  -> Layer 2-to-3 reasoning adapter
+  -> step_records.jsonl + predicates.jsonl (Layer 3 inputs)
+
+step_records.jsonl + predicates.jsonl + config/thesis_rules.yaml
   -> Layer 3 rule inference
   -> inferred_constraints.csv
   -> Layer 4 validation
@@ -64,7 +66,9 @@ That file defines the default run id, input CSV directory, output root, predicat
 
 ## Adapter Role
 
-The adapter turns existing graph CSV records into the JSONL inputs used by the reasoning layers.
+The adapter bridges Layer 2 output to Layer 3. For IndustReal, it turns the
+existing graph CSV records into `step_records.jsonl` and `predicates.jsonl`,
+which are inputs to Layer 3 inference, not outputs from Layer 3.
 
 It reads:
 
@@ -73,6 +77,8 @@ nodes_events.csv
 edges_event_component.csv
 edges_event_next.csv
 nodes_components.csv
+config/domain_config.yaml
+config/thesis_rules.yaml (adapter predicate definitions)
 ```
 
 It writes:
@@ -85,6 +91,12 @@ predicates.jsonl
 `step_records.jsonl` contains one normalized step record per source assembly event.
 
 `predicates.jsonl` contains symbolic facts derived from each step, such as the step action, time window, object use, and component metadata.
+
+`config/domain_config.yaml` is consumed here by the adapter to materialize
+component-specific domain knowledge into predicates. Layer 3 inference does
+not read that file directly. `config/thesis_rules.yaml` is used at both stages:
+the adapter reads its predicate definitions, and Layer 3 inference reads its
+aliases, defaults, and rules.
 
 The upstream graph stores event instants. The adapter fills `time_window.start_s` and `start_frame` from the event row, and currently infers `end_s` and `end_frame` from the next distinct event timestamp in the same clip when one exists. The final timestamp group remains open-ended with null end values. This is a downstream fallback until upper-layer step segmentation provides explicit step windows.
 
@@ -175,6 +187,10 @@ step_records.jsonl
 predicates.jsonl
 config/thesis_rules.yaml
 ```
+
+These are the direct Layer 3 inputs. In particular,
+`config/domain_config.yaml` is not a direct Layer 3 input; its relevant domain
+knowledge has already been encoded into `predicates.jsonl` by the adapter.
 
 It writes:
 
@@ -500,7 +516,7 @@ hasSafetyRequirement(component, secured, base, workspace)
 hasRequiredTool(component, screwdriver)
 ```
 
-Layer 3 rules then match these generic predicates. The rule engine does not hardcode specific component names; object-specific knowledge comes from `domain_config.yaml`.
+Layer 3 rules then match these generic predicates. The rule engine does not hardcode specific component names or read `domain_config.yaml` directly; object-specific knowledge from that file reaches Layer 3 indirectly through the predicates materialized by the adapter.
 
 In principle, this domain config can be generated from CAD metadata. A CAD-derived generator could inspect assembly hierarchy, mating constraints, fastener relationships, component names, and contact/constraint graphs to propose generic types, parent components, installation targets, and required tools. The current file is manually authored from the exported IndustReal component list.
 

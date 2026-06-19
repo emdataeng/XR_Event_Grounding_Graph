@@ -1,0 +1,4 @@
+{"timestamp": "2026-06-19T10:26:26.383824+00:00", "event": "run_started", "condition": "symbolic_domain", "total_interactions": 19}
+{"timestamp": "2026-06-19T10:26:26.384343+00:00", "event": "request_sent", "condition": "symbolic_domain", "interaction": 1, "total_interactions": 19, "risk_type": "sequence_error", "case_id": "case_001_missing_context"}
+{"timestamp": "2026-06-19T10:26:30.547895+00:00", "event": "interaction_failed", "condition": "symbolic_domain", "interaction": 1, "risk_type": "sequence_error", "case_id": "case_001_missing_context", "duration_seconds": 4.163543, "error_type": "BadRequestError"}
+{"timestamp": "2026-06-19T10:26:30.548071+00:00", "event": "run_failed", "condition": "symbolic_domain", "completed_interactions": 0, "total_interactions": 19, "total_duration_seconds": 4.164586, "error_type": "BadRequestError"}

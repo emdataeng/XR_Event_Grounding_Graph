@@ -16,10 +16,11 @@ class DatasetSelection:
 
 
 def load_experiment_artifacts(config: dict[str, Any], selection: DatasetSelection) -> dict[str, Any]:
-    """Load generated steps, domain files, rules, and graph artifacts.
+    """Load Layer 3 input steps, domain files, rules, and graph artifacts.
 
-    This placeholder defines the integration point between the experiment and
-    the thesis artifacts produced by scripts 14 through 19.
+    For IndustReal, script 14 adapts Layer 2 output into ``step_records.jsonl``
+    and ``predicates.jsonl``. Those files are inputs to Layer 3 inference;
+    later scripts produce validation and graph artifacts.
     """
     raise NotImplementedError("Artifact loading is not implemented yet.")
 

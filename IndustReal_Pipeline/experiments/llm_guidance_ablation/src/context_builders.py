@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from enum import Enum
 from typing import Any
 
@@ -23,8 +24,8 @@ def build_steps_only_context(test_case: dict[str, Any], artifacts: dict[str, Any
     artifacts = artifacts or {}
     step_id = str(test_case.get("step_id", "")).strip()
     question = str(test_case.get("question", "")).strip()
-    step_context = _lookup_generated_step(step_id, artifacts)
-    has_step_context = _has_generated_step(step_id, artifacts)
+    step_context = _step_list_artifact(artifacts)
+    has_step_context = bool(step_context)
     prompts = _condition_prompts(artifacts, "steps_only")
 
     if not step_id:
@@ -43,15 +44,30 @@ def build_steps_only_context(test_case: dict[str, Any], artifacts: dict[str, Any
 
 
 def build_symbolic_domain_context(test_case: dict[str, Any], artifacts: dict[str, Any] | None = None) -> dict[str, str]:
-    """Build prompts using generated steps plus symbolic domain artifacts.
+    """Build prompts using the frozen step list, predicates, and rules."""
+    artifacts = artifacts or {}
+    step_id = str(test_case.get("step_id", "")).strip()
+    question = str(test_case.get("question", "")).strip()
+    if not step_id:
+        raise ValueError("Test case is missing required field: step_id")
+    if not question:
+        raise ValueError("Test case is missing required field: question")
 
-    Placeholder for the next milestone. It currently returns a minimal prompt
-    with a clear marker that symbolic domain grounding has not been implemented.
-    """
-    base_context = build_steps_only_context(test_case, artifacts)
-    prompts = _condition_prompts(artifacts or {}, "symbolic_domain")
-    base_context["user_prompt"] += prompts["user_suffix_placeholder"]
-    return base_context
+    predicates = predicate_context_for_step(step_id, artifacts)
+    thesis_rules = _required_text_artifact(artifacts, "thesis_rules")
+    step_context = _step_list_artifact(artifacts)
+    has_step_context = bool(step_context)
+    prompts = _condition_prompts(artifacts, "symbolic_domain")
+    system_prompt = prompts["system_with_context"] if has_step_context else prompts["system_missing_context"]
+    user_prompt = _render_template(
+        prompts["user_template"],
+        step_id=step_id,
+        step_context=step_context,
+        predicates=predicates,
+        thesis_rules=thesis_rules,
+        question=question,
+    )
+    return {"system_prompt": system_prompt, "user_prompt": user_prompt}
 
 
 def build_graph_grounded_context(test_case: dict[str, Any], artifacts: dict[str, Any] | None = None) -> dict[str, str]:
@@ -80,38 +96,59 @@ def build_context(
     return builders[condition](test_case, artifacts)
 
 
-def _lookup_generated_step(step_id: str, artifacts: dict[str, Any]) -> str:
-    """Find generated step text in optional artifacts."""
-    generated_steps = artifacts.get("generated_steps")
-    if isinstance(generated_steps, dict):
-        value = generated_steps.get(step_id)
-        return _format_step_value(value)
-
-    if isinstance(generated_steps, list):
-        return _format_step_records(generated_steps, step_id)
-
-    return "No generated step artifact was found for this step id."
+def _required_text_artifact(artifacts: dict[str, Any], name: str) -> str:
+    """Return a required raw-text artifact without parsing or rewriting it."""
+    value = artifacts.get(name)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"Required prompt artifact was not loaded: {name}")
+    return value
 
 
-def _has_generated_step(step_id: str, artifacts: dict[str, Any]) -> bool:
-    """Return whether a prompt-safe generated step exists for this step id."""
-    generated_steps = artifacts.get("generated_steps")
-    if isinstance(generated_steps, dict):
-        return bool(generated_steps.get(step_id))
-
-    if isinstance(generated_steps, list):
-        for item in generated_steps:
-            if not isinstance(item, dict):
-                continue
-            item_id = item.get("step_id") or item.get("id")
-            if _same_step_id(item_id, step_id):
-                return True
-
-    return False
+def _step_list_artifact(artifacts: dict[str, Any]) -> str:
+    """Return the frozen step-list artifact shared by prompt conditions."""
+    value = artifacts.get("step_list")
+    if isinstance(value, str) and value.strip():
+        return value
+    return ""
 
 
-def _format_step_records(records: list[Any], current_step_id: str) -> str:
-    """Render Layer 3 step records as an ordered, prompt-safe step list."""
+def predicate_context_for_step(step_id: str, artifacts: dict[str, Any]) -> str:
+    """Render the precomputed predicate window for one test-case step."""
+    artifact = artifacts.get("predicate_contexts")
+    if not isinstance(artifact, dict):
+        raise ValueError("Required prompt artifact was not loaded: predicate_contexts")
+
+    expected_hops = artifacts.get("step_hops")
+    artifact_hops = artifact.get("step_hops")
+    if artifact_hops != expected_hops:
+        raise ValueError(
+            "Predicate context hop mismatch: "
+            f"artifact uses {artifact_hops}, config requests {expected_hops}. Regenerate the artifact."
+        )
+
+    contexts = artifact.get("contexts")
+    context = contexts.get(canonical_step_id(step_id)) if isinstance(contexts, dict) else None
+    if not isinstance(context, dict):
+        return f"No predicate context was found for current step id: {step_id}"
+
+    included_step_ids = context.get("included_step_ids") or []
+    predicate_lines = context.get("predicate_lines") or []
+    return (
+        "Predicate context window:\n"
+        f"- center_step_id: {context.get('center_step_id')}\n"
+        f"- step_hops: {artifact_hops}\n"
+        f"- included_step_ids: {json.dumps(included_step_ids, ensure_ascii=False)}\n\n"
+        "Selected predicates:\n"
+        + "\n".join(str(line) for line in predicate_lines)
+    )
+
+
+def render_step_list(records: list[Any]) -> str:
+    """Render Layer 3 input step records as an ordered, prompt-safe step list.
+
+    For IndustReal, the reasoning adapter derives these records from Layer 2
+    output before Layer 3 inference consumes them.
+    """
     steps = [_normalize_step_record(record) for record in records if isinstance(record, dict)]
     steps = [step for step in steps if step["step_id"]]
     steps.sort(key=lambda step: step["index"] if step["index"] is not None else 10**9)
@@ -121,9 +158,8 @@ def _format_step_records(records: list[Any], current_step_id: str) -> str:
 
     lines = ["Available assembly steps:"]
     for step in steps:
-        current_marker = " [CURRENT]" if _same_step_id(step["step_id"], current_step_id) else ""
         lines.append(
-            f"- Step {step['index']}: {step['action_description']}{current_marker}\n"
+            f"- Step {step['index']}: {step['action_description']}\n"
             f"  - step_id: {step['step_id']}\n"
             f"  - acted_on_object: {step['acted_on_object']}\n"
             f"  - previous_step_id: {step['previous_step_id']}\n"
@@ -132,15 +168,11 @@ def _format_step_records(records: list[Any], current_step_id: str) -> str:
             f"  - confidence: {step['confidence']}"
         )
 
-    if not any(_same_step_id(step["step_id"], current_step_id) for step in steps):
-        lines.append("")
-        lines.append("Current step warning: the requested step id was not found in the generated step records.")
-
     return "\n".join(lines)
 
 
 def _normalize_step_record(record: dict[str, Any]) -> dict[str, Any]:
-    """Extract the prompt-safe fields from one Layer 3 step record."""
+    """Extract prompt-safe fields from one Layer 3 input step record."""
     action = record.get("action") if isinstance(record.get("action"), dict) else {}
     sequence = record.get("sequence") if isinstance(record.get("sequence"), dict) else {}
     time_window = record.get("time_window") if isinstance(record.get("time_window"), dict) else {}
@@ -174,10 +206,10 @@ def _format_acted_on_objects(objects: Any) -> str:
 
 def _same_step_id(left: Any, right: Any) -> bool:
     """Compare step ids while tolerating zero-padded event ids."""
-    return _canonical_step_id(left) == _canonical_step_id(right)
+    return canonical_step_id(left) == canonical_step_id(right)
 
 
-def _canonical_step_id(value: Any) -> str:
+def canonical_step_id(value: Any) -> str:
     """Normalize event suffixes such as event_001 and event_1."""
     text = str(value or "")
     if text.startswith("step::"):
@@ -186,20 +218,6 @@ def _canonical_step_id(value: Any) -> str:
     if not separator or not suffix.isdigit():
         return text
     return f"{prefix}{separator}{int(suffix)}"
-
-
-def _format_step_value(value: Any) -> str:
-    """Convert a generated-step value into prompt text."""
-    if value is None:
-        return "No generated step artifact was found for this step id."
-    if isinstance(value, str):
-        return value.strip() or "Generated step artifact is empty."
-    if isinstance(value, dict):
-        for key in ("text", "description", "instruction", "action", "step_text"):
-            if value.get(key):
-                return str(value[key]).strip()
-        return str(value)
-    return str(value)
 
 
 def _condition_prompts(artifacts: dict[str, Any], condition_name: str) -> dict[str, str]:

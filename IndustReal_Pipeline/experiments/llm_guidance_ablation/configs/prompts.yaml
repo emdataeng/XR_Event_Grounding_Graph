@@ -26,10 +26,35 @@ steps_only:
     {question}
 
 symbolic_domain:
-  user_suffix_placeholder: |-
+  system_with_context: >-
+    You are an assistant helping a novice assembly operator.
+    Answer using only the generated procedural steps, symbolic predicates,
+    and thesis rules provided. Do not infer missing assembly information from
+    general knowledge. Be concise, practical, and safety-aware. If the
+    provided context is ambiguous or conflicting, say what is uncertain.
 
-    Symbolic domain context:
-    [Not implemented in this milestone.]
+  system_missing_context: >-
+    You are an assistant helping a novice assembly operator. Use only the
+    provided symbolic predicates and thesis rules. No generated procedural
+    step context has been provided, so do not invent the current or next step.
+    Be concise, practical, and safety-aware, and state what step information
+    is missing when it prevents a grounded answer.
+
+  user_template: |-
+    Current step id:
+    {step_id}
+
+    Generated procedural steps:
+    {step_context}
+
+    Symbolic predicates (deterministic step window):
+    {predicates}
+
+    Thesis rules (raw YAML):
+    {thesis_rules}
+
+    Operator question:
+    {question}
 
 graph_grounded:
   user_suffix_placeholder: |-

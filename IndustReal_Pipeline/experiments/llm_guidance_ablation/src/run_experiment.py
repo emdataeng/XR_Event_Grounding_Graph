@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -18,13 +19,15 @@ from lm_client import ask_llm, set_config_path
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = Path(__file__).resolve().parents[3]
+ALL_CONDITIONS = "all"
 
 
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for an experiment run."""
     parser = argparse.ArgumentParser(description="Run an LLM guidance ablation condition.")
     parser.add_argument("--config", default=str(EXPERIMENT_ROOT / "configs" / "config.yaml"))
-    parser.add_argument("--condition", choices=[condition.value for condition in PromptCondition], required=True)
+    condition_choices = [PromptCondition.STEPS_ONLY.value, PromptCondition.SYMBOLIC_DOMAIN.value, ALL_CONDITIONS]
+    parser.add_argument("--condition", choices=condition_choices, required=True)
     parser.add_argument("--industreal", metavar="CLIP_ID", help="Run against an IndustReal clip id.")
     parser.add_argument("--dataset", help="Run against a non-IndustReal dataset identifier.")
     return parser.parse_args()
@@ -77,26 +80,30 @@ def flatten_risk_groups(risk_groups: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def load_artifacts(config: dict[str, Any]) -> dict[str, Any]:
-    """Load optional artifacts needed by context builders.
-
-    For this first milestone, missing placeholder paths are allowed. The
-    steps-only condition can still run and will tell the model that no generated
-    step artifact was found for the case.
-    """
+    """Load the frozen step list and optional condition-specific artifacts."""
     artifacts = {"prompt_templates": load_prompt_templates(config)}
-    generated_steps_path = resolve_configured_path(config["input_paths"]["generated_steps"])
-    if not generated_steps_path.exists() or "PLACEHOLDER" in str(generated_steps_path):
-        artifacts["generated_steps"] = {}
-        return artifacts
+    # The frozen step list is shared verbatim so conditions differ only in the
+    # additional symbolic context they receive.
+    for artifact_name in ("step_list", "thesis_rules"):
+        configured_path = config.get("input_paths", {}).get(artifact_name)
+        if not configured_path:
+            artifacts[artifact_name] = ""
+            continue
+        artifact_path = resolve_configured_path(configured_path)
+        if not artifact_path.exists() or "PLACEHOLDER" in str(artifact_path):
+            artifacts[artifact_name] = ""
+            continue
+        artifacts[artifact_name] = artifact_path.read_text(encoding="utf-8")
 
-    with generated_steps_path.open("r", encoding="utf-8") as handle:
-        if generated_steps_path.suffix.lower() in {".yaml", ".yml"}:
-            generated_steps = yaml.safe_load(handle)
-        elif generated_steps_path.suffix.lower() == ".jsonl":
-            generated_steps = [json.loads(line) for line in handle if line.strip()]
-        else:
-            generated_steps = json.load(handle)
-    artifacts["generated_steps"] = generated_steps
+    predicate_context_path = resolve_configured_path(config["input_paths"]["predicate_contexts"])
+    if not predicate_context_path.exists():
+        raise FileNotFoundError(f"Predicate context artifact is missing: {predicate_context_path}")
+    with predicate_context_path.open("r", encoding="utf-8") as handle:
+        artifacts["predicate_contexts"] = json.load(handle)
+    artifacts["step_hops"] = int(config.get("context_retrieval", {}).get("step_hops", 1))
+
+    # TODO: Filter rules by matched action or predicate vocabulary if the full
+    # rule file becomes too large. Predicate context is already step-windowed.
     return artifacts
 
 
@@ -140,11 +147,49 @@ def prompt_report_dir_for_run(config: dict[str, Any], condition: PromptCondition
     return output_root / "prompt_reports" / f"{condition.value}_{timestamp}"
 
 
-def run_experiment(condition: PromptCondition, config: dict[str, Any]) -> tuple[Path, Path]:
+def log_path_for_run(config: dict[str, Any], condition: PromptCondition, timestamp: str) -> Path:
+    """Create the communication-flow log path for a run."""
+    output_root = resolve_configured_path(config.get("output_paths", {}).get("root", "outputs"))
+    log_root = output_root / "logs"
+    log_root.mkdir(parents=True, exist_ok=True)
+    return log_root / f"communication_{condition.value}_{timestamp}.log"
+
+
+def _write_log_event(handle: Any, event: str, **fields: Any) -> None:
+    """Write and flush one structured event without prompt or response text."""
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event": event,
+        **fields,
+    }
+    handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    handle.flush()
+
+
+def format_duration_hms(seconds: float) -> str:
+    """Format elapsed seconds as hours, minutes, and seconds."""
+    hours, remainder = divmod(max(0.0, seconds), 3600)
+    minutes, remaining_seconds = divmod(remainder, 60)
+    return f"{int(hours):02d}h {int(minutes):02d}m {remaining_seconds:05.2f}s"
+
+
+def build_run_statistics(durations: list[float], total_seconds: float) -> dict[str, Any]:
+    """Build reproducible summary fields for completed LLM interactions."""
+    return {
+        "completed_interactions": len(durations),
+        "min_interaction_seconds": round(min(durations), 6) if durations else None,
+        "max_interaction_seconds": round(max(durations), 6) if durations else None,
+        "avg_interaction_seconds": round(sum(durations) / len(durations), 6) if durations else None,
+        "total_duration_seconds": round(total_seconds, 6),
+        "total_duration_hms": format_duration_hms(total_seconds),
+    }
+
+
+def run_experiment(condition: PromptCondition, config: dict[str, Any]) -> tuple[Path, Path, Path]:
     """Run one prompting condition across all novice question test cases."""
-    if condition is not PromptCondition.STEPS_ONLY:
+    if condition not in {PromptCondition.STEPS_ONLY, PromptCondition.SYMBOLIC_DOMAIN}:
         raise NotImplementedError(
-            f"{condition.value} is not implemented yet. Use --condition steps_only for this milestone."
+            f"{condition.value} is not implemented yet. Use --condition steps_only or symbolic_domain."
         )
 
     test_cases = load_test_cases(config)
@@ -152,30 +197,137 @@ def run_experiment(condition: PromptCondition, config: dict[str, Any]) -> tuple[
     timestamp = local_timestamp_for_filename()
     output_path = output_path_for_run(config, condition, timestamp)
     prompt_report_dir = prompt_report_dir_for_run(config, condition, timestamp)
+    log_path = log_path_for_run(config, condition, timestamp)
+    total_cases = len(test_cases)
+    completed_cases = 0
+    interaction_durations: list[float] = []
+    run_started = time.perf_counter()
 
-    with output_path.open("w", encoding="utf-8") as handle:
-        for test_case in test_cases:
-            context = build_context(condition, test_case, artifacts)
-            response = ask_llm(context["system_prompt"], context["user_prompt"])
-            row = {
-                "case_id": test_case.get("case_id"),
-                "condition": condition.value,
-                "step_id": test_case.get("step_id"),
-                "question": test_case.get("question"),
-                "response": response,
-                "risk_type": test_case.get("risk_type"),
-                "expected_answer_elements": test_case.get("expected_answer_elements"),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }
-            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    print(f"Starting {condition.value}: {total_cases} LLM interactions")
+    print(f"Communication log: {log_path}")
+    with log_path.open("w", encoding="utf-8") as log_handle:
+        _write_log_event(
+            log_handle,
+            "run_started",
+            condition=condition.value,
+            total_interactions=total_cases,
+        )
+        try:
+            with output_path.open("w", encoding="utf-8") as output_handle:
+                for index, test_case in enumerate(test_cases, start=1):
+                    case_id = str(test_case.get("case_id") or "unknown")
+                    risk_type = str(test_case.get("risk_type") or "unclassified")
+                    progress = f"[{index}/{total_cases}]"
+                    context = build_context(condition, test_case, artifacts)
+                    print(f"{progress} {condition.value} | {risk_type} | {case_id}: sending request")
+                    interaction_started = time.perf_counter()
+                    _write_log_event(
+                        log_handle,
+                        "request_sent",
+                        condition=condition.value,
+                        interaction=index,
+                        total_interactions=total_cases,
+                        risk_type=risk_type,
+                        case_id=case_id,
+                    )
+                    try:
+                        response = ask_llm(context["system_prompt"], context["user_prompt"])
+                    except Exception as exc:
+                        interaction_duration = time.perf_counter() - interaction_started
+                        _write_log_event(
+                            log_handle,
+                            "interaction_failed",
+                            condition=condition.value,
+                            interaction=index,
+                            risk_type=risk_type,
+                            case_id=case_id,
+                            duration_seconds=round(interaction_duration, 6),
+                            error_type=type(exc).__name__,
+                        )
+                        raise
 
-    export_prompt_reports(config, condition, prompt_report_dir, test_cases, artifacts)
-    return output_path, prompt_report_dir
+                    interaction_duration = time.perf_counter() - interaction_started
+                    completed_cases += 1
+                    interaction_durations.append(interaction_duration)
+                    _write_log_event(
+                        log_handle,
+                        "response_received",
+                        condition=condition.value,
+                        interaction=index,
+                        total_interactions=total_cases,
+                        risk_type=risk_type,
+                        case_id=case_id,
+                        duration_seconds=round(interaction_duration, 6),
+                    )
+                    print(f"{progress} completed in {interaction_duration:.2f}s")
+                    row = {
+                        "case_id": test_case.get("case_id"),
+                        "condition": condition.value,
+                        "step_id": test_case.get("step_id"),
+                        "question": test_case.get("question"),
+                        "response": response,
+                        "risk_type": test_case.get("risk_type"),
+                        "expected_answer_elements": test_case.get("expected_answer_elements"),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                    output_handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+                    output_handle.flush()
+
+            total_duration = time.perf_counter() - run_started
+            run_statistics = build_run_statistics(interaction_durations, total_duration)
+            export_prompt_reports(
+                config,
+                condition,
+                prompt_report_dir,
+                test_cases,
+                artifacts,
+                run_statistics=run_statistics,
+            )
+        except Exception as exc:
+            total_duration = time.perf_counter() - run_started
+            _write_log_event(
+                log_handle,
+                "run_failed",
+                condition=condition.value,
+                completed_interactions=completed_cases,
+                total_interactions=total_cases,
+                total_duration_seconds=round(total_duration, 6),
+                total_duration_hms=format_duration_hms(total_duration),
+                error_type=type(exc).__name__,
+            )
+            raise
+
+        _write_log_event(
+            log_handle,
+            "run_completed",
+            condition=condition.value,
+            **run_statistics,
+            total_interactions=total_cases,
+            responses_path=str(output_path),
+            prompt_reports_path=str(prompt_report_dir),
+        )
+
+    print(f"Completed {condition.value}: {completed_cases}/{total_cases} interactions")
+    print(
+        "Prompt timing: "
+        f"min={run_statistics['min_interaction_seconds']:.2f}s | "
+        f"max={run_statistics['max_interaction_seconds']:.2f}s | "
+        f"avg={run_statistics['avg_interaction_seconds']:.2f}s"
+    )
+    print(f"Total time: {run_statistics['total_duration_hms']}")
+    return output_path, prompt_report_dir, log_path
 
 
 def local_timestamp_for_filename() -> str:
     """Return a local timestamp with timezone offset for output filenames."""
     return datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z")
+
+
+def selected_conditions(value: str) -> list[PromptCondition]:
+    """Expand the CLI condition value into the sequential runs to execute."""
+    if value == ALL_CONDITIONS:
+        return [PromptCondition.STEPS_ONLY, PromptCondition.SYMBOLIC_DOMAIN]
+    return [PromptCondition(value)]
 
 
 def main() -> None:
@@ -184,8 +336,9 @@ def main() -> None:
         args = parse_args()
         set_config_path(args.config)
         config = load_config(args.config)
-        condition = PromptCondition(args.condition)
-        output_path, prompt_report_dir = run_experiment(condition, config)
+        run_outputs = []
+        for condition in selected_conditions(args.condition):
+            run_outputs.append((condition, *run_experiment(condition, config)))
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
@@ -199,8 +352,10 @@ def main() -> None:
         print(f"Error: experiment failed: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
 
-    print(f"Wrote responses to {output_path}")
-    print(f"Wrote prompt reports to {prompt_report_dir}")
+    for condition, output_path, prompt_report_dir, log_path in run_outputs:
+        print(f"{condition.value}: wrote responses to {output_path}")
+        print(f"{condition.value}: wrote prompt reports to {prompt_report_dir}")
+        print(f"{condition.value}: wrote communication log to {log_path}")
 
 
 if __name__ == "__main__":

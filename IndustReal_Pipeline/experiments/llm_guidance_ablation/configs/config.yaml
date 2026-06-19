@@ -2,7 +2,7 @@
 api_base_url: "http://localhost:1234/v1"
 api_key: "lm-studio"
 model_name: "mistralai/mistral-7b-instruct-v0.3"
-temperature: 0.2
+temperature: 0.0
 max_tokens: 512
 
 dataset:
@@ -14,11 +14,19 @@ dataset:
 
 input_paths:
   industreal_root: "results\\neo4j\\raw_cad_dataset__all_test_clips"
-  generated_steps: "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\step_records.jsonl"
-  domain_config: "PLACEHOLDER\\path\\to\\domain_config.yaml"
-  thesis_rules: "PLACEHOLDER\\path\\to\\thesis_rules.yaml"
+  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+  predicate_contexts: "experiments\\llm_guidance_ablation\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
+  thesis_rules: "config\\thesis_rules.yaml"
   procedural_reasoning_graph: "PLACEHOLDER\\path\\to\\procedural_reasoning_graph.json"
   test_cases: "experiments\\llm_guidance_ablation\\configs\\novice_questions.yaml"
+
+artifact_sources:
+  step_records: "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\step_records.jsonl"
+  predicates: "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\predicates.jsonl"
+
+context_retrieval:
+  # Shared neighborhood radius for symbolic_domain and future graph_grounded retrieval.
+  step_hops: 1
 
 prompt_paths:
   prompts: "experiments\\llm_guidance_ablation\\configs\\prompts.yaml"
