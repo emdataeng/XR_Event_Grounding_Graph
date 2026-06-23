@@ -4,17 +4,30 @@ This experiment framework compares prompting conditions for novice operator supp
 
 This is an ablation study, not a direct competition between LLMs and knowledge graphs. The goal is to isolate the contribution of progressively richer grounding signals: a frozen procedural step list, symbolic Layer 3 inputs, and procedural reasoning graph context.
 
-## Prompting Conditions
+## Experiments
 
-The framework is organized around three conditions:
-
-- `steps_only`: The LLM receives the frozen procedural step-list artifact together with the novice question.
-- `symbolic_domain`: The LLM receives the same frozen step-list artifact, a deterministic predicate window around the current step, and the complete raw text of `thesis_rules.yaml`.
-- `graph_grounded`: The LLM receives the frozen procedural step list plus a local neighborhood retrieved from the procedural reasoning graph.
+The framework is organized around three prompting conditions. All three use the
+same novice test cases and the same frozen procedural step-list artifact, so the
+ablation isolates what changes when progressively richer grounding evidence is
+added.
 
 Evaluation metadata such as `risk_type` and `expected_answer_elements` is used only after responses are generated. It must never be included in prompts sent to the LLM.
 
-### `steps_only` Data Source
+### Experiment 1: `steps_only`
+
+**Name:** `steps_only`
+
+**Description:** Baseline condition. The LLM receives prompt instructions, the
+current step id, the novice operator question, and the frozen procedural step
+list. It does not receive symbolic predicates, thesis rules, inferred
+constraints, validation records, or graph evidence.
+
+**Data source:** The prompt context comes from `input_paths.step_list`, currently:
+
+```yaml
+input_paths:
+  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+```
 
 For the `steps_only` condition, the procedural step list sent to the LLM is
 loaded verbatim from `input_paths.step_list`. That text artifact is generated
@@ -28,20 +41,8 @@ validation records, or the procedural reasoning graph. Apart from the rendered
 step-list artifact, the prompt contains only the prompt instructions, current step id,
 and novice question.
 
-All three conditions use the same `input_paths.step_list` artifact. This is the fairness invariant for the ablation: the grounded conditions differ only in the additional evidence they provide.
-
-```yaml
-input_paths:
-  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
-  predicate_contexts: "experiments\\llm_guidance_ablation\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
-  thesis_rules: "config\\thesis_rules.yaml"
-
-context_retrieval:
-  step_hops: 1
-  evidence_hops: 2
-```
-
-Generate or refresh the step-list artifact from `step_records.jsonl` with:
+**How the data is obtained and prepared for the LLM:** Generate or refresh the
+step-list artifact from `step_records.jsonl` with:
 
 ```powershell
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\build_step_list_artifact.py `
@@ -59,7 +60,41 @@ The artifact is built from selected fields rather than copying raw JSONL records
 - `time_window.start_frame` and `time_window.end_frame`
 - confidence
 
-Generate the predicate-context artifact with the same hop radius configured in
+At run time, the runner reads this text file verbatim and inserts it into the
+configured `steps_only` prompt template.
+
+### Experiment 2: `symbolic_domain`
+
+**Name:** `symbolic_domain`
+
+**Description:** Symbolic-context condition. The LLM receives everything from
+`steps_only`, plus a deterministic predicate window around the current step and
+the complete raw text of `config/thesis_rules.yaml`. This tests whether explicit
+symbolic Layer 3 evidence and domain rules improve novice-support answers over
+the step-list baseline.
+
+**Data source:** The prompt context comes from three configured artifacts:
+
+```yaml
+input_paths:
+  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+  predicate_contexts: "experiments\\llm_guidance_ablation\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
+  thesis_rules: "config\\thesis_rules.yaml"
+
+context_retrieval:
+  step_hops: 1
+```
+
+The step-list artifact is the same file used by `steps_only`. Predicate context
+is prepared from `step_records.jsonl` and `predicates.jsonl`, which are Layer 3
+input artifacts produced by the IndustReal adapter. The rules are loaded
+verbatim from `thesis_rules.yaml`; `domain_config.yaml` is not sent because its
+relevant knowledge has already been materialized into the predicates by the
+adapter.
+
+**How the data is obtained and prepared for the LLM:** First generate the shared
+step-list artifact as described in Experiment 1. Then generate the
+predicate-context artifact with the hop radius configured in
 `context_retrieval.step_hops`:
 
 ```powershell
@@ -77,7 +112,59 @@ step. Predicate records are projected deterministically to the fields used for
 rule matching: `step_id`, `name`, `args`, and `conf`; verbose provenance, notes,
 and record identifiers are excluded to stay within the model context limit.
 
-### Graph Retrieval Budgets
+At run time, the runner selects the precomputed predicate context for the
+test-case `step_id`, renders it with the shared step list and the raw
+`thesis_rules.yaml` text, and inserts those blocks into the configured
+`symbolic_domain` prompt template.
+
+### Experiment 3: `graph_grounded`
+
+**Name:** `graph_grounded`
+
+**Description:** Graph-grounded condition. The LLM receives everything from
+`steps_only`, plus a deterministic local neighborhood retrieved from the
+procedural reasoning graph around the current step. This tests whether structured
+graph evidence improves novice-support answers over the shared step-list
+baseline.
+
+**Data source:** The prompt context comes from the shared step list and the
+procedural reasoning graph:
+
+```yaml
+input_paths:
+  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+  # Leave empty to derive the graph path from the selected dataset/clip id.
+  procedural_reasoning_graph: ""
+
+context_retrieval:
+  step_hops: 1
+  evidence_hops: 2
+```
+
+If `input_paths.procedural_reasoning_graph` is empty, the runner derives the
+graph path from the selected dataset or IndustReal clip id under
+`results/procedural_reasoning_graph/`, replacing `::` separators in the dataset
+id with `__` in the directory name.
+For the default IndustReal clip, the graph is built by the pipeline after Layer
+3 inference and Layer 4 validation.
+
+**How the data is obtained and prepared for the LLM:** First generate the shared
+step-list artifact as described in Experiment 1. Then build the procedural
+reasoning graph using the normal pipeline:
+
+```powershell
+.venv\Scripts\python.exe scripts\14_build_layer3_reasoning_adapter.py
+.venv\Scripts\python.exe scripts\15_run_layer3_inference.py
+.venv\Scripts\python.exe scripts\16_run_layer4_validation.py
+.venv\Scripts\python.exe scripts\17_build_procedural_reasoning_graph.py
+```
+
+At run time, the experiment loads the graph JSON, extracts a deterministic
+subgraph for each test-case step, and serializes that subgraph into compact text
+before inserting it into the prompt. The graph-grounded prompt does not send the
+raw full graph.
+
+#### Graph Retrieval Budgets
 
 The `graph_grounded` condition uses two deterministic traversal budgets:
 
@@ -112,7 +199,33 @@ predicate, constraint, entity, rule, and source label on every edge would add
 substantial repetition. The serializer does not generate a separate interpreted
 sequence summary; the graph relationships remain the authoritative evidence.
 
-### Layer 2 to Layer 3 Boundary
+### Notes:
+
+#### Why just a window?
+
+Experiment 2 sends a predicate window around the current step rather than the
+whole `predicates.jsonl` file for four reasons:
+
+- **Relevance:** Each novice question is anchored to one current assembly step.
+  The most useful symbolic evidence is usually the current step plus nearby
+  sequence context, such as the previous and next step.
+- **Context size:** The full predicate list can be large and repetitive. Sending
+  every predicate would consume prompt budget with evidence unrelated to the
+  operator's immediate question.
+- **Fair comparison:** `symbolic_domain` uses the same sequence radius as
+  `graph_grounded`'s `step_hops`. With `step_hops: 1`, both conditions cover the
+  same previous/current/next procedural window, but in different
+  representations.
+- **Avoiding accidental leakage:** The full predicate list may include far-away
+  future or unrelated procedure information. A local window better matches what
+  an operator-support assistant should use for the current step.
+
+In short, Experiment 2 sends the shared full step list, local symbolic evidence,
+and full thesis rules. The step list provides broad procedural orientation,
+while the predicate window provides detailed symbolic grounding only where it is
+most relevant.
+
+#### Layer 2 to Layer 3 Boundary
 
 `step_records.jsonl` and `predicates.jsonl` are Layer 3 input artifacts. They are not outputs of Layer 3 inference.
 
@@ -124,8 +237,6 @@ Layer 2 output
     -> step_records.jsonl + predicates.jsonl
     -> scripts/15_run_layer3_inference.py (Layer 3)
 ```
-
-The artifact-building scripts read `step_records.jsonl` and `predicates.jsonl`; experiment runs read the resulting frozen artifacts instead. `symbolic_domain` additionally sends the selected predicate window and `thesis_rules.yaml`. It does not send `domain_config.yaml`, whose relevant knowledge has already been materialized into the predicates by the adapter.
 
 ## Dataset Selection
 
