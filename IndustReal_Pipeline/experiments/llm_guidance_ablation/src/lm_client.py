@@ -33,13 +33,21 @@ def set_config_path(config_path: str | Path) -> None:
 
 
 def load_lm_config(config_path: str | Path = DEFAULT_CONFIG_PATH) -> LMConfig:
-    """Load the LLM API settings from the experiment config file."""
+    """Load the LLM API settings from the experiment or shared config file."""
     path = Path(config_path)
     if not path.exists():
         raise FileNotFoundError(f"config.yaml is missing: {path}")
 
     with path.open("r", encoding="utf-8") as handle:
         config: dict[str, Any] = yaml.safe_load(handle) or {}
+
+    llm_config_path = config.get("llm_config")
+    if llm_config_path:
+        shared_path = _resolve_configured_path(str(llm_config_path))
+        if not shared_path.exists():
+            raise FileNotFoundError(f"Shared LLM config is missing: {shared_path}")
+        with shared_path.open("r", encoding="utf-8") as handle:
+            config = yaml.safe_load(handle) or {}
 
     try:
         return LMConfig(

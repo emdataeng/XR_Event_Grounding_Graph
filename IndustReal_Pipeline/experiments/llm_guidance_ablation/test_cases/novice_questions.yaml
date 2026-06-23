@@ -1,4 +1,4 @@
 # Canonical operator prompts now live in:
-# experiments/llm_guidance_ablation/configs/novice_questions.yaml
+# experiments/shared/configs/novice_questions.yaml
 #
 # Keep this file only as a pointer for the original scaffold location.

@@ -1,0 +1,173 @@
+# risk_type is evaluation metadata. Query intent is retrieval behavior.
+# This mapping keeps the evaluation taxonomy separate from the Cypher template names.
+
+default_intent: current_step_context
+
+intent_by_risk_type:
+  sequence_error: sequence_context
+  component_confusion: component_check
+  incorrect_installation: installation_check
+  tool_usage_error: tool_context
+  missing_context: current_step_context
+  removal_or_rework_error: removal_or_rework_check
+  confidence_or_evidence_issue: evidence_confidence
+
+templates:
+  current_step_context:
+    description: "Retrieve the current step and direct graph evidence."
+    cypher: |-
+      OPTIONAL MATCH (s:Step {graph_name: $graph_name})
+      WHERE s.step_id = $step_id
+      OPTIONAL MATCH (s)-[r]-(n)
+      RETURN
+        $step_id AS requested_step_id,
+        s IS NOT NULL AS current_step_found,
+        s.step_id AS step_id,
+        s.index AS step_index,
+        s.action_description AS action_description,
+        s.action_name AS action_name,
+        s.object_labels AS object_labels,
+        s.status AS status,
+        s.confidence AS confidence,
+        type(r) AS relation,
+        labels(n) AS neighbor_labels,
+        n.display_label AS neighbor_label,
+        n.name AS neighbor_name,
+        n.args AS neighbor_args
+      ORDER BY relation, neighbor_label
+      LIMIT $limit
+
+  sequence_context:
+    description: "Retrieve previous, current, and next procedural steps."
+    cypher: |-
+      MATCH (s:Step {graph_name: $graph_name})
+      WHERE s.step_id = $step_id
+      OPTIONAL MATCH (prev:Step {graph_name: $graph_name})-[:NEXT]->(s)
+      OPTIONAL MATCH (s)-[:NEXT]->(next:Step {graph_name: $graph_name})
+      RETURN
+        s.step_id AS current_step_id,
+        s.index AS current_index,
+        s.action_description AS current_action,
+        s.object_labels AS current_objects,
+        s.status AS current_status,
+        prev.step_id AS previous_step_id,
+        prev.index AS previous_index,
+        prev.action_description AS previous_action,
+        next.step_id AS next_step_id,
+        next.index AS next_index,
+        next.action_description AS next_action
+      LIMIT $limit
+
+  component_check:
+    description: "Retrieve component/object evidence attached to the current step."
+    cypher: |-
+      MATCH (s:Step {graph_name: $graph_name})
+      WHERE s.step_id = $step_id
+      OPTIONAL MATCH (s)-[r:HAS_ENTITY|HAS_PREDICATE|HAS_CONSTRAINT]-(n)
+      RETURN
+        s.step_id AS step_id,
+        s.action_description AS action_description,
+        s.object_ids AS object_ids,
+        s.object_labels AS object_labels,
+        type(r) AS relation,
+        labels(n) AS evidence_labels,
+        n.display_label AS evidence_label,
+        n.name AS evidence_name,
+        n.args AS evidence_args,
+        n.kind AS evidence_kind,
+        n.confidence AS evidence_confidence
+      ORDER BY relation, evidence_label
+      LIMIT $limit
+
+  installation_check:
+    description: "Retrieve requirements, produced effects, and support around the current step."
+    cypher: |-
+      MATCH (s:Step {graph_name: $graph_name})
+      WHERE s.step_id = $step_id
+      OPTIONAL MATCH (s)-[rel:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|SUPPORTED_BY]-(n)
+      RETURN
+        s.step_id AS step_id,
+        s.action_description AS action_description,
+        s.object_labels AS object_labels,
+        s.status AS status,
+        type(rel) AS relation,
+        rel.required_condition AS required_condition,
+        rel.supporting_effect AS supporting_effect,
+        labels(n) AS evidence_labels,
+        n.display_label AS evidence_label,
+        n.name AS evidence_name,
+        n.args AS evidence_args,
+        n.kind AS evidence_kind,
+        n.status AS evidence_status,
+        n.support_status AS support_status
+      ORDER BY relation, evidence_label
+      LIMIT $limit
+
+  tool_context:
+    description: "Retrieve current step evidence likely to mention tools or missing tool evidence."
+    cypher: |-
+      MATCH (s:Step {graph_name: $graph_name})
+      WHERE s.step_id = $step_id
+      OPTIONAL MATCH (s)-[r:HAS_PREDICATE|HAS_CONSTRAINT|HAS_ENTITY]-(n)
+      WHERE toLower(coalesce(n.display_label, '') + ' ' + coalesce(n.name, '') + ' ' + coalesce(n.kind, '')) CONTAINS 'tool'
+         OR toLower(coalesce(s.action_description, '')) CONTAINS 'tool'
+      RETURN
+        s.step_id AS step_id,
+        s.action_description AS action_description,
+        s.object_labels AS object_labels,
+        type(r) AS relation,
+        labels(n) AS evidence_labels,
+        n.display_label AS evidence_label,
+        n.name AS evidence_name,
+        n.args AS evidence_args,
+        n.kind AS evidence_kind
+      LIMIT $limit
+
+  removal_or_rework_check:
+    description: "Retrieve removal/rework evidence, invalidations, and dependencies."
+    cypher: |-
+      MATCH (s:Step {graph_name: $graph_name})
+      WHERE s.step_id = $step_id
+      OPTIONAL MATCH (s)-[rel:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|INVALIDATED_BY]-(n)
+      RETURN
+        s.step_id AS step_id,
+        s.action_description AS action_description,
+        s.action_name AS action_name,
+        s.object_labels AS object_labels,
+        s.invalidates_effect_count AS invalidates_effect_count,
+        s.invalidated_effects AS invalidated_effects,
+        type(rel) AS relation,
+        rel.required_condition AS required_condition,
+        rel.supporting_effect AS supporting_effect,
+        labels(n) AS evidence_labels,
+        n.display_label AS evidence_label,
+        n.name AS evidence_name,
+        n.args AS evidence_args,
+        n.status AS evidence_status
+      ORDER BY relation, evidence_label
+      LIMIT $limit
+
+  evidence_confidence:
+    description: "Retrieve confidence, status, warnings, and source/provenance evidence."
+    cypher: |-
+      MATCH (s:Step {graph_name: $graph_name})
+      WHERE s.step_id = $step_id
+      OPTIONAL MATCH (s)-[r:HAS_PREDICATE|HAS_CONSTRAINT|DERIVED_FROM|SUPPORTED_BY]-(n)
+      RETURN
+        s.step_id AS step_id,
+        s.action_description AS action_description,
+        s.status AS status,
+        s.confidence AS confidence,
+        s.warning_count AS warning_count,
+        s.has_rule_coverage AS has_rule_coverage,
+        s.has_expected_effect AS has_expected_effect,
+        type(r) AS relation,
+        labels(n) AS evidence_labels,
+        n.display_label AS evidence_label,
+        n.name AS evidence_name,
+        n.args AS evidence_args,
+        n.confidence AS evidence_confidence,
+        n.status AS evidence_status,
+        n.support_status AS support_status
+      ORDER BY relation, evidence_label
+      LIMIT $limit

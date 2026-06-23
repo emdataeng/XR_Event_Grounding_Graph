@@ -26,7 +26,7 @@ constraints, validation records, or graph evidence.
 
 ```yaml
 input_paths:
-  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+  step_list: "experiments\\shared\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
 ```
 
 For the `steps_only` condition, the procedural step list sent to the LLM is
@@ -47,7 +47,7 @@ step-list artifact from `step_records.jsonl` with:
 ```powershell
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\build_step_list_artifact.py `
   --step-records results\reasoning_layers\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\step_records.jsonl `
-  --output experiments\llm_guidance_ablation\data\steps_od_only_test_p1_03_assy_0_1.txt
+  --output experiments\shared\data\steps_od_only_test_p1_03_assy_0_1.txt
 ```
 
 The artifact is built from selected fields rather than copying raw JSONL records. Each rendered step includes:
@@ -77,8 +77,8 @@ the step-list baseline.
 
 ```yaml
 input_paths:
-  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
-  predicate_contexts: "experiments\\llm_guidance_ablation\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
+  step_list: "experiments\\shared\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+  predicate_contexts: "experiments\\shared\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
   thesis_rules: "config\\thesis_rules.yaml"
 
 context_retrieval:
@@ -102,7 +102,7 @@ predicate-context artifact with the hop radius configured in
   --step-records results\reasoning_layers\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\step_records.jsonl `
   --predicates results\reasoning_layers\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\predicates.jsonl `
   --hops 1 `
-  --output experiments\llm_guidance_ablation\data\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json
+  --output experiments\shared\data\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json
 ```
 
 With `step_hops: 1`, each context contains predicates for the current step, its
@@ -132,7 +132,7 @@ procedural reasoning graph:
 
 ```yaml
 input_paths:
-  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+  step_list: "experiments\\shared\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
   # Leave empty to derive the graph path from the selected dataset/clip id.
   procedural_reasoning_graph: ""
 
@@ -284,9 +284,9 @@ This folder contains working runners for `steps_only`, `symbolic_domain`, and `g
 
 The `symbolic_domain` condition uses deterministic sequence-window retrieval rather than summarization: it selects predicates for the current step and configured neighboring steps, projects only rule-matching fields, and includes `thesis_rules.yaml` verbatim. This avoids introducing a separate summarization model into the ablation.
 
-Run settings live in `configs/config.yaml`. Prompt templates live in `configs/prompts.yaml`, including the normal chat prompts and the LM Studio fallback message used when a model template rejects the `system` role.
+Run settings live in `configs/config.yaml`. Shared OpenAI-compatible API settings live in `experiments/shared/configs/llm_api.yaml`. Prompt templates live in `configs/prompts.yaml`, including the normal chat prompts and the LM Studio fallback message used when a model template rejects the `system` role.
 
-Operator prompts for the novice test cases live in `configs/novice_questions.yaml`. They are grouped by `risk_type` so cases can be removed or curated easily. The `question` field is sent to the LLM as the operator question; `risk_type` and `expected_answer_elements` are evaluation-only fields and must not be sent to the LLM.
+Operator prompts for the novice test cases live in `experiments/shared/configs/novice_questions.yaml`. They are grouped by `risk_type` so cases can be removed or curated easily. The `question` field is sent to the LLM as the operator question; `risk_type` and `expected_answer_elements` are evaluation-only fields and must not be sent to the LLM.
 
 ## Run Commands
 

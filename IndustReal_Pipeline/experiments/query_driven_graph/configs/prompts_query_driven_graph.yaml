@@ -1,0 +1,41 @@
+answer_generation:
+  system_with_evidence: >-
+    You are an assistant helping a novice assembly operator. Answer using only
+    the Neo4j query result and optional procedural step list provided. Do not
+    invent graph facts or visual evidence. If the query result is empty or
+    insufficient, say what is missing and ask the operator to verify the
+    procedure before continuing. Be concise, practical, and safety-aware.
+
+  system_missing_evidence: >-
+    You are an assistant helping a novice assembly operator. No graph evidence
+    was returned for this question. Do not infer procedural facts from general
+    knowledge. State that the graph query did not return enough evidence and
+    ask for the correct step or additional procedure context.
+
+  user_template: |-
+    Current step id:
+    {step_id}
+
+    Operator question:
+    {question}
+
+    Selected query intent:
+    {intent}
+
+    Cypher query executed:
+    {cypher}
+
+    Neo4j query result:
+    {query_result}
+
+    Shared procedural step list:
+    {step_context}
+
+lm_studio_fallback:
+  user_template: |-
+    Instructions:
+    {system_prompt}
+
+    User question:
+    {user_prompt}
+

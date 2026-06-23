@@ -1,5 +1,6 @@
 # Credentials
 .env
+experiments/query_driven_graph/.env.local
 
 # Codex workspace metadata
 .codex
@@ -12,10 +13,20 @@ __pycache__/
 results/*
 !results/neo4j/
 !results/neo4j/**
+!results/reasoning_layers/
+results/reasoning_layers/*
+!results/reasoning_layers/raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1/
+!results/reasoning_layers/raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1/**
+!results/procedural_reasoning_graph/
+results/procedural_reasoning_graph/*
+!results/procedural_reasoning_graph/raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1/
+!results/procedural_reasoning_graph/raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1/**
 !results/10_assy_0_1_results.json
 !results/raw_cad_pilot/
 !results/raw_cad_pilot/raw_cad_pilot__10_assy_0_1/
 !results/raw_cad_pilot/raw_cad_pilot__10_assy_0_1/**
+experiments/query_driven_graph/data/
+experiments/query_driven_graph/outputs/
 data/part_geometries.zip
 data/raw/
 data/slices/

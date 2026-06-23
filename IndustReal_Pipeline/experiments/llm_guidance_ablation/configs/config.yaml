@@ -1,9 +1,4 @@
-# OpenAI-compatible API settings. LM Studio defaults to http://localhost:1234/v1.
-api_base_url: "http://localhost:1234/v1"
-api_key: "lm-studio"
-model_name: "mistralai/mistral-7b-instruct-v0.3"
-temperature: 0.0
-max_tokens: 512
+llm_config: "experiments\\shared\\configs\\llm_api.yaml"
 
 dataset:
   default_kind: "industreal"
@@ -14,12 +9,12 @@ dataset:
 
 input_paths:
   industreal_root: "results\\neo4j\\raw_cad_dataset__all_test_clips"
-  step_list: "experiments\\llm_guidance_ablation\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
-  predicate_contexts: "experiments\\llm_guidance_ablation\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
+  step_list: "experiments\\shared\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+  predicate_contexts: "experiments\\shared\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
   thesis_rules: "config\\thesis_rules.yaml"
   # Leave empty to derive the path from the selected dataset/clip id.
   procedural_reasoning_graph: ""
-  test_cases: "experiments\\llm_guidance_ablation\\configs\\novice_questions.yaml"
+  test_cases: "experiments\\shared\\configs\\novice_questions.yaml"
 
 artifact_sources:
   step_records: "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\step_records.jsonl"

@@ -1,0 +1,8 @@
+# OpenAI-compatible API settings shared by experiments.
+# LM Studio defaults to http://localhost:1234/v1.
+api_base_url: "http://localhost:1234/v1"
+api_key: "lm-studio"
+model_name: "mistralai/mistral-7b-instruct-v0.3"
+temperature: 0.0
+max_tokens: 512
+
