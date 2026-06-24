@@ -214,6 +214,8 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 skip_reason = llm_skip_reason(query_status, query_error, query_rows)
                 if skip_reason:
                     response = f"LLM call skipped: {skip_reason}"
+                    llm_status = "skipped"
+                    llm_error = None
                     write_log_event(
                         log_handle,
                         "llm_call_skipped",
@@ -226,9 +228,34 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     )
                 elif dry_run:
                     response = "[dry-run] LLM answer generation skipped."
+                    llm_status = "dry_run"
+                    llm_error = None
                 else:
-                    prompt = build_answer_prompt(test_case, plan, query_rows, step_context, prompts)
-                    response = ask_llm(prompt["system_prompt"], prompt["user_prompt"])
+                    try:
+                        prompt = build_answer_prompt(test_case, plan, query_rows, step_context, prompts)
+                        response = ask_llm(prompt["system_prompt"], prompt["user_prompt"])
+                        llm_status = "ok"
+                        llm_error = None
+                    except Exception as exc:
+                        llm_error = f"{type(exc).__name__}: {exc}"
+                        llm_status = "failed"
+                        response = f"LLM answer generation failed: {llm_error}"
+                        write_log_event(
+                            log_handle,
+                            "llm_call_failed",
+                            condition=CONDITION,
+                            interaction=index,
+                            case_id=case_id,
+                            risk_type=risk_type,
+                            intent=plan.intent,
+                            error_type=type(exc).__name__,
+                            error_message=str(exc),
+                        )
+                        print(
+                            f"[{index}/{len(test_cases)}] {case_id}: "
+                            f"LLM call failed; continuing with the next question: {llm_error}",
+                            file=sys.stderr,
+                        )
 
                 duration = time.perf_counter() - case_started
                 row = {
@@ -244,6 +271,8 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     "query_error": query_error,
                     "query_rows": query_rows,
                     "response": response,
+                    "llm_status": llm_status,
+                    "llm_error": llm_error,
                     "risk_type": test_case.get("risk_type"),
                     "expected_answer_elements": test_case.get("expected_answer_elements"),
                     "duration_seconds": round(duration, 6),
@@ -261,6 +290,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     risk_type=risk_type,
                     intent=plan.intent,
                     query_status=query_status,
+                    llm_status=llm_status,
                     duration_seconds=round(duration, 6),
                 )
 
@@ -271,6 +301,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 "run_completed",
                 condition=CONDITION,
                 completed_interactions=len(rows),
+                failed_llm_interactions=sum(row["llm_status"] == "failed" for row in rows),
                 total_interactions=len(test_cases),
                 total_duration_seconds=round(total_duration, 6),
                 responses_path=str(paths["responses"]),
