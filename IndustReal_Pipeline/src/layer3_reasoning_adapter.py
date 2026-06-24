@@ -124,6 +124,7 @@ REQUIRED_PREDICATE_KEYS = (
     "requires_installed_before",
     "has_required_condition",
     "has_safety_requirement",
+    "has_observed_effect",
     "has_required_tool",
 )
 
@@ -473,6 +474,8 @@ def _predicates_for_step(
             source_component_id,
             component_id,
             conf,
+            action_description=_blank_to_none(row.get("action_desc")),
+            source_file=csv_files.events_csv,
         )
         predicates.extend(
             item
@@ -489,6 +492,9 @@ def _domain_predicates_for_component(
     source_component_id: str,
     individual_id: str,
     conf: float | None,
+    *,
+    action_description: str | None,
+    source_file: str,
 ) -> list[dict[str, Any]]:
     entry = _effective_domain_entry(domain_config, source_component_id)
     if not entry:
@@ -595,6 +601,35 @@ def _domain_predicates_for_component(
                     fields=["components", source_component_id, "safety_requirements", str(idx)],
                 )
             )
+
+    for idx, effect in enumerate(entry.get("observed_effects", []) or []):
+        if not isinstance(effect, dict):
+            continue
+        effect_name = _blank_to_none(effect.get("name"))
+        description_pattern = _blank_to_none(effect.get("description_pattern"))
+        args = _resolve_domain_args(effect.get("args", []), individual_id, entry, domain_config)
+        if (
+            effect_name
+            and description_pattern
+            and action_description
+            and len(args) == 2
+            and re.search(description_pattern, action_description, flags=re.IGNORECASE)
+        ):
+            output.append(
+                _predicate_from_key(
+                    predicate_defs,
+                    "has_observed_effect",
+                    step_id,
+                    [step_id, effect_name, *args],
+                    conf,
+                    source_file=source_file,
+                    source_fields=["action_desc"],
+                    notes=(
+                        "Explicit effect extracted from the step annotation using "
+                        f"type_defaults observed_effects pattern {description_pattern!r}."
+                    ),
+                )
+            )
     return [item for item in output if item is not None]
 
 
@@ -626,6 +661,15 @@ def _resolve_domain_args(args: Any, component_id: str, entry: dict[str, Any], do
             output.append(component_id)
         elif arg == "$installation_target":
             output.append(_domain_individual_id(domain_config, _blank_to_none(entry.get("installation_target"))))
+        elif arg == "$installation_target_target":
+            installation_target = _blank_to_none(entry.get("installation_target"))
+            target_entry = _effective_domain_entry(domain_config, installation_target)
+            output.append(
+                _domain_individual_id(
+                    domain_config,
+                    _blank_to_none(target_entry.get("installation_target")),
+                )
+            )
         elif arg == "$parent_component":
             output.append(_domain_individual_id(domain_config, _blank_to_none(entry.get("parent_component"))))
         else:
@@ -813,6 +857,7 @@ def _validate_domain_config(config: dict[str, Any], path: Path) -> None:
             raise ValueError(f"domain config type default must be a mapping: type_defaults.{type_name}")
         _validate_condition_list(entry, vocabulary, path, ["type_defaults", str(type_name), "required_conditions"])
         _validate_condition_list(entry, vocabulary, path, ["type_defaults", str(type_name), "safety_requirements"])
+        _validate_observed_effects(entry, vocabulary, path, ["type_defaults", str(type_name), "observed_effects"])
 
     for component_id, entry in config.get("components", {}).items():
         if not isinstance(entry, dict):
@@ -822,6 +867,7 @@ def _validate_domain_config(config: dict[str, Any], path: Path) -> None:
             raise ValueError(f"domain config unknown generic_type '{generic_type}' at components.{component_id}")
         _validate_condition_list(entry, vocabulary, path, ["components", str(component_id), "required_conditions"])
         _validate_condition_list(entry, vocabulary, path, ["components", str(component_id), "safety_requirements"])
+        _validate_observed_effects(entry, vocabulary, path, ["components", str(component_id), "observed_effects"])
 
 
 def _validate_condition_list(
@@ -848,6 +894,25 @@ def _validate_condition_list(
                 f"domain config condition '{name}' at {'.'.join(fields + [str(idx)])} has arity "
                 f"{actual_arity}, expected {expected_arity}"
             )
+
+
+def _validate_observed_effects(
+    entry: dict[str, Any],
+    vocabulary: dict[str, Any],
+    path: Path,
+    fields: list[str],
+) -> None:
+    _validate_condition_list(entry, vocabulary, path, fields)
+    list_name = fields[-1]
+    for idx, effect in enumerate(entry.get(list_name, []) or []):
+        pattern = _blank_to_none(effect.get("description_pattern"))
+        location = ".".join(fields + [str(idx)])
+        if not pattern:
+            raise ValueError(f"domain config observed effect missing description_pattern at {location}")
+        try:
+            re.compile(pattern)
+        except re.error as exc:
+            raise ValueError(f"domain config invalid description_pattern at {location}: {exc}") from exc
 
 
 def _filter_events(

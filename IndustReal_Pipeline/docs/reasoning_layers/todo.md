@@ -4,6 +4,12 @@ This document tracks implementation follow-ups for the reasoning-layer prototype
 
 ## TODO
 
+- [ ] Record reasoning configuration identity in every generated run manifest.
+  - Include `domain_model_version` and `rule_set_version`.
+  - Include cryptographic hashes of `config/domain_config.yaml` and `config/thesis_rules.yaml`.
+  - Propagate this identity into reasoning-layer and procedural-graph result metadata.
+  - Make it possible to determine exactly which domain and rule semantics produced an existing result directory.
+
 - [ ] Generate `config/domain_config.yaml` from CAD-derived structure.
   - Infer generic component types from CAD names, hierarchy, metadata, and geometry.
   - Infer parent components and expected installation targets from assembly hierarchy and mating/contact constraints.

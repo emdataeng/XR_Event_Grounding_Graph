@@ -1,5 +1,6 @@
 import csv
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -37,6 +38,9 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     is_a = {tuple(item["args"]) for item in predicates if item["name"] == "isA"}
     labels = {tuple(item["args"]) for item in predicates if item["name"] == "hasLabel"}
     required_tools = {tuple(item["args"]) for item in predicates if item["name"] == "hasRequiredTool"}
+    safety_requirements = {
+        tuple(item["args"]) for item in predicates if item["name"] == "hasSafetyRequirement"
+    }
     time_windows = {
         item["source_event_id"].rsplit("::", 1)[-1]: item["time_window"]
         for item in steps
@@ -65,6 +69,24 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     assert ("front_bracket_screw", "Screw") in is_a
     assert ("front_bracket_screw", "Fastener") in is_a
     assert ("front_bracket_screw", "screwdriver") in required_tools
+    assert (
+        "front_chassis_pin",
+        "secured",
+        "front_chassis",
+        "base",
+    ) in safety_requirements
+    assert (
+        "front_rear_chassis_pin",
+        "secured",
+        "rear_chassis",
+        "base",
+    ) in safety_requirements
+    assert (
+        "rear_rear_chassis_pin",
+        "secured",
+        "rear_chassis",
+        "base",
+    ) in safety_requirements
 
     constraints_path = output_dir / "inferred_constraints.csv"
     result = run_layer3_inference(
@@ -83,7 +105,7 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     assert result["constraints_by_rule"]["effect_remove_component_from_target"] == 1
     assert result["rule_coverage_warnings"] == 0
     assert result["constraints_by_rule"]["implicit_domain_required_condition"] == 3
-    assert result["constraints_by_rule"]["safety_domain_requirement"] == 3
+    assert result["constraints_by_rule"]["safety_domain_requirement"] == 6
     assert result["constraints_by_rule"]["tool_domain_requirement"] == 1
     assert any(
         row["name"] == "requiresTool" and json.loads(row["args"]) == [row["step_id"], "screwdriver"]
@@ -107,6 +129,64 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     )
     install_diag = next(row for row in diagnostics if row["action_name"] == "install" and int(row["produced_constraint_count"]) > 0)
     assert install_diag["warning_code"] == ""
+
+
+def test_explicit_secured_annotation_produces_secured_effect(tmp_path: Path) -> None:
+    csv_dir = tmp_path / "csv"
+    csv_dir.mkdir()
+    for filename in ("nodes_events.csv", "edges_event_component.csv", "edges_event_next.csv", "nodes_components.csv"):
+        shutil.copy2(DEFAULT_CSV_DIR / filename, csv_dir / filename)
+
+    events_path = csv_dir / "nodes_events.csv"
+    with open(events_path, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+        fieldnames = list(rows[0])
+    target = next(
+        row
+        for row in rows
+        if row["clip_result_id"] == SAMPLE_CLIP_RESULT_ID
+        and row["component"] == "rear chassis"
+        and row["event_type"] == "INSTALL"
+    )
+    target["action_desc"] = "Install and secure rear chassis"
+    target["display_name"] = target["action_desc"]
+    target["name"] = target["action_desc"]
+    with open(events_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    output_dir = tmp_path / "reasoning"
+    build_reasoning_adapter_outputs(
+        AdapterInputs(
+            csv_dir=csv_dir,
+            run_id="test",
+            output_dir=output_dir,
+            clip_result_id=SAMPLE_CLIP_RESULT_ID,
+            predicate_config_path=DEFAULT_PREDICATE_CONFIG_PATH,
+            domain_config_path=DEFAULT_DOMAIN_CONFIG_PATH,
+        )
+    )
+    predicates = _read_jsonl(output_dir / "predicates.jsonl")
+    observed = next(item for item in predicates if item["name"] == "hasObservedEffect")
+    assert observed["args"][1:] == ["secured", "rear_chassis", "base"]
+
+    constraints_path = output_dir / "inferred_constraints.csv"
+    run_layer3_inference(
+        Layer3Inputs(
+            step_records_path=output_dir / "step_records.jsonl",
+            predicates_path=output_dir / "predicates.jsonl",
+            rules_path=DEFAULT_PREDICATE_CONFIG_PATH,
+            output_path=constraints_path,
+        )
+    )
+    constraints = _read_constraints(constraints_path)
+    assert any(
+        row["rule_id"] == "effect_explicitly_observed_condition"
+        and row["name"] == "produces"
+        and json.loads(row["args"]) == [row["step_id"], "secured", "rear_chassis", "base"]
+        for row in constraints
+    )
 
 
 def _read_jsonl(path: Path) -> list[dict[str, object]]:

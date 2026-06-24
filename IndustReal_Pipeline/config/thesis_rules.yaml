@@ -1,4 +1,6 @@
 {
+  "schema_version": "industreal_thesis_rules.v1",
+  "rule_set_version": "1.1.0",
   "adapter": {
     "predicates": {
       "event": {
@@ -72,6 +74,12 @@
           "args": ["component_id", "condition_name", "arg_1", "arg_2"],
           "enabled": true
         },
+        "has_observed_effect": {
+          "name": "hasObservedEffect",
+          "description": "Associates a step with an effect explicitly stated in its annotation.",
+          "args": ["step_id", "condition_name", "arg_1", "arg_2"],
+          "enabled": true
+        },
         "has_required_tool": {
           "name": "hasRequiredTool",
           "description": "Associates a component with a tool required by the domain config.",
@@ -93,6 +101,7 @@
     "requiresInstalledBefore": {"arity": 3, "description": "States that a component requires its target to be installed first."},
     "hasRequiredCondition": {"arity": 4, "description": "Associates a component with a required assembly condition."},
     "hasSafetyRequirement": {"arity": 4, "description": "Associates a component with a safety condition."},
+    "hasObservedEffect": {"arity": 4, "description": "Associates a step with an explicitly annotated effect."},
     "hasRequiredTool": {"arity": 2, "description": "Associates a component with a required tool."},
     "requires": {"arity": 4, "description": "Layer 3 inferred precondition or assembly condition."},
     "produces": {"arity": 4, "description": "Layer 3 expected effect."},
@@ -148,6 +157,18 @@
       ],
       "constraints": [
         {"name": "produces", "kind": "expected_effect", "args": ["?s", "installed", "?component", "?target"]}
+      ]
+    },
+    {
+      "id": "effect_explicitly_observed_condition",
+      "type": "expected_effect",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "hasAction", "args": ["?s", "install"]},
+        {"name": "hasObservedEffect", "args": ["?s", "?condition", "?arg1", "?arg2"]}
+      ],
+      "constraints": [
+        {"name": "produces", "kind": "expected_effect", "args": ["?s", "?condition", "?arg1", "?arg2"]}
       ]
     },
     {

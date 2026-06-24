@@ -1,5 +1,6 @@
 {
   "schema_version": "industreal_domain_config.v1",
+  "domain_model_version": "1.1.0",
   "type_hierarchy": {
     "Component": {
       "parents": []
@@ -41,7 +42,17 @@
         {"name": "aligned", "args": ["$self", "$installation_target"]}
       ],
       "safety_requirements": [
-        {"name": "secured", "args": ["industreal_component::base", "Workspace"]}
+        {"name": "secured", "args": ["industreal_component::base", "Workspace"]},
+        {"name": "secured", "args": ["$installation_target", "$installation_target_target"]}
+      ]
+    },
+    "Chassis": {
+      "observed_effects": [
+        {
+          "name": "secured",
+          "args": ["$self", "$installation_target"],
+          "description_pattern": "\\bsecur(?:e|ed|ing)\\b"
+        }
       ]
     }
   },
