@@ -12,10 +12,15 @@ from typing import Any
 
 import yaml
 
+SHARED_EXPERIMENTS_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
+
 from context_builders import PromptCondition, build_context
 from export_prompt_reports import export_prompt_reports
 from graph_loader import graph_artifact_path, load_procedural_reasoning_graph
 from lm_client import ask_llm, set_config_path
+from shared.graph_retrieval_config import load_graph_retrieval_config
+from shared.id_compaction import step_provenance
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
@@ -107,8 +112,8 @@ def load_artifacts(
             raise FileNotFoundError(f"Predicate context artifact is missing: {predicate_context_path}")
         with predicate_context_path.open("r", encoding="utf-8") as handle:
             artifacts["predicate_contexts"] = json.load(handle)
-    artifacts["step_hops"] = int(config.get("context_retrieval", {}).get("step_hops", 1))
-    artifacts["evidence_hops"] = int(config.get("context_retrieval", {}).get("evidence_hops", 2))
+    retrieval_path = resolve_configured_path(config["graph_retrieval_config"])
+    artifacts.update(load_graph_retrieval_config(retrieval_path))
 
     if condition in {None, PromptCondition.GRAPH_GROUNDED}:
         configured_graph_path = str(config.get("input_paths", {}).get("procedural_reasoning_graph") or "").strip()
@@ -175,9 +180,9 @@ def log_path_for_run(config: dict[str, Any], condition: PromptCondition, timesta
 
 
 def _write_log_event(handle: Any, event: str, **fields: Any) -> None:
-    """Write and flush one structured event without prompt or response text."""
+    """Write a structured event in the same local timezone as its filename."""
     record = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now().astimezone().isoformat(),
         "event": event,
         **fields,
     }
@@ -229,6 +234,10 @@ def run_experiment(
             "run_started",
             condition=condition.value,
             total_interactions=total_cases,
+            graph_retrieval={
+                "step_hops": artifacts["step_hops"],
+                "evidence_hops": artifacts["evidence_hops"],
+            },
         )
         try:
             with output_path.open("w", encoding="utf-8") as output_handle:
@@ -282,6 +291,11 @@ def run_experiment(
                         "case_id": test_case.get("case_id"),
                         "condition": condition.value,
                         "step_id": test_case.get("step_id"),
+                        "step_provenance": step_provenance(test_case.get("step_id")),
+                        "graph_retrieval": {
+                            "step_hops": artifacts["step_hops"],
+                            "evidence_hops": artifacts["evidence_hops"],
+                        },
                         "question": test_case.get("question"),
                         "response": response,
                         "risk_type": test_case.get("risk_type"),

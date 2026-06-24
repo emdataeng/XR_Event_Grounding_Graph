@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime
+from io import StringIO
 from pathlib import Path
 
 
@@ -35,6 +37,16 @@ class FakePlan:
         self.params = {"step_id": step_id}
 
 
+def test_communication_log_timestamp_uses_local_timezone() -> None:
+    handle = StringIO()
+    runner.write_log_event(handle, "test_event")
+
+    timestamp = json.loads(handle.getvalue())["timestamp"]
+    parsed = datetime.fromisoformat(timestamp)
+
+    assert parsed.utcoffset() == datetime.now().astimezone().utcoffset()
+
+
 def test_llm_failure_is_logged_and_next_question_is_processed(
     tmp_path: Path, monkeypatch
 ) -> None:
@@ -45,6 +57,7 @@ def test_llm_failure_is_logged_and_next_question_is_processed(
     output_root = tmp_path / "outputs"
     config = {
         "_config_path": str(tmp_path / "config.yaml"),
+        "graph_retrieval_config": "graph_retrieval.yaml",
         "neo4j": {"graph_name": "test_graph", "row_limit": 25},
         "input_paths": {},
         "prompt_paths": {"prompts": "prompts.yaml", "query_templates": "queries.yaml"},
@@ -55,11 +68,18 @@ def test_llm_failure_is_logged_and_next_question_is_processed(
     monkeypatch.setattr(runner, "load_step_context", lambda unused: "")
     monkeypatch.setattr(runner, "load_prompt_templates", lambda unused: {})
     monkeypatch.setattr(runner, "load_query_template_config", lambda unused: {})
+    monkeypatch.setattr(
+        runner,
+        "load_graph_retrieval_config",
+        lambda unused: {"step_hops": 1, "evidence_hops": 2},
+    )
     monkeypatch.setattr(runner, "client_from_config", lambda unused_config, unused_root: FakeNeo4jClient())
     monkeypatch.setattr(
         runner,
         "build_query_plan",
-        lambda case, unused_templates, unused_graph, unused_limit: FakePlan(case["step_id"]),
+        lambda case, unused_templates, unused_graph, unused_limit, unused_retrieval: FakePlan(
+            case["step_id"]
+        ),
     )
     monkeypatch.setattr(
         runner,
@@ -94,6 +114,7 @@ def test_llm_failure_is_logged_and_next_question_is_processed(
 
     assert len(rows) == 2
     assert rows[0]["llm_status"] == "failed"
+    assert rows[0]["step_provenance"] is None
     assert rows[0]["llm_error"] == "RuntimeError: context length exceeded"
     assert rows[1]["llm_status"] == "ok"
     assert rows[1]["response"] == "second answer"

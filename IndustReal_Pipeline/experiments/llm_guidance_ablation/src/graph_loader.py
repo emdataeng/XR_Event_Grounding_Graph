@@ -80,8 +80,8 @@ def graph_artifact_path(results_root: str | Path, dataset_id: str) -> Path:
 def extract_step_subgraph(
     graph: dict,
     step_id: str,
-    hops: int = 2,
-    evidence_hops: int | None = None,
+    hops: int,
+    evidence_hops: int,
 ) -> dict:
     """Extract sequence and semantic neighborhoods around a selected step.
 
@@ -90,8 +90,6 @@ def extract_step_subgraph(
     allowlist. Newly encountered steps, entities, rules, and sources are
     included but terminal; only predicates and constraints expand further.
     """
-    if evidence_hops is None:
-        evidence_hops = hops
     if hops < 0 or evidence_hops < 0:
         raise ValueError("hops and evidence_hops must be zero or greater")
 

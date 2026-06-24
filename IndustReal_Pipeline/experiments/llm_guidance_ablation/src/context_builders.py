@@ -3,10 +3,17 @@
 from __future__ import annotations
 
 import json
+import sys
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from graph_loader import extract_step_subgraph, serialize_graph_evidence
+
+SHARED_EXPERIMENTS_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
+
+from shared.id_compaction import compact_prompt_text, compact_step_id  # noqa: E402
 
 
 class PromptCondition(str, Enum):
@@ -24,13 +31,14 @@ def build_steps_only_context(test_case: dict[str, Any], artifacts: dict[str, Any
     ``expected_answer_elements`` are intentionally not read here.
     """
     artifacts = artifacts or {}
-    step_id = str(test_case.get("step_id", "")).strip()
+    source_step_id = str(test_case.get("step_id", "")).strip()
+    step_id = compact_step_id(source_step_id)
     question = str(test_case.get("question", "")).strip()
-    step_context = _step_list_artifact(artifacts)
+    step_context = compact_prompt_text(_step_list_artifact(artifacts), source_step_id)
     has_step_context = bool(step_context)
     prompts = _condition_prompts(artifacts, "steps_only")
 
-    if not step_id:
+    if not source_step_id:
         raise ValueError("Test case is missing required field: step_id")
     if not question:
         raise ValueError("Test case is missing required field: question")
@@ -48,16 +56,17 @@ def build_steps_only_context(test_case: dict[str, Any], artifacts: dict[str, Any
 def build_symbolic_domain_context(test_case: dict[str, Any], artifacts: dict[str, Any] | None = None) -> dict[str, str]:
     """Build prompts using the frozen step list, predicates, and rules."""
     artifacts = artifacts or {}
-    step_id = str(test_case.get("step_id", "")).strip()
+    source_step_id = str(test_case.get("step_id", "")).strip()
+    step_id = compact_step_id(source_step_id)
     question = str(test_case.get("question", "")).strip()
-    if not step_id:
+    if not source_step_id:
         raise ValueError("Test case is missing required field: step_id")
     if not question:
         raise ValueError("Test case is missing required field: question")
 
-    predicates = predicate_context_for_step(step_id, artifacts)
+    predicates = compact_prompt_text(predicate_context_for_step(source_step_id, artifacts), source_step_id)
     thesis_rules = _required_text_artifact(artifacts, "thesis_rules")
-    step_context = _step_list_artifact(artifacts)
+    step_context = compact_prompt_text(_step_list_artifact(artifacts), source_step_id)
     has_step_context = bool(step_context)
     prompts = _condition_prompts(artifacts, "symbolic_domain")
     system_prompt = prompts["system_with_context"] if has_step_context else prompts["system_missing_context"]
@@ -75,15 +84,19 @@ def build_symbolic_domain_context(test_case: dict[str, Any], artifacts: dict[str
 def build_graph_grounded_context(test_case: dict[str, Any], artifacts: dict[str, Any] | None = None) -> dict[str, str]:
     """Build prompts using generated steps plus local procedural graph evidence."""
     artifacts = artifacts or {}
-    step_id = str(test_case.get("step_id", "")).strip()
+    source_step_id = str(test_case.get("step_id", "")).strip()
+    step_id = compact_step_id(source_step_id)
     question = str(test_case.get("question", "")).strip()
-    if not step_id:
+    if not source_step_id:
         raise ValueError("Test case is missing required field: step_id")
     if not question:
         raise ValueError("Test case is missing required field: question")
 
-    graph_evidence = graph_evidence_for_step(step_id, artifacts)
-    step_context = _step_list_artifact(artifacts)
+    graph_evidence = compact_prompt_text(
+        graph_evidence_for_step(source_step_id, artifacts),
+        source_step_id,
+    )
+    step_context = compact_prompt_text(_step_list_artifact(artifacts), source_step_id)
     prompts = _condition_prompts(artifacts, "graph_grounded")
     system_prompt = prompts["system_with_context"] if step_context else prompts["system_missing_context"]
     user_prompt = _render_template(
@@ -101,8 +114,8 @@ def graph_evidence_for_step(step_id: str, artifacts: dict[str, Any]) -> str:
     graph = artifacts.get("procedural_reasoning_graph")
     if not isinstance(graph, dict):
         raise ValueError("Required prompt artifact was not loaded: procedural_reasoning_graph")
-    step_hops = int(artifacts.get("step_hops", 1))
-    evidence_hops = int(artifacts.get("evidence_hops", 2))
+    step_hops = int(artifacts["step_hops"])
+    evidence_hops = int(artifacts["evidence_hops"])
     subgraph = extract_step_subgraph(graph, step_id, step_hops, evidence_hops)
     return (
         f"Retrieval policy: step_hops={step_hops}, evidence_hops={evidence_hops}\n"

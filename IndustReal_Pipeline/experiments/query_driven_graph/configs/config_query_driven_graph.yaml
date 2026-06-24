@@ -1,4 +1,5 @@
 llm_config: "experiments\\shared\\configs\\llm_api.yaml"
+graph_retrieval_config: "experiments\\shared\\configs\\graph_retrieval.yaml"
 
 dataset:
   default_clip_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1"

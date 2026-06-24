@@ -1,0 +1,6 @@
+# Shared graph traversal budgets for every experiment that retrieves graph context.
+context_retrieval:
+  # Sequence radius for NEXT traversal between Step nodes.
+  step_hops: 1
+  # Semantic evidence depth starting from the original current Step only.
+  evidence_hops: 2

@@ -4,22 +4,28 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
+EXPERIMENTS_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(EXPERIMENTS_DIR))
+
 from context_builders import canonical_step_id
+from shared.graph_retrieval_config import load_graph_retrieval_config
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--step-records", type=Path, required=True)
     parser.add_argument("--predicates", type=Path, required=True)
-    parser.add_argument("--hops", type=int, default=1)
+    parser.add_argument(
+        "--graph-retrieval-config",
+        type=Path,
+        default=EXPERIMENTS_DIR / "shared" / "configs" / "graph_retrieval.yaml",
+    )
     parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
-    if args.hops < 0:
-        parser.error("--hops must be zero or greater")
-    return args
+    return parser.parse_args()
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -84,7 +90,12 @@ def build_predicate_contexts(step_records_path: Path, predicates_path: Path, hop
 
 def main() -> None:
     args = parse_args()
-    artifact = build_predicate_contexts(args.step_records, args.predicates, args.hops)
+    retrieval = load_graph_retrieval_config(args.graph_retrieval_config)
+    artifact = build_predicate_contexts(
+        args.step_records,
+        args.predicates,
+        retrieval["step_hops"],
+    )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(artifact, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(args.output)

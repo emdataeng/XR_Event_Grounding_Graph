@@ -16,14 +16,18 @@ CURRENT_DIR = Path(__file__).resolve().parent
 EXPERIMENT_ROOT = CURRENT_DIR.parents[0]
 REPO_ROOT = CURRENT_DIR.parents[2]
 LLM_ABLATION_SRC = REPO_ROOT / "experiments" / "llm_guidance_ablation" / "src"
+SHARED_EXPERIMENTS_DIR = REPO_ROOT / "experiments"
 sys.path.insert(0, str(CURRENT_DIR))
 sys.path.insert(0, str(LLM_ABLATION_SRC))
+sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
 
 from answer_builder import build_answer_prompt, load_prompt_templates  # noqa: E402
 from export_query_reports import export_query_reports  # noqa: E402
 from lm_client import ask_llm, set_config_path  # noqa: E402
 from neo4j_client import client_from_config  # noqa: E402
 from query_planner import build_query_plan, canonical_step_id, load_query_template_config  # noqa: E402
+from shared.graph_retrieval_config import load_graph_retrieval_config  # noqa: E402
+from shared.id_compaction import step_provenance  # noqa: E402
 
 
 CONDITION = "query_driven_graph"
@@ -120,10 +124,10 @@ def output_paths(config: dict[str, Any], timestamp: str) -> dict[str, Path]:
 
 
 def write_log_event(handle: Any, event: str, **fields: Any) -> None:
-    """Write and flush one structured communication event."""
+    """Write and flush one structured event using the filename's local timezone."""
     handle.write(
         json.dumps(
-            {"timestamp": datetime.now(timezone.utc).isoformat(), "event": event, **fields},
+            {"timestamp": datetime.now().astimezone().isoformat(), "event": event, **fields},
             ensure_ascii=False,
         )
         + "\n"
@@ -139,6 +143,9 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
     template_path = resolve_configured_path(config["prompt_paths"]["query_templates"])
     prompts = load_prompt_templates(prompt_path)
     template_config = load_query_template_config(template_path)
+    retrieval_config = load_graph_retrieval_config(
+        resolve_configured_path(config["graph_retrieval_config"])
+    )
     graph_name = str(config.get("neo4j", {}).get("graph_name") or "procedural_reasoning_graph")
     row_limit = int(config.get("neo4j", {}).get("row_limit", 25))
     timestamp = local_timestamp_for_filename()
@@ -162,13 +169,20 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 condition=CONDITION,
                 dry_run=dry_run,
                 total_interactions=len(test_cases),
+                graph_retrieval=retrieval_config,
             )
             for index, test_case in enumerate(test_cases, start=1):
                 case_id = str(test_case.get("case_id") or "unknown")
                 risk_type = str(test_case.get("risk_type") or "unclassified")
                 print(f"[{index}/{len(test_cases)}] {risk_type} | {case_id}: querying graph")
                 case_started = time.perf_counter()
-                plan = build_query_plan(test_case, template_config, graph_name, row_limit)
+                plan = build_query_plan(
+                    test_case,
+                    template_config,
+                    graph_name,
+                    row_limit,
+                    retrieval_config,
+                )
                 write_log_event(
                     log_handle,
                     "query_selected",
@@ -262,11 +276,13 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     "case_id": test_case.get("case_id"),
                     "condition": CONDITION,
                     "step_id": test_case.get("step_id"),
+                    "step_provenance": step_provenance(test_case.get("step_id")),
                     "question": test_case.get("question"),
                     "intent": plan.intent,
                     "intent_description": plan.description,
                     "cypher": plan.cypher,
                     "query_params": plan.params,
+                    "graph_retrieval": retrieval_config,
                     "query_status": query_status,
                     "query_error": query_error,
                     "query_rows": query_rows,

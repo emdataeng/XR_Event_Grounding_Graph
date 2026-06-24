@@ -13,6 +13,11 @@ from typing import Any
 from context_builders import PromptCondition, build_context, graph_evidence_for_step, predicate_context_for_step
 from graph_loader import extract_step_subgraph
 
+SHARED_EXPERIMENTS_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
+
+from shared.id_compaction import compact_prompt_text, compact_step_id  # noqa: E402
+
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -75,6 +80,10 @@ def render_prompt_report_group(
     symbolic_domain_included = condition is PromptCondition.SYMBOLIC_DOMAIN
     graph_grounded_included = condition is PromptCondition.GRAPH_GROUNDED
     shared_context = build_context(condition, test_cases[0], artifacts)
+    report_step_list = compact_prompt_text(
+        artifacts.get("step_list") or "",
+        test_cases[0].get("step_id"),
+    )
     case_sections = [render_prompt_case_section(test_case, condition, artifacts) for test_case in test_cases]
     shared_rules = _render_shared_rules(condition, artifacts)
 
@@ -126,7 +135,7 @@ The following content is identical for every case in this report and is shown on
 This block is inserted into the user message for every case.
 
 ```text
-{artifacts.get("step_list") or "No step-list artifact loaded."}
+{report_step_list or "No step-list artifact loaded."}
 ```
 
 {shared_rules}
@@ -157,27 +166,31 @@ def render_prompt_case_section(
 ) -> str:
     """Render only prompt content that varies for one test case."""
     predicate_section = ""
+    source_step_id = str(test_case.get("step_id") or "")
     if condition is PromptCondition.SYMBOLIC_DOMAIN:
         predicate_section = f"""
 ### Selected Symbolic Predicates
 
 ```text
-{predicate_context_for_step(str(test_case.get("step_id") or ""), artifacts)}
+{compact_prompt_text(predicate_context_for_step(source_step_id, artifacts), source_step_id)}
 ```
 """
     elif condition is PromptCondition.GRAPH_GROUNDED:
         subgraph = extract_step_subgraph(
             artifacts["procedural_reasoning_graph"],
-            str(test_case.get("step_id") or ""),
-            int(artifacts.get("step_hops", 1)),
-            int(artifacts.get("evidence_hops", 2)),
+            source_step_id,
+            int(artifacts["step_hops"]),
+            int(artifacts["evidence_hops"]),
         )
-        evidence_text = graph_evidence_for_step(str(test_case.get("step_id") or ""), artifacts)
+        evidence_text = compact_prompt_text(
+            graph_evidence_for_step(source_step_id, artifacts),
+            source_step_id,
+        )
         predicate_section = _render_graph_evidence_report(subgraph, evidence_text, artifacts)
     return f"""
 ## Case: {test_case.get("case_id")}
 
-- Step id: `{test_case.get("step_id")}`
+- Step id: `{compact_step_id(source_step_id)}`
 - Operator question: {test_case.get("question")}
 {predicate_section}
 

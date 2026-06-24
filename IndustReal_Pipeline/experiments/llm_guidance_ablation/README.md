@@ -81,8 +81,7 @@ input_paths:
   predicate_contexts: "experiments\\shared\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
   thesis_rules: "config\\thesis_rules.yaml"
 
-context_retrieval:
-  step_hops: 1
+graph_retrieval_config: "experiments\\shared\\configs\\graph_retrieval.yaml"
 ```
 
 The step-list artifact is the same file used by `steps_only`. Predicate context
@@ -94,14 +93,14 @@ adapter.
 
 **How the data is obtained and prepared for the LLM:** First generate the shared
 step-list artifact as described in Experiment 1. Then generate the
-predicate-context artifact with the hop radius configured in
-`context_retrieval.step_hops`:
+predicate-context artifact with the hop radius configured in the shared
+`graph_retrieval.yaml` file:
 
 ```powershell
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\build_predicate_context_artifact.py `
   --step-records results\reasoning_layers\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\step_records.jsonl `
   --predicates results\reasoning_layers\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\predicates.jsonl `
-  --hops 1 `
+  --graph-retrieval-config experiments\shared\configs\graph_retrieval.yaml `
   --output experiments\shared\data\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json
 ```
 
@@ -136,9 +135,7 @@ input_paths:
   # Leave empty to derive the graph path from the selected dataset/clip id.
   procedural_reasoning_graph: ""
 
-context_retrieval:
-  step_hops: 1
-  evidence_hops: 2
+graph_retrieval_config: "experiments\\shared\\configs\\graph_retrieval.yaml"
 ```
 
 If `input_paths.procedural_reasoning_graph` is empty, the runner derives the
@@ -184,8 +181,8 @@ and provenance branches from pulling unrelated portions of the graph into the
 prompt.
 
 Traversal is reproducible: nodes and edges are processed in sorted order,
-edges are deduplicated by source, relation, and target, and both hop limits are
-fixed in `config.yaml`. Graph-grounded prompt reports show the two budgets,
+edges are deduplicated by source, relation, and target, and both hop limits come
+from `experiments/shared/configs/graph_retrieval.yaml`. Graph-grounded prompt reports show the two budgets,
 node and relationship counts, and the exact serialized evidence sent to the
 LLM.
 
@@ -329,6 +326,11 @@ outputs/responses_steps_only_20260618T184039+0200.jsonl
 Each condition gets a separate file because its name is part of the filename, for example `responses_symbolic_domain_20260618T184039+0200.jsonl`.
 
 Each JSONL row includes `risk_type` and `expected_answer_elements` for evaluation, but those fields are not included in prompts sent to the LLM.
+
+Upstream identifiers are preserved in response artifacts for traceability, while
+LLM-facing step lists, predicates, and graph evidence use compact aliases such
+as `step_1`. Each response row also includes parsed `step_provenance` fields for
+the run id, evidence mode, archive, clip id, and numeric step index.
 
 While a run is active, the console shows the condition, current/total interaction count, risk group, case id, and elapsed time for each completed request.
 

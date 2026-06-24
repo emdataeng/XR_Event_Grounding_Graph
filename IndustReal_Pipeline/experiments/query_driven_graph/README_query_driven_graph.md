@@ -11,11 +11,38 @@ only the returned graph evidence.
 The first milestone uses deterministic template-based Cypher retrieval:
 
 ```text
-novice question + current step id
-    -> deterministic intent selection
-    -> read-only Cypher template
-    -> Neo4j query result
-    -> LLM answer grounded in query rows
+┌───────────────────┐     ┌───────────────────┐
+│ Novice question   │     │ Risk type         │
+└─────────┬─────────┘     └─────────┬─────────┘
+          └──────────────┬───────────┘
+                         ▼
+              ┌─────────────────────┐
+              │ Rule-based intent   │
+              │ selection           │
+              └──────────┬──────────┘
+                         ▼
+              ┌─────────────────────┐
+              │ Predefined read-only│
+              │ Cypher template     │
+              └──────────┬──────────┘
+                         │
+┌───────────────────┐    │    ┌───────────────────┐
+│ Current step ID   ├────┼────┤ Graph name        │
+└───────────────────┘    │    └───────────────────┘
+                         ▼
+              ┌─────────────────────┐
+              │ Parameterized       │
+              │ Neo4j query         │
+              └──────────┬──────────┘
+                         ▼
+              ┌─────────────────────┐
+              │ Neo4j query result  │
+              └──────────┬──────────┘
+                         ▼
+              ┌─────────────────────┐
+              │ LLM answer grounded │
+              │ in retrieved rows   │
+              └─────────────────────┘
 ```
 
 This keeps query retrieval inspectable before adding LLM-generated Cypher.
@@ -25,6 +52,9 @@ Shared novice questions and frozen step-list artifacts live under
 test cases and procedural baseline.
 Shared OpenAI-compatible API settings live in
 `experiments/shared/configs/llm_api.yaml`.
+Shared sequence and semantic graph-traversal budgets live in
+`experiments/shared/configs/graph_retrieval.yaml`; this experiment renders those
+values into its validated read-only Cypher templates.
 
 ## Run Prerequisites
 
@@ -113,3 +143,12 @@ Each run writes:
 Each JSONL response row includes the selected intent, Cypher query, query
 parameters, query rows, and final answer. Evaluation metadata is saved for later
 analysis but is not sent to the LLM.
+
+## Prompt Identifier Compaction
+
+Upstream graph identifiers remain unchanged for Neo4j queries, stored query
+parameters, and traceability. At the LLM prompt boundary, identifiers belonging
+to the active clip are rendered as compact aliases such as `step_1`.
+
+Response rows retain the original `step_id` and add `step_provenance`, containing
+the parsed run id, evidence mode, archive, clip id, and numeric step index.

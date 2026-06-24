@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+SHARED_EXPERIMENTS_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
+
+from shared.id_compaction import compact_prompt_text, compact_prompt_value, compact_step_id  # noqa: E402
 
 
 def load_prompt_templates(path: str | Path) -> dict[str, Any]:
@@ -36,15 +42,16 @@ def build_answer_prompt(
     system_key = "system_with_evidence" if query_rows else "system_missing_evidence"
     system_prompt = str(answer_prompts[system_key])
     user_template = str(answer_prompts["user_template"])
+    source_step_id = str(test_case.get("step_id") or "")
+    compact_query_rows = compact_prompt_value(query_rows, source_step_id)
     user_prompt = user_template.format_map(
         {
-            "step_id": str(test_case.get("step_id") or ""),
+            "step_id": compact_step_id(source_step_id),
             "question": str(test_case.get("question") or ""),
             "intent": query_plan.intent,
             "cypher": query_plan.cypher,
-            "query_result": json.dumps(query_rows, indent=2, ensure_ascii=False, sort_keys=True),
-            "step_context": step_context,
+            "query_result": json.dumps(compact_query_rows, indent=2, ensure_ascii=False, sort_keys=True),
+            "step_context": compact_prompt_text(step_context, source_step_id),
         }
     )
     return {"system_prompt": system_prompt, "user_prompt": user_prompt}
-

@@ -13,10 +13,13 @@ import yaml
 CURRENT_DIR = Path(__file__).resolve().parent
 EXPERIMENT_ROOT = CURRENT_DIR.parents[0]
 REPO_ROOT = CURRENT_DIR.parents[2]
+SHARED_EXPERIMENTS_DIR = REPO_ROOT / "experiments"
 sys.path.insert(0, str(CURRENT_DIR))
+sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
 
 from neo4j_client import client_from_config  # noqa: E402
 from query_planner import build_query_plan, load_query_template_config  # noqa: E402
+from shared.graph_retrieval_config import load_graph_retrieval_config  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:
@@ -69,6 +72,9 @@ def main() -> None:
     args = parse_args()
     config = load_config(args.config)
     template_config = load_query_template_config(resolve_configured_path(config["prompt_paths"]["query_templates"]))
+    retrieval_config = load_graph_retrieval_config(
+        resolve_configured_path(config["graph_retrieval_config"])
+    )
     test_cases = load_test_cases(resolve_configured_path(config["input_paths"]["test_cases"]))
     graph_name = str(config.get("neo4j", {}).get("graph_name") or "procedural_reasoning_graph")
     row_limit = int(config.get("neo4j", {}).get("row_limit", 25))
@@ -107,7 +113,13 @@ def main() -> None:
             print(json.dumps(sorted(valid_step_ids)[:5], indent=2, ensure_ascii=False))
 
         for index, test_case in enumerate(test_cases, start=1):
-            plan = build_query_plan(test_case, template_config, graph_name, row_limit)
+            plan = build_query_plan(
+                test_case,
+                template_config,
+                graph_name,
+                row_limit,
+                retrieval_config,
+            )
             case_id = str(test_case.get("case_id") or "unknown")
             if plan.params["step_id"] not in valid_step_ids:
                 print(

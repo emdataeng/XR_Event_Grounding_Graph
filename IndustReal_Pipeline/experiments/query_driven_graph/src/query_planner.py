@@ -38,6 +38,7 @@ def build_query_plan(
     template_config: dict[str, Any],
     graph_name: str,
     row_limit: int,
+    retrieval_config: dict[str, int],
 ) -> QueryPlan:
     """Select a deterministic query template and bind safe parameters."""
     intent = select_intent(test_case, template_config)
@@ -48,7 +49,11 @@ def build_query_plan(
     template = templates[intent]
     if not isinstance(template, dict):
         raise ValueError(f"Expected query template to be a mapping for intent: {intent}")
-    cypher = str(template.get("cypher") or "").strip()
+    cypher_template = str(template.get("cypher") or "").strip()
+    cypher = (
+        cypher_template.replace("{step_hops}", str(int(retrieval_config["step_hops"])))
+        .replace("{evidence_hops}", str(int(retrieval_config["evidence_hops"])))
+    )
     validate_read_only_cypher(cypher)
 
     step_id = str(test_case.get("step_id") or "").strip()

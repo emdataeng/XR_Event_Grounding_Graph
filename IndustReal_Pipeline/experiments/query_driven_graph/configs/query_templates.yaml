@@ -18,7 +18,11 @@ templates:
     cypher: |-
       OPTIONAL MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH (s)-[r]-(n)
+      OPTIONAL MATCH path = (s)-[*0..{evidence_hops}]-(n)
+      WHERE length(path) > 0
+        AND all(intermediate IN nodes(path)[1..-1]
+                WHERE intermediate:Predicate OR intermediate:Constraint)
+      WITH s, n, path, last(relationships(path)) AS r
       RETURN
         $step_id AS requested_step_id,
         s IS NOT NULL AS current_step_found,
@@ -33,8 +37,9 @@ templates:
         labels(n) AS neighbor_labels,
         n.display_label AS neighbor_label,
         n.name AS neighbor_name,
-        n.args AS neighbor_args
-      ORDER BY relation, neighbor_label
+        n.args AS neighbor_args,
+        length(path) AS evidence_distance
+      ORDER BY evidence_distance, relation, neighbor_label
       LIMIT $limit
 
   sequence_context:
@@ -42,20 +47,25 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH (prev:Step {graph_name: $graph_name})-[:NEXT]->(s)
-      OPTIONAL MATCH (s)-[:NEXT]->(next:Step {graph_name: $graph_name})
+      MATCH path = (s)-[:NEXT*0..{step_hops}]-(context:Step {graph_name: $graph_name})
       RETURN
         s.step_id AS current_step_id,
         s.index AS current_index,
         s.action_description AS current_action,
         s.object_labels AS current_objects,
         s.status AS current_status,
-        prev.step_id AS previous_step_id,
-        prev.index AS previous_index,
-        prev.action_description AS previous_action,
-        next.step_id AS next_step_id,
-        next.index AS next_index,
-        next.action_description AS next_action
+        context.step_id AS context_step_id,
+        context.index AS context_index,
+        context.action_description AS context_action,
+        context.object_labels AS context_objects,
+        context.status AS context_status,
+        length(path) AS sequence_distance,
+        CASE
+          WHEN context.index < s.index THEN 'previous'
+          WHEN context.index > s.index THEN 'next'
+          ELSE 'current'
+        END AS sequence_position
+      ORDER BY sequence_distance, context_index
       LIMIT $limit
 
   component_check:
@@ -63,7 +73,11 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH (s)-[r:HAS_ENTITY|HAS_PREDICATE|HAS_CONSTRAINT]-(n)
+      OPTIONAL MATCH path = (s)-[:HAS_ENTITY|HAS_PREDICATE|HAS_CONSTRAINT*0..{evidence_hops}]-(n)
+      WHERE length(path) > 0
+        AND all(intermediate IN nodes(path)[1..-1]
+                WHERE intermediate:Predicate OR intermediate:Constraint)
+      WITH s, n, path, last(relationships(path)) AS r
       RETURN
         s.step_id AS step_id,
         s.action_description AS action_description,
@@ -75,8 +89,9 @@ templates:
         n.name AS evidence_name,
         n.args AS evidence_args,
         n.kind AS evidence_kind,
-        n.confidence AS evidence_confidence
-      ORDER BY relation, evidence_label
+        n.confidence AS evidence_confidence,
+        length(path) AS evidence_distance
+      ORDER BY evidence_distance, relation, evidence_label
       LIMIT $limit
 
   installation_check:
@@ -84,7 +99,11 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH (s)-[rel:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|SUPPORTED_BY]-(n)
+      OPTIONAL MATCH path = (s)-[:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|SUPPORTED_BY*0..{evidence_hops}]-(n)
+      WHERE length(path) > 0
+        AND all(intermediate IN nodes(path)[1..-1]
+                WHERE intermediate:Predicate OR intermediate:Constraint)
+      WITH s, n, path, last(relationships(path)) AS rel
       RETURN
         s.step_id AS step_id,
         s.action_description AS action_description,
@@ -99,8 +118,9 @@ templates:
         n.args AS evidence_args,
         n.kind AS evidence_kind,
         n.status AS evidence_status,
-        n.support_status AS support_status
-      ORDER BY relation, evidence_label
+        n.support_status AS support_status,
+        length(path) AS evidence_distance
+      ORDER BY evidence_distance, relation, evidence_label
       LIMIT $limit
 
   tool_context:
@@ -108,9 +128,15 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH (s)-[r:HAS_PREDICATE|HAS_CONSTRAINT|HAS_ENTITY]-(n)
-      WHERE toLower(coalesce(n.display_label, '') + ' ' + coalesce(n.name, '') + ' ' + coalesce(n.kind, '')) CONTAINS 'tool'
-         OR toLower(coalesce(s.action_description, '')) CONTAINS 'tool'
+      OPTIONAL MATCH path = (s)-[:HAS_PREDICATE|HAS_CONSTRAINT|HAS_ENTITY*0..{evidence_hops}]-(n)
+      WHERE length(path) > 0
+        AND all(intermediate IN nodes(path)[1..-1]
+                WHERE intermediate:Predicate OR intermediate:Constraint)
+        AND (
+          toLower(coalesce(n.display_label, '') + ' ' + coalesce(n.name, '') + ' ' + coalesce(n.kind, '')) CONTAINS 'tool'
+          OR toLower(coalesce(s.action_description, '')) CONTAINS 'tool'
+        )
+      WITH s, n, path, last(relationships(path)) AS r
       RETURN
         s.step_id AS step_id,
         s.action_description AS action_description,
@@ -120,7 +146,9 @@ templates:
         n.display_label AS evidence_label,
         n.name AS evidence_name,
         n.args AS evidence_args,
-        n.kind AS evidence_kind
+        n.kind AS evidence_kind,
+        length(path) AS evidence_distance
+      ORDER BY evidence_distance, relation, evidence_label
       LIMIT $limit
 
   removal_or_rework_check:
@@ -128,7 +156,11 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH (s)-[rel:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|INVALIDATED_BY]-(n)
+      OPTIONAL MATCH path = (s)-[:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|INVALIDATED_BY*0..{evidence_hops}]-(n)
+      WHERE length(path) > 0
+        AND all(intermediate IN nodes(path)[1..-1]
+                WHERE intermediate:Predicate OR intermediate:Constraint)
+      WITH s, n, path, last(relationships(path)) AS rel
       RETURN
         s.step_id AS step_id,
         s.action_description AS action_description,
@@ -143,8 +175,9 @@ templates:
         n.display_label AS evidence_label,
         n.name AS evidence_name,
         n.args AS evidence_args,
-        n.status AS evidence_status
-      ORDER BY relation, evidence_label
+        n.status AS evidence_status,
+        length(path) AS evidence_distance
+      ORDER BY evidence_distance, relation, evidence_label
       LIMIT $limit
 
   evidence_confidence:
@@ -152,7 +185,11 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH (s)-[r:HAS_PREDICATE|HAS_CONSTRAINT|DERIVED_FROM|SUPPORTED_BY]-(n)
+      OPTIONAL MATCH path = (s)-[:HAS_PREDICATE|HAS_CONSTRAINT|DERIVED_FROM|SUPPORTED_BY*0..{evidence_hops}]-(n)
+      WHERE length(path) > 0
+        AND all(intermediate IN nodes(path)[1..-1]
+                WHERE intermediate:Predicate OR intermediate:Constraint)
+      WITH s, n, path, last(relationships(path)) AS r
       RETURN
         s.step_id AS step_id,
         s.action_description AS action_description,
@@ -168,6 +205,7 @@ templates:
         n.args AS evidence_args,
         n.confidence AS evidence_confidence,
         n.status AS evidence_status,
-        n.support_status AS support_status
-      ORDER BY relation, evidence_label
+        n.support_status AS support_status,
+        length(path) AS evidence_distance
+      ORDER BY evidence_distance, relation, evidence_label
       LIMIT $limit
