@@ -130,7 +130,7 @@ def _apply_inference_rule(
     constraint_templates = _rule_constraint_templates(rule)
     threshold = float(rule.get("threshold", default_threshold))
     aggregation = str(rule.get("aggregation", default_aggregation))
-    matches = _find_matches(antecedents, predicates)
+    matches = _find_matches(antecedents, predicates, guards=list(rule.get("guards", [])))
     constraints: list[dict[str, Any]] = []
     for match_idx, match in enumerate(matches):
         evidence = list(match["evidence"])
@@ -165,7 +165,7 @@ def _apply_compatibility_rule(
     antecedents = list(rule.get("antecedents", []))
     constraint_templates = _rule_constraint_templates(rule)
     aggregation = str(rule.get("aggregation", default_aggregation))
-    matches = _find_matches(antecedents, predicates)
+    matches = _find_matches(antecedents, predicates, guards=list(rule.get("guards", [])))
     constraints: list[dict[str, Any]] = []
     for match_idx, match in enumerate(matches):
         evidence = list(match["evidence"])
@@ -305,7 +305,12 @@ def _compact_evidence_predicates(predicates: list[dict[str, Any]]) -> list[dict[
     ]
 
 
-def _find_matches(antecedents: list[dict[str, Any]], predicates: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _find_matches(
+    antecedents: list[dict[str, Any]],
+    predicates: list[dict[str, Any]],
+    *,
+    guards: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     matches = [{"bindings": {}, "evidence": []}]
     for antecedent in antecedents:
         next_matches = []
@@ -323,7 +328,36 @@ def _find_matches(antecedents: list[dict[str, Any]], predicates: list[dict[str, 
         matches = next_matches
         if not matches:
             break
-    return _dedupe_matches(matches)
+    guarded = [
+        match
+        for match in matches
+        if _guards_pass(list(guards or []), dict(match["bindings"]))
+    ]
+    return _dedupe_matches(guarded)
+
+
+def _guards_pass(guards: list[dict[str, Any]], bindings: dict[str, Any]) -> bool:
+    for guard in guards:
+        operator = str(guard.get("operator") or "")
+        args = list(guard.get("args", []) or [])
+        values = [_instantiate_guard_arg(arg, bindings) for arg in args]
+        if operator == "equal":
+            if values[0] != values[1]:
+                return False
+        elif operator == "not_equal":
+            if values[0] == values[1]:
+                return False
+        else:
+            raise ValueError(f"unsupported Layer 3 guard operator: {operator}")
+    return True
+
+
+def _instantiate_guard_arg(value: Any, bindings: dict[str, Any]) -> Any:
+    if isinstance(value, str) and value.startswith("?"):
+        if value not in bindings:
+            raise ValueError(f"Layer 3 guard references unbound variable: {value}")
+        return bindings[value]
+    return value
 
 
 def _match_antecedent(
@@ -497,6 +531,19 @@ def _validate_rule_config(config: dict[str, Any], path: Path) -> None:
                 aliases,
                 f"rules.{rule_id}.constraints.{idx}",
             )
+        for idx, guard in enumerate(list(rule.get("guards", []))):
+            _validate_guard(guard, f"rules.{rule_id}.guards.{idx}")
+
+
+def _validate_guard(guard: dict[str, Any], location: str) -> None:
+    if not isinstance(guard, dict):
+        raise ValueError(f"rule guard must be a mapping at {location}")
+    operator = str(guard.get("operator") or "")
+    if operator not in {"equal", "not_equal"}:
+        raise ValueError(f"unsupported guard operator '{operator}' at {location}")
+    args = list(guard.get("args", []) or [])
+    if len(args) != 2:
+        raise ValueError(f"guard '{operator}' at {location} requires exactly 2 args")
 
 
 def _validate_predicate_pattern(

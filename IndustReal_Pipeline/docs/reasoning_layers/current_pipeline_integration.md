@@ -19,7 +19,7 @@ existing graph CSVs
   -> optional UI graph-data export
   -> platform/data/graph-data.js
 
-existing graph CSVs + config/domain_config.yaml + config/thesis_rules.yaml
+existing graph CSVs + config/domain_config.yaml + config/observation_contract.yaml + config/thesis_rules.yaml
   -> Layer 2-to-3 reasoning adapter
   -> step_records.jsonl + predicates.jsonl (Layer 3 inputs)
 
@@ -78,6 +78,7 @@ edges_event_component.csv
 edges_event_next.csv
 nodes_components.csv
 config/domain_config.yaml
+config/observation_contract.yaml
 config/thesis_rules.yaml (adapter predicate definitions)
 ```
 
@@ -97,6 +98,23 @@ component-specific domain knowledge into predicates. Layer 3 inference does
 not read that file directly. `config/thesis_rules.yaml` is used at both stages:
 the adapter reads its predicate definitions, and Layer 3 inference reads its
 aliases, defaults, and rules.
+
+`config/observation_contract.yaml` defines optional canonical fields for
+independently observed installation targets and the policy used when those
+fields are absent. It is referenced by `config/reasoning_adapter.yaml` and is
+shared across upstream sources rather than tied to a particular VLM, parser, or
+dataset.
+
+The current canonical event fields are:
+
+```text
+observed_installation_target
+observed_installation_target_confidence
+observed_installation_target_source
+```
+
+They are optional. Existing IndustReal `nodes_events.csv` files do not need to
+add empty columns.
 
 The upstream graph stores event instants. The adapter fills `time_window.start_s` and `start_frame` from the event row, and currently infers `end_s` and `end_frame` from the next distinct event timestamp in the same clip when one exists. The final timestamp group remains open-ended with null end values. This is a downstream fallback until upper-layer step segmentation provides explicit step windows.
 
@@ -160,6 +178,9 @@ uses_object
 
 is_a
   reads component metadata from nodes_components.csv
+
+observed_install_target
+  reads optional canonical observation fields from nodes_events.csv
 ```
 
 This is expected. A config file can say what a predicate is called, but it cannot invent source evidence that does not exist upstream.
@@ -225,6 +246,15 @@ rules
 
 Each rule matches predicate names and argument patterns. Rule outputs are defined under the `constraints` field. When the antecedents match and confidence passes the threshold, the rule emits one or more constraints.
 
+Rules may also define two-argument guards:
+
+```json
+{"operator": "equal", "args": ["?left", "?right"]}
+{"operator": "not_equal", "args": ["?left", "?right"]}
+```
+
+Guards run after antecedent matching and operate on bound variables.
+
 The current rule categories follow the methodology draft:
 
 ```text
@@ -242,6 +272,7 @@ Current examples use domain individual ids and generic class predicates:
 
 ```text
 hasAction(step1, install) + usesObject(step1, base) + isA(base, Component)
+  + allowsDomainAssumedInstallTarget(step1, base)
   -> produces(step1, installed, base, workspace)
 
 hasAction(step2, install) + usesObject(step2, rear_chassis) + isA(rear_chassis, Component)
@@ -262,6 +293,57 @@ hasAction(step, error) + usesObject(step, object)
 ```
 
 Because rules match by predicate name after alias normalization, changing a predicate output name in `adapter.predicates` should either use a canonical vocabulary name or add an explicit alias to `predicate_aliases`.
+
+### Observed versus expected installation targets
+
+Expected domain knowledge and observed upstream claims are intentionally
+separate:
+
+```text
+hasInstallTarget(component, expected_target)
+observedInstallTarget(step, component, observed_target)
+```
+
+The adapter never rewrites the observed target to match the expected one.
+
+The three target-grounding outcomes are:
+
+```text
+observed == expected
+  -> produces installed(component, observed_target)
+
+observed != expected
+  -> incompatibleInstallationTarget(component, observed_target, expected_target)
+  -> Layer 4 rejects the step
+
+no observed target + domain_assumed policy
+  -> allowsDomainAssumedInstallTarget(step, component)
+  -> preserves the expected domain-derived installed effect
+```
+
+The default policy lives in `config/observation_contract.yaml`:
+
+```json
+"missing_observation_policy": "domain_assumed"
+```
+
+Set it to `require_observed` to disable fallback. In that mode, a target-less
+installation does not receive a confirmed installed effect from the domain
+target alone.
+
+An upstream source can participate without changing the reasoning rules. It
+only needs to populate the canonical optional event fields. For example:
+
+```text
+event_type: INSTALL
+component: front rear chassis pin
+observed_installation_target: industreal_component::front_bracket
+observed_installation_target_confidence: 0.83
+observed_installation_target_source: vlm
+```
+
+The resulting mismatch remains traceable to both the upstream observation and
+the expected target materialized from `domain_config.yaml`.
 
 ## Layer 4 Validation
 
@@ -522,6 +604,8 @@ The adapter materializes this domain config into predicates such as:
 isA(component, Chassis)
 isA(component, Component)
 hasInstallTarget(component, target)
+observedInstallTarget(step, component, observed_target)
+allowsDomainAssumedInstallTarget(step, component)
 requiresInstalledBefore(component, target, support)
 hasParentComponent(component, parent)
 hasRequiredCondition(component, aligned, component, target)

@@ -36,6 +36,11 @@ def main() -> None:
     parser.add_argument("--evidence-root", type=Path, default=None)
     parser.add_argument("--predicate-config", type=Path, default=adapter_config.predicate_config_path)
     parser.add_argument("--domain-config", type=Path, default=adapter_config.domain_config_path)
+    parser.add_argument(
+        "--observation-contract",
+        type=Path,
+        default=adapter_config.observation_contract_path,
+    )
     args = parser.parse_args()
 
     output_dir = args.output_dir or (args.output_root / args.run_id)
@@ -52,6 +57,7 @@ def main() -> None:
             adapter_config_path=args.adapter_config,
             predicate_config_path=args.predicate_config,
             domain_config_path=args.domain_config,
+            observation_contract_path=args.observation_contract,
         )
     )
     print(json.dumps(result, indent=2))

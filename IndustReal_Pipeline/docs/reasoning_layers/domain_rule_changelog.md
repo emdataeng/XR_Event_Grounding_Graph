@@ -25,7 +25,65 @@ versioning:
 Current versions:
 
 - Domain model: `1.2.0`
-- Rule set: `1.2.0`
+- Rule set: `1.3.0`
+
+## 2026-06-25 — Observed installation-target grounding
+
+Versions:
+
+- Domain model: `1.2.0`
+- Rule set: `1.3.0`
+- Observation contract: `1.0.0`
+
+Decision record:
+
+- [`ADR-003: Separate Observed and Expected Installation Targets`](decisions/ADR-003-observed-installation-target-grounding.md)
+
+### Added
+
+- Added the source-independent `config/observation_contract.yaml`.
+- Added optional canonical event fields for an independently observed target,
+  confidence, and source type.
+- Added `observedInstallTarget(step, component, target)`.
+- Added `allowsDomainAssumedInstallTarget(step, component)` for explicit
+  backward-compatible fallback.
+- Added reusable `equal` and `not_equal` Layer 3 rule guards.
+- Added `incompatibleInstallationTarget(step, component, observed, expected)`.
+
+### Changed
+
+- Matching observed and expected targets now produce installation effects through
+  `effect_install_component_on_observed_target`.
+- Conflicting targets produce a compatibility constraint and Layer 4 rejection.
+- The existing `effect_install_component_on_target` rule now runs only when the
+  adapter explicitly permits domain-assumed fallback.
+
+### Backward compatibility
+
+The default policy is:
+
+```text
+missing_observation_policy: domain_assumed
+```
+
+Current IndustReal events do not contain observed target fields. They therefore
+continue to receive domain-inferred installation effects as before.
+
+The optional `require_observed` policy disables that fallback when experiments
+need stricter target grounding.
+
+### Impact
+
+- Adapter and downstream reasoning artifacts must be regenerated.
+- The domain model version remains `1.2.0` because expected target knowledge did
+  not change.
+- Rule provenance now distinguishes observed-target confirmation from
+  domain-assumed fallback.
+
+### Verification
+
+- Added focused tests for matching targets, conflicting targets, missing
+  observations, Layer 4 rejection, and the `require_observed` policy.
 
 ## 2026-06-25 — Alignment for all non-base components
 

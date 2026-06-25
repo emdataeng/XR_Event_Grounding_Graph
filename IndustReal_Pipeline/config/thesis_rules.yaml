@@ -1,6 +1,6 @@
 {
   "schema_version": "industreal_thesis_rules.v1",
-  "rule_set_version": "1.2.0",
+  "rule_set_version": "1.3.0",
   "adapter": {
     "predicates": {
       "event": {
@@ -56,6 +56,18 @@
           "args": ["component_id", "target_id"],
           "enabled": true
         },
+        "observed_install_target": {
+          "name": "observedInstallTarget",
+          "description": "Associates an installation step with a target independently observed by an upstream source.",
+          "args": ["step_id", "component_id", "target_id"],
+          "enabled": true
+        },
+        "allows_domain_assumed_install_target": {
+          "name": "allowsDomainAssumedInstallTarget",
+          "description": "Allows the expected domain target to supply a missing observed installation target under the configured policy.",
+          "args": ["step_id", "component_id"],
+          "enabled": true
+        },
         "requires_installed_before": {
           "name": "requiresInstalledBefore",
           "description": "States that a component installation requires its target to already be installed on another support.",
@@ -98,6 +110,8 @@
     "hasLabel": {"arity": 2, "description": "Associates an individual with its display label."},
     "hasParentComponent": {"arity": 2, "description": "Associates a component with its parent component."},
     "hasInstallTarget": {"arity": 2, "description": "Associates a component with its expected installation target."},
+    "observedInstallTarget": {"arity": 3, "description": "Associates a step and component with an independently observed installation target."},
+    "allowsDomainAssumedInstallTarget": {"arity": 2, "description": "Allows domain-assumed target fallback when no observed target is available."},
     "requiresInstalledBefore": {"arity": 3, "description": "States that a component requires its target to be installed first."},
     "hasRequiredCondition": {"arity": 4, "description": "Associates a component with a required assembly condition."},
     "hasSafetyRequirement": {"arity": 4, "description": "Associates a component with a safety condition."},
@@ -107,7 +121,8 @@
     "produces": {"arity": 4, "description": "Layer 3 expected effect."},
     "requiresSafety": {"arity": 4, "description": "Layer 3 inferred safety requirement."},
     "requiresTool": {"arity": 2, "description": "Layer 3 inferred tool requirement."},
-    "incompatibleAction": {"arity": 3, "description": "Layer 3 inferred incompatibility."}
+    "incompatibleAction": {"arity": 3, "description": "Layer 3 inferred incompatibility."},
+    "incompatibleInstallationTarget": {"arity": 4, "description": "Observed installation target conflicts with the expected domain target."}
   },
   "predicate_aliases": {
     "stepHasAction": "hasAction",
@@ -153,10 +168,48 @@
         {"name": "hasAction", "args": ["?s", "install"]},
         {"name": "usesObject", "args": ["?s", "?component"]},
         {"name": "isA", "args": ["?component", "Component"]},
+        {"name": "allowsDomainAssumedInstallTarget", "args": ["?s", "?component"]},
         {"name": "hasInstallTarget", "args": ["?component", "?target"]}
       ],
       "constraints": [
         {"name": "produces", "kind": "expected_effect", "args": ["?s", "installed", "?component", "?target"]}
+      ]
+    },
+    {
+      "id": "effect_install_component_on_observed_target",
+      "type": "expected_effect",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "hasAction", "args": ["?s", "install"]},
+        {"name": "usesObject", "args": ["?s", "?component"]},
+        {"name": "isA", "args": ["?component", "Component"]},
+        {"name": "observedInstallTarget", "args": ["?s", "?component", "?target"]},
+        {"name": "hasInstallTarget", "args": ["?component", "?target"]}
+      ],
+      "constraints": [
+        {"name": "produces", "kind": "expected_effect", "args": ["?s", "installed", "?component", "?target"]}
+      ]
+    },
+    {
+      "id": "compat_observed_installation_target_mismatch",
+      "type": "compatibility",
+      "threshold": 0.70,
+      "antecedents": [
+        {"name": "hasAction", "args": ["?s", "install"]},
+        {"name": "usesObject", "args": ["?s", "?component"]},
+        {"name": "isA", "args": ["?component", "Component"]},
+        {"name": "observedInstallTarget", "args": ["?s", "?component", "?observed_target"]},
+        {"name": "hasInstallTarget", "args": ["?component", "?expected_target"]}
+      ],
+      "guards": [
+        {"operator": "not_equal", "args": ["?observed_target", "?expected_target"]}
+      ],
+      "constraints": [
+        {
+          "name": "incompatibleInstallationTarget",
+          "kind": "compatibility",
+          "args": ["?s", "?component", "?observed_target", "?expected_target"]
+        }
       ]
     },
     {

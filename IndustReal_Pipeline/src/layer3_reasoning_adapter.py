@@ -25,6 +25,7 @@ class ReasoningAdapterConfig:
     output_root: Path
     predicate_config_path: Path
     domain_config_path: Path
+    observation_contract_path: Path
     events_csv: str
     event_component_csv: str
     event_next_csv: str
@@ -50,6 +51,7 @@ def load_adapter_config(config_path: Path | None = DEFAULT_ADAPTER_CONFIG_PATH) 
         output_root=_config_path(path, _expand_config_value(paths.get("output_root"), run_id)),
         predicate_config_path=_config_path(path, _expand_config_value(paths.get("predicate_config"), run_id)),
         domain_config_path=_config_path(path, _expand_config_value(paths.get("domain_config"), run_id)),
+        observation_contract_path=_config_path(path, _expand_config_value(paths.get("observation_contract"), run_id)),
         events_csv=_required_config_string(csv_files, "events", path),
         event_component_csv=_required_config_string(csv_files, "event_component", path),
         event_next_csv=_required_config_string(csv_files, "event_next", path),
@@ -106,6 +108,7 @@ DEFAULT_CSV_DIR = default_adapter_config().csv_dir
 DEFAULT_OUTPUT_ROOT = default_adapter_config().output_root
 DEFAULT_PREDICATE_CONFIG_PATH = default_adapter_config().predicate_config_path
 DEFAULT_DOMAIN_CONFIG_PATH = default_adapter_config().domain_config_path
+DEFAULT_OBSERVATION_CONTRACT_PATH = default_adapter_config().observation_contract_path
 
 EVENTS_CSV = default_adapter_config().events_csv
 EVENT_COMPONENT_CSV = default_adapter_config().event_component_csv
@@ -121,6 +124,8 @@ REQUIRED_PREDICATE_KEYS = (
     "has_label",
     "has_parent_component",
     "has_install_target",
+    "observed_install_target",
+    "allows_domain_assumed_install_target",
     "requires_installed_before",
     "has_required_condition",
     "has_safety_requirement",
@@ -142,6 +147,7 @@ class AdapterInputs:
     adapter_config_path: Path | None = DEFAULT_ADAPTER_CONFIG_PATH
     predicate_config_path: Path | None = DEFAULT_PREDICATE_CONFIG_PATH
     domain_config_path: Path | None = DEFAULT_DOMAIN_CONFIG_PATH
+    observation_contract_path: Path | None = DEFAULT_OBSERVATION_CONTRACT_PATH
 
 
 def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
@@ -159,6 +165,7 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
     components = _read_csv(csv_dir / components_csv)
     predicate_defs = _load_predicate_defs(inputs.predicate_config_path)
     domain_config = _load_domain_config(inputs.domain_config_path)
+    observation_contract = _load_observation_contract(inputs.observation_contract_path)
 
     filtered_events = _filter_events(
         events,
@@ -221,6 +228,7 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
                 component_by_id=component_by_id,
                 predicate_defs=predicate_defs,
                 domain_config=domain_config,
+                observation_contract=observation_contract,
                 csv_files=adapter_config,
             )
         )
@@ -240,6 +248,9 @@ def build_reasoning_adapter_outputs(inputs: AdapterInputs) -> dict[str, Any]:
         "adapter_config_path": str(inputs.adapter_config_path) if inputs.adapter_config_path else None,
         "predicate_config_path": str(inputs.predicate_config_path) if inputs.predicate_config_path else None,
         "domain_config_path": str(inputs.domain_config_path) if inputs.domain_config_path else None,
+        "observation_contract_path": (
+            str(inputs.observation_contract_path) if inputs.observation_contract_path else None
+        ),
         "step_records": len(step_records),
         "predicates": len(predicates),
         "clip_result_ids": sorted({str(row.get("clip_result_id", "")) for row in ordered_events}),
@@ -377,6 +388,7 @@ def _predicates_for_step(
     component_by_id: dict[str, dict[str, str]],
     predicate_defs: dict[str, dict[str, Any]],
     domain_config: dict[str, Any],
+    observation_contract: dict[str, Any],
     csv_files: ReasoningAdapterConfig,
 ) -> list[dict[str, Any]]:
     event_id = str(step_record["source_event_id"])
@@ -445,6 +457,18 @@ def _predicates_for_step(
             source_fields=[":START_ID(AssemblyEvent)", ":END_ID(Component)", "role"],
             notes=role_note,
         )
+        observed_target_predicates = []
+        if relation_key == "uses_object" and step_record["action"]["name"] == "install":
+            observed_target_predicates = _observed_install_target_predicates(
+                predicate_defs,
+                observation_contract,
+                domain_config,
+                row,
+                step_id=step_id,
+                component_id=component_id,
+                event_conf=conf,
+                source_file=csv_files.events_csv,
+            )
         type_predicate = None
         if not has_domain_type:
             type_predicate = _predicate_from_key(
@@ -479,10 +503,70 @@ def _predicates_for_step(
         )
         predicates.extend(
             item
-            for item in [interaction_predicate, type_predicate, label_predicate, *domain_predicates]
+            for item in [
+                interaction_predicate,
+                type_predicate,
+                label_predicate,
+                *observed_target_predicates,
+                *domain_predicates,
+            ]
             if item is not None
         )
     return predicates
+
+
+def _observed_install_target_predicates(
+    predicate_defs: dict[str, dict[str, Any]],
+    observation_contract: dict[str, Any],
+    domain_config: dict[str, Any],
+    row: dict[str, str],
+    *,
+    step_id: str,
+    component_id: str,
+    event_conf: float | None,
+    source_file: str,
+) -> list[dict[str, Any] | None]:
+    target_config = observation_contract["installation_target"]
+    fields = target_config["event_fields"]
+    target_field = str(fields["target"])
+    raw_target = _blank_to_none(row.get(target_field))
+    if raw_target is None:
+        if target_config["missing_observation_policy"] != "domain_assumed":
+            return []
+        return [
+            _predicate_from_key(
+                predicate_defs,
+                "allows_domain_assumed_install_target",
+                step_id,
+                [step_id, component_id],
+                event_conf,
+                source_file=str(observation_contract["_source_path"]),
+                source_fields=["installation_target", "missing_observation_policy"],
+                notes="No observed installation target was supplied; domain-assumed fallback is enabled.",
+                source_type="configuration",
+            )
+        ]
+
+    observed_target = _resolve_observed_entity_id(domain_config, raw_target)
+    confidence_field = str(fields["confidence"])
+    observed_conf = _parse_float(row.get(confidence_field))
+    if observed_conf is None and target_config["fallback_to_event_confidence"]:
+        observed_conf = event_conf
+    source_type_field = str(fields["source_type"])
+    source_type = _blank_to_none(row.get(source_type_field)) or str(target_config["default_source_type"])
+    return [
+        _predicate_from_key(
+            predicate_defs,
+            "observed_install_target",
+            step_id,
+            [step_id, component_id, observed_target],
+            observed_conf,
+            source_file=source_file,
+            source_fields=[target_field, confidence_field, source_type_field],
+            notes="Observed target is preserved independently from the expected domain installation target.",
+            source_type=source_type,
+        )
+    ]
 
 
 def _domain_predicates_for_component(
@@ -687,6 +771,7 @@ def _predicate_from_key(
     source_file: str,
     source_fields: list[str],
     notes: str | None,
+    source_type: str = "existing_graph_csv",
 ) -> dict[str, Any] | None:
     predicate_def = predicate_defs.get(key)
     if predicate_def is None:
@@ -701,6 +786,7 @@ def _predicate_from_key(
         source_file=source_file,
         source_fields=source_fields,
         notes=notes,
+        source_type=source_type,
         category=_blank_to_none(predicate_def.get("category")),
         predicate_key=key,
     )
@@ -717,6 +803,7 @@ def _predicate(
     notes: str | None,
     category: str | None,
     predicate_key: str | None,
+    source_type: str = "existing_graph_csv",
 ) -> dict[str, Any]:
     suffix = _normalize_token("_".join(str(arg) for arg in args if arg is not None))[:96]
     return {
@@ -730,7 +817,7 @@ def _predicate(
         "args": args,
         "conf": conf,
         "source": {
-            "type": "existing_graph_csv",
+            "type": source_type,
             "file": source_file,
             "fields": source_fields,
         },
@@ -790,6 +877,63 @@ def _load_domain_config(config_path: Path | None) -> dict[str, Any]:
         raise ValueError(f"domain config components must be a mapping: {config_path}")
     _validate_domain_config(config, Path(config_path))
     return config
+
+
+def _load_observation_contract(config_path: Path | None) -> dict[str, Any]:
+    if config_path is None:
+        raise ValueError("observation contract config path is required")
+    path = Path(config_path)
+    config = _load_config(path)
+    target_config = config.get("installation_target")
+    if not isinstance(target_config, dict):
+        raise ValueError(f"observation contract missing installation_target mapping: {path}")
+    required = (
+        "missing_observation_policy",
+        "supported_missing_observation_policies",
+        "event_fields",
+        "fallback_to_event_confidence",
+        "default_source_type",
+    )
+    missing = [key for key in required if key not in target_config]
+    if missing:
+        raise ValueError(f"observation contract installation_target missing: {', '.join(missing)}")
+    supported = list(target_config["supported_missing_observation_policies"] or [])
+    policy = str(target_config["missing_observation_policy"])
+    if policy not in supported:
+        raise ValueError(
+            f"unsupported missing installation-target observation policy '{policy}' in {path}; "
+            f"expected one of: {', '.join(str(item) for item in supported)}"
+        )
+    fields = target_config["event_fields"]
+    if not isinstance(fields, dict):
+        raise ValueError(f"observation contract installation_target.event_fields must be a mapping: {path}")
+    missing_fields = [key for key in ("target", "confidence", "source_type") if not fields.get(key)]
+    if missing_fields:
+        raise ValueError(
+            f"observation contract installation_target.event_fields missing: {', '.join(missing_fields)}"
+        )
+    return {**config, "_source_path": path}
+
+
+def _resolve_observed_entity_id(domain_config: dict[str, Any], raw_value: str) -> str:
+    direct = _domain_individual_id(domain_config, raw_value)
+    components = domain_config.get("components", {})
+    entities = domain_config.get("entities", {})
+    if raw_value in components or raw_value in entities:
+        return str(direct)
+    normalized = _normalize_token(raw_value)
+    for entries in (components, entities):
+        for source_id, entry in entries.items():
+            if not isinstance(entry, dict):
+                continue
+            candidates = (
+                source_id,
+                entry.get("name"),
+                entry.get("display_name"),
+            )
+            if any(_normalize_token(candidate) == normalized for candidate in candidates if candidate):
+                return str(_domain_individual_id(domain_config, str(source_id)))
+    return str(direct)
 
 
 def _domain_individual_id(domain_config: dict[str, Any], source_id: str | None) -> str | None:
