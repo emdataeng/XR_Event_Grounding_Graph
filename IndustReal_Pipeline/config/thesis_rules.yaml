@@ -1,6 +1,6 @@
 {
   "schema_version": "industreal_thesis_rules.v1",
-  "rule_set_version": "1.1.0",
+  "rule_set_version": "1.2.0",
   "adapter": {
     "predicates": {
       "event": {
@@ -206,7 +206,7 @@
       "antecedents": [
         {"name": "hasAction", "args": ["?s", "install"]},
         {"name": "usesObject", "args": ["?s", "?component"]},
-        {"name": "isA", "args": ["?component", "ChassisPin"]},
+        {"name": "isA", "args": ["?component", "Component"]},
         {"name": "hasRequiredCondition", "args": ["?component", "?condition", "?arg1", "?arg2"]}
       ],
       "constraints": [

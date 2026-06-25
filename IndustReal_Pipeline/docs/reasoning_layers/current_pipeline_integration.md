@@ -244,8 +244,9 @@ Current examples use domain individual ids and generic class predicates:
 hasAction(step1, install) + usesObject(step1, base) + isA(base, Component)
   -> produces(step1, installed, base, workspace)
 
-hasAction(step2, install) + usesObject(step2, rear_chassis) + isA(rear_chassis, Chassis)
+hasAction(step2, install) + usesObject(step2, rear_chassis) + isA(rear_chassis, Component)
   -> requires(step2, installed, base, workspace)
+  -> requires(step2, aligned, rear_chassis, base)
   -> produces(step2, installed, rear_chassis, base)
 
 hasAction(step3, install) + usesObject(step3, front_rear_chassis_pin) + isA(front_rear_chassis_pin, ChassisPin)
@@ -499,7 +500,19 @@ predicate_aliases
 
 `type_hierarchy` makes generic classes explicit. The adapter emits the configured class and its parents, for example `isA(front_bracket_screw, Screw)`, `isA(front_bracket_screw, Fastener)`, and `isA(front_bracket_screw, Component)`.
 
-`type_defaults` provides common requirements for all components of a generic type unless the component overrides the field. For example, `Screw` defines `required_tool: screwdriver`, and `ChassisPin` defines aligned and secured requirements shared by all chassis pins.
+`type_defaults` provides inherited fields for components of a generic type.
+`Component` defines the general
+`aligned($self, $installation_target)` requirement, `Screw` defines
+`required_tool: screwdriver`, and `ChassisPin` defines securing requirements
+shared by all chassis pins.
+
+Component fields override inherited defaults in
+`src/layer3_reasoning_adapter.py` when `_effective_domain_entry` applies the
+component entry after resolving its type defaults. An override replaces the
+complete field value; lists are not merged. For example,
+`industreal_component::base` sets `required_conditions: []`, which replaces the
+inherited `Component.required_conditions` list and prevents the base from
+requiring alignment with `Workspace`.
 
 `condition_vocabulary` controls condition names and arities used by `required_conditions` and `safety_requirements`. The adapter validates those configured conditions at load time and raises a clear error for unknown names or wrong argument counts.
 
@@ -517,6 +530,12 @@ hasRequiredTool(component, screwdriver)
 ```
 
 Layer 3 rules then match these generic predicates. The rule engine does not hardcode specific component names or read `domain_config.yaml` directly; object-specific knowledge from that file reaches Layer 3 indirectly through the predicates materialized by the adapter.
+
+The `implicit_domain_required_condition` rule matches installed objects typed as
+`Component` and consumes their materialized `hasRequiredCondition` predicates.
+Therefore all configured non-base components can produce an implicit alignment
+constraint, while the base cannot because its component-level override prevents
+the adapter from emitting that requirement predicate.
 
 In principle, this domain config can be generated from CAD metadata. A CAD-derived generator could inspect assembly hierarchy, mating constraints, fastener relationships, component names, and contact/constraint graphs to propose generic types, parent components, installation targets, and required tools. The current file is manually authored from the exported IndustReal component list.
 

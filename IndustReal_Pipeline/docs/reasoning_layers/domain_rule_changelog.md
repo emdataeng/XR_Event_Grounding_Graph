@@ -24,8 +24,56 @@ versioning:
 
 Current versions:
 
-- Domain model: `1.1.0`
-- Rule set: `1.1.0`
+- Domain model: `1.2.0`
+- Rule set: `1.2.0`
+
+## 2026-06-25 — Alignment for all non-base components
+
+Versions:
+
+- Domain model: `1.2.0`
+- Rule set: `1.2.0`
+
+Decision record:
+
+- [`ADR-002: Require Alignment for Every Non-Base Component Installation`](decisions/ADR-002-align-all-installed-components.md)
+
+### Changed
+
+- Moved the generic alignment requirement from `ChassisPin` to the `Component`
+  type default:
+
+  ```text
+  aligned($self, $installation_target)
+  ```
+
+- Added an explicit empty `required_conditions` override for
+  `industreal_component::base`.
+- Generalized `implicit_domain_required_condition` from `ChassisPin` to
+  `Component`.
+- Kept chassis-pin securing requirements scoped to `ChassisPin`.
+
+### Rationale
+
+Alignment is a general precondition for installing one assembly component onto
+another. The base is excluded because it establishes the assembly reference in
+the workspace.
+
+The adapter resolves type defaults first and then applies component fields.
+Consequently, the base's empty list replaces the inherited alignment list.
+
+### Impact
+
+- Every non-base install step can now produce an implicit
+  `requires(..., aligned, component, installation_target)` constraint.
+- Existing generated reasoning artifacts must be rebuilt.
+- In the ontology integration sample, the number of constraints produced by
+  `implicit_domain_required_condition` increases from 3 to 9.
+
+### Verification
+
+- Updated `tests/test_layer3_ontology_config.py` to cover inherited alignment,
+  the base override, representative component types, and expanded inference.
 
 ## 2026-06-24 — Explicit chassis securing
 

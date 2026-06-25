@@ -1,6 +1,6 @@
 {
   "schema_version": "industreal_domain_config.v1",
-  "domain_model_version": "1.1.0",
+  "domain_model_version": "1.2.0",
   "type_hierarchy": {
     "Component": {
       "parents": []
@@ -34,13 +34,15 @@
     }
   },
   "type_defaults": {
+    "Component": {
+      "required_conditions": [
+        {"name": "aligned", "args": ["$self", "$installation_target"]}
+      ]
+    },
     "Screw": {
       "required_tool": "screwdriver"
     },
     "ChassisPin": {
-      "required_conditions": [
-        {"name": "aligned", "args": ["$self", "$installation_target"]}
-      ],
       "safety_requirements": [
         {"name": "secured", "args": ["industreal_component::base", "Workspace"]},
         {"name": "secured", "args": ["$installation_target", "$installation_target_target"]}
@@ -89,7 +91,8 @@
     "industreal_component::base": {
       "name": "base",
       "generic_type": "Base",
-      "installation_target": "Workspace"
+      "installation_target": "Workspace",
+      "required_conditions": []
     },
     "industreal_component::front_chassis": {
       "name": "front_chassis",

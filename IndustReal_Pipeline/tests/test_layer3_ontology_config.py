@@ -38,6 +38,9 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     is_a = {tuple(item["args"]) for item in predicates if item["name"] == "isA"}
     labels = {tuple(item["args"]) for item in predicates if item["name"] == "hasLabel"}
     required_tools = {tuple(item["args"]) for item in predicates if item["name"] == "hasRequiredTool"}
+    required_conditions = {
+        tuple(item["args"]) for item in predicates if item["name"] == "hasRequiredCondition"
+    }
     safety_requirements = {
         tuple(item["args"]) for item in predicates if item["name"] == "hasSafetyRequirement"
     }
@@ -69,6 +72,12 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     assert ("front_bracket_screw", "Screw") in is_a
     assert ("front_bracket_screw", "Fastener") in is_a
     assert ("front_bracket_screw", "screwdriver") in required_tools
+    assert ("base", "aligned", "base", "workspace") not in required_conditions
+    assert ("rear_chassis", "aligned", "rear_chassis", "base") in required_conditions
+    assert ("front_chassis_pin", "aligned", "front_chassis_pin", "front_chassis") in required_conditions
+    assert ("front_bracket", "aligned", "front_bracket", "front_chassis") in required_conditions
+    assert ("front_bracket_screw", "aligned", "front_bracket_screw", "front_bracket") in required_conditions
+    assert ("front_wheel_assy", "aligned", "front_wheel_assy", "front_chassis") in required_conditions
     assert (
         "front_chassis_pin",
         "secured",
@@ -104,7 +113,7 @@ def test_ontology_config_emits_generic_class_facts_and_type_defaults(tmp_path: P
     assert result["constraints_by_rule"]["precondition_remove_requires_component_installed"] == 1
     assert result["constraints_by_rule"]["effect_remove_component_from_target"] == 1
     assert result["rule_coverage_warnings"] == 0
-    assert result["constraints_by_rule"]["implicit_domain_required_condition"] == 3
+    assert result["constraints_by_rule"]["implicit_domain_required_condition"] == 9
     assert result["constraints_by_rule"]["safety_domain_requirement"] == 6
     assert result["constraints_by_rule"]["tool_domain_requirement"] == 1
     assert any(
