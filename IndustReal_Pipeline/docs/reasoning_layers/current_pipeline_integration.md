@@ -42,9 +42,12 @@ scripts/16_run_layer4_validation.py
 scripts/17_build_procedural_reasoning_graph.py
 scripts/18_import_procedural_reasoning_graph_neo4j.py
 scripts/19_build_graph_data_js.py
+scripts/25_rebuild_all_reasoning_and_import_neo4j.py
 ```
 
 `scripts/19_build_graph_data_js.py` is a downstream UI export helper. It reads the regular per-clip result JSON files under `results/` together with the Neo4j CSV export under `results/neo4j/<run_id>/`, then writes `platform/data/graph-data.js` as `window.INDUSTREAL_DATA = {...}` for the browser UI. It does not feed the Layer 3 or Layer 4 reasoning artifacts.
+
+`scripts/25_rebuild_all_reasoning_and_import_neo4j.py` is the batch rebuild and import wrapper. It discovers every `clip_result_id` in `results/neo4j/<run_id>/nodes_events.csv`, rebuilds the reasoning-layer outputs and procedural graph for each clip/mode, and then imports the rebuilt procedural graphs into Neo4j.
 
 Current implementation modules:
 
@@ -277,7 +280,6 @@ hasAction(step1, install) + usesObject(step1, base) + isA(base, Component)
 
 hasAction(step2, install) + usesObject(step2, rear_chassis) + isA(rear_chassis, Component)
   -> requires(step2, installed, base, workspace)
-  -> requires(step2, aligned, rear_chassis, base)
   -> produces(step2, installed, rear_chassis, base)
 
 hasAction(step3, install) + usesObject(step3, front_rear_chassis_pin) + isA(front_rear_chassis_pin, ChassisPin)
@@ -583,18 +585,18 @@ predicate_aliases
 `type_hierarchy` makes generic classes explicit. The adapter emits the configured class and its parents, for example `isA(front_bracket_screw, Screw)`, `isA(front_bracket_screw, Fastener)`, and `isA(front_bracket_screw, Component)`.
 
 `type_defaults` provides inherited fields for components of a generic type.
-`Component` defines the general
+`ChassisPin`, `Screw`, and `WheelAssembly` define the mechanically scoped
 `aligned($self, $installation_target)` requirement, `Screw` defines
 `required_tool: screwdriver`, and `ChassisPin` defines securing requirements
-shared by all chassis pins.
+shared by all chassis pins. Alignment is intentionally not inherited by every
+`Component`; placement-like `Chassis` and `Bracket` installations do not receive
+a separate hard alignment requirement unless configured explicitly.
 
 Component fields override inherited defaults in
 `src/layer3_reasoning_adapter.py` when `_effective_domain_entry` applies the
 component entry after resolving its type defaults. An override replaces the
-complete field value; lists are not merged. For example,
-`industreal_component::base` sets `required_conditions: []`, which replaces the
-inherited `Component.required_conditions` list and prevents the base from
-requiring alignment with `Workspace`.
+complete field value; lists are not merged. The base has no alignment
+requirement because neither `Base` nor the generic `Component` type defines one.
 
 `condition_vocabulary` controls condition names and arities used by `required_conditions` and `safety_requirements`. The adapter validates those configured conditions at load time and raises a clear error for unknown names or wrong argument counts.
 
@@ -617,13 +619,93 @@ Layer 3 rules then match these generic predicates. The rule engine does not hard
 
 The `implicit_domain_required_condition` rule matches installed objects typed as
 `Component` and consumes their materialized `hasRequiredCondition` predicates.
-Therefore all configured non-base components can produce an implicit alignment
-constraint, while the base cannot because its component-level override prevents
-the adapter from emitting that requirement predicate.
+The rule remains generic, but only component types that actually materialize a
+`hasRequiredCondition` predicate produce an implicit alignment constraint. In
+the current domain model, this means `ChassisPin`, `Screw`, and
+`WheelAssembly`.
 
 In principle, this domain config can be generated from CAD metadata. A CAD-derived generator could inspect assembly hierarchy, mating constraints, fastener relationships, component names, and contact/constraint graphs to propose generic types, parent components, installation targets, and required tools. The current file is manually authored from the exported IndustReal component list.
 
 ## Practical Commands
+
+### Rebuild all clip/mode reasoning outputs and update Neo4j
+
+Use the all-clips wrapper when rule, domain, observation-contract, adapter, validation, or graph-export behavior has changed and the whole reasoning corpus should be regenerated. This is the preferred command before reporting dataset-level reasoning-layer evaluation numbers or refreshing Aura after a rule update.
+
+From the repository root:
+
+```powershell
+.venv\Scripts\python.exe scripts\25_rebuild_all_reasoning_and_import_neo4j.py
+```
+
+The wrapper reads unique `clip_result_id` values from:
+
+```text
+results\neo4j\raw_cad_dataset__all_test_clips\nodes_events.csv
+```
+
+For each discovered clip/mode result, it writes or overwrites:
+
+```text
+results\reasoning_layers\<sanitized_clip_result_id>\
+  step_records.jsonl
+  predicates.jsonl
+  inferred_constraints.csv
+  rule_coverage_diagnostics.csv
+  validation_records.jsonl
+  step_validations.csv
+  explanation_traces.json
+  effect_history_diagnostics.csv
+
+results\procedural_reasoning_graph\<sanitized_clip_result_id>\
+  procedural_reasoning_graph.json
+  procedural_reasoning_graph_nodes.csv
+  procedural_reasoning_graph_edges.csv
+```
+
+`<sanitized_clip_result_id>` is the CSV `clip_result_id` with `::` replaced by `__`. For example:
+
+```text
+raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1
+```
+
+is written under:
+
+```text
+raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1
+```
+
+Neo4j import is intentionally delayed until all local rebuilds succeed. If any adapter, Layer 3, Layer 4, or graph-builder command fails, the script stops and does not update Aura. After a successful local rebuild, it imports the first procedural graph with the default replacement behavior from `scripts/18_import_procedural_reasoning_graph_neo4j.py`, which clears existing nodes with `graph_name="procedural_reasoning_graph"`. It imports all remaining clips with `--no-replace-graph`, so the final Aura graph contains all rebuilt clip/mode graphs rather than only the final imported clip.
+
+The Neo4j import step requires `NEO4J_URI` and `NEO4J_PASSWORD` in `.env` unless a different env file is passed:
+
+```powershell
+.venv\Scripts\python.exe scripts\25_rebuild_all_reasoning_and_import_neo4j.py `
+  --env-file path\to\.env
+```
+
+Useful execution modes:
+
+```powershell
+# Print all commands without rebuilding or importing.
+.venv\Scripts\python.exe scripts\25_rebuild_all_reasoning_and_import_neo4j.py --dry-run
+
+# Rebuild local artifacts only; do not import to Neo4j.
+.venv\Scripts\python.exe scripts\25_rebuild_all_reasoning_and_import_neo4j.py --skip-import
+
+# Rebuild and import one selected clip/mode result.
+.venv\Scripts\python.exe scripts\25_rebuild_all_reasoning_and_import_neo4j.py `
+  --clip-result-id raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1
+
+# Rebuild all clips for a different run id and matching Neo4j CSV export root.
+.venv\Scripts\python.exe scripts\25_rebuild_all_reasoning_and_import_neo4j.py `
+  --run-id raw_cad_dataset__all_test_clips `
+  --csv-dir results\neo4j\raw_cad_dataset__all_test_clips
+```
+
+The wrapper uses the current Python interpreter for all child scripts. Therefore, invoke it with `.venv\Scripts\python.exe` so the repository virtual environment is used consistently.
+
+### Single-clip manual commands
 
 Build adapter outputs for a filtered clip:
 

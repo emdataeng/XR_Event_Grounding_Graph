@@ -33,7 +33,7 @@
         "object_args": [
           "front_bracket"
         ],
-        "predicate_count": 7,
+        "predicate_count": 8,
         "produced_constraint_count": 0,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_0",
         "step_index": 0,
@@ -155,6 +155,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_0",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_0::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_0_base",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -322,7 +342,7 @@
         "object_args": [
           "rear_chassis"
         ],
-        "predicate_count": 8,
+        "predicate_count": 9,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_1",
         "step_index": 1,
@@ -432,6 +452,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_1",
+          "rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_1::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_1_rear_cha",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -619,6 +659,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -652,8 +709,8 @@
         "object_args": [
           "front_rear_chassis_pin"
         ],
-        "predicate_count": 12,
-        "produced_constraint_count": 4,
+        "predicate_count": 14,
+        "produced_constraint_count": 5,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2",
         "step_index": 2,
         "suggested_fix": "",
@@ -702,6 +759,20 @@
         ],
         "conf": 1.0,
         "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2::c::safety_domain_requirement::0_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
         "kind": "safety_constraint",
         "name": "requiresSafety",
         "rule_id": "safety_domain_requirement",
@@ -790,6 +861,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2",
+          "front_rear_chassis_pin"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_2_front_re",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -966,6 +1057,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_rear_chassis_pin",
+            "safety_requirements",
+            "1"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -1067,6 +1182,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -1100,8 +1232,8 @@
         "object_args": [
           "rear_rear_chassis_pin"
         ],
-        "predicate_count": 12,
-        "produced_constraint_count": 4,
+        "predicate_count": 14,
+        "produced_constraint_count": 5,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3",
         "step_index": 3,
         "suggested_fix": "",
@@ -1150,6 +1282,20 @@
         ],
         "conf": 1.0,
         "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3::c::safety_domain_requirement::0_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
         "kind": "safety_constraint",
         "name": "requiresSafety",
         "rule_id": "safety_domain_requirement",
@@ -1238,6 +1384,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3",
+          "rear_rear_chassis_pin"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_3_rear_rea",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -1414,6 +1580,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "rear_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::rear_rear_chassis_pin",
+            "safety_requirements",
+            "1"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -1514,7 +1704,7 @@
         "object_args": [
           "rear_chassis"
         ],
-        "predicate_count": 8,
+        "predicate_count": 9,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_4",
         "step_index": 4,
@@ -1624,6 +1814,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_4",
+          "rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_4::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_4_rear_cha",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -1792,7 +2002,7 @@
         "object_args": [
           "front_rear_chassis_pin"
         ],
-        "predicate_count": 12,
+        "predicate_count": 13,
         "produced_constraint_count": 1,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_5",
         "step_index": 5,
@@ -2080,6 +2290,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_5::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_rear_chassis_pin",
+            "safety_requirements",
+            "1"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [],
@@ -2156,7 +2390,7 @@
         "object_args": [
           "front_chassis"
         ],
-        "predicate_count": 8,
+        "predicate_count": 9,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6",
         "step_index": 6,
@@ -2266,6 +2500,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6",
+          "front_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_6_front_ch",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -2453,6 +2707,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7",
+          "secured",
+          "front_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -2486,8 +2757,8 @@
         "object_args": [
           "front_chassis_pin"
         ],
-        "predicate_count": 12,
-        "produced_constraint_count": 4,
+        "predicate_count": 14,
+        "produced_constraint_count": 5,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7",
         "step_index": 7,
         "suggested_fix": "",
@@ -2536,6 +2807,20 @@
         ],
         "conf": 1.0,
         "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7::c::safety_domain_requirement::0_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7",
+          "secured",
+          "front_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
         "kind": "safety_constraint",
         "name": "requiresSafety",
         "rule_id": "safety_domain_requirement",
@@ -2624,6 +2909,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7",
+          "front_chassis_pin"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_7_front_ch",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -2796,6 +3101,30 @@
             "industreal_component::front_chassis_pin",
             "safety_requirements",
             "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "front_chassis_pin",
+          "secured",
+          "front_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_chassis_pin",
+            "safety_requirements",
+            "1"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -3196,7 +3525,7 @@
         "object_args": [
           "short_rear_chassis"
         ],
-        "predicate_count": 8,
+        "predicate_count": 9,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_9",
         "step_index": 9,
@@ -3306,6 +3635,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_9",
+          "short_rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_9::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_9_short_re",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -3492,7 +3841,7 @@
         "object_args": [
           "front_bracket"
         ],
-        "predicate_count": 9,
+        "predicate_count": 10,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_10",
         "step_index": 10,
@@ -3602,6 +3951,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_10",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_10::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_10_front_b",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -3780,6 +4149,23 @@
       {
         "args": [
           "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11",
           "screwdriver"
         ],
         "conf": 1.0,
@@ -3820,12 +4206,12 @@
         "has_meaningful_evidence": true,
         "has_requirement": true,
         "has_rule_coverage": true,
-        "matched_rule_count": 3,
+        "matched_rule_count": 4,
         "object_args": [
           "front_bracket_screw"
         ],
-        "predicate_count": 11,
-        "produced_constraint_count": 3,
+        "predicate_count": 13,
+        "produced_constraint_count": 4,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11",
         "step_index": 11,
         "suggested_fix": "",
@@ -3849,6 +4235,20 @@
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_install_requires_target_installed",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
         "support": null
       },
       {
@@ -3946,6 +4346,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11",
+          "front_bracket_screw"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_11_front_b",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -4095,6 +4515,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_bracket_screw",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_bracket_screw",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -4162,6 +4606,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -4191,12 +4652,12 @@
         "has_meaningful_evidence": true,
         "has_requirement": true,
         "has_rule_coverage": true,
-        "matched_rule_count": 2,
+        "matched_rule_count": 3,
         "object_args": [
           "front_wheel_assy"
         ],
-        "predicate_count": 9,
-        "produced_constraint_count": 2,
+        "predicate_count": 11,
+        "produced_constraint_count": 3,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12",
         "step_index": 12,
         "suggested_fix": "",
@@ -4220,6 +4681,20 @@
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_install_requires_target_installed",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
         "support": null
       }
     ],
@@ -4305,6 +4780,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12",
+          "front_wheel_assy"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_12_front_w",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -4412,6 +4907,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_wheel_assy",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_wheel_assy",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -4479,6 +4998,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -4508,12 +5044,12 @@
         "has_meaningful_evidence": true,
         "has_requirement": true,
         "has_rule_coverage": true,
-        "matched_rule_count": 2,
+        "matched_rule_count": 3,
         "object_args": [
           "rear_wheel_assy"
         ],
-        "predicate_count": 9,
-        "produced_constraint_count": 2,
+        "predicate_count": 11,
+        "produced_constraint_count": 3,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13",
         "step_index": 13,
         "suggested_fix": "",
@@ -4537,6 +5073,20 @@
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_install_requires_target_installed",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
         "support": null
       }
     ],
@@ -4622,6 +5172,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13",
+          "rear_wheel_assy"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_13_rear_wh",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -4725,6 +5295,30 @@
             "components",
             "industreal_component::rear_wheel_assy",
             "installation_target"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "rear_wheel_assy",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::rear_wheel_assy",
+            "required_conditions",
+            "0"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -5125,7 +5719,7 @@
         "object_args": [
           "rear_chassis"
         ],
-        "predicate_count": 8,
+        "predicate_count": 9,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_15",
         "step_index": 15,
@@ -5235,6 +5829,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_15",
+          "rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_15::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_15_rear_ch",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -5717,7 +6331,7 @@
         "object_args": [
           "front_rear_chassis_pin"
         ],
-        "predicate_count": 12,
+        "predicate_count": 13,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_17",
         "step_index": 17,
@@ -5999,6 +6613,30 @@
             "industreal_component::front_rear_chassis_pin",
             "safety_requirements",
             "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "front_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_17::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_rear_chassis_pin",
+            "safety_requirements",
+            "1"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -6435,7 +7073,7 @@
         "object_args": [
           "front_bracket_screw"
         ],
-        "predicate_count": 11,
+        "predicate_count": 12,
         "produced_constraint_count": 3,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_19",
         "step_index": 19,
@@ -6706,6 +7344,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_bracket_screw",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_19::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_bracket_screw",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -6806,7 +7468,7 @@
         "object_args": [
           "front_wheel_assy"
         ],
-        "predicate_count": 9,
+        "predicate_count": 10,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_20",
         "step_index": 20,
@@ -7023,6 +7685,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_wheel_assy",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_20::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_wheel_assy",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -7123,7 +7809,7 @@
         "object_args": [
           "rear_wheel_assy"
         ],
-        "predicate_count": 9,
+        "predicate_count": 10,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_21",
         "step_index": 21,
@@ -7340,6 +8026,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "rear_wheel_assy",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_21::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::rear_wheel_assy",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -7441,6 +8151,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -7474,8 +8201,8 @@
         "object_args": [
           "front_rear_chassis_pin"
         ],
-        "predicate_count": 12,
-        "produced_constraint_count": 4,
+        "predicate_count": 14,
+        "produced_constraint_count": 5,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22",
         "step_index": 22,
         "suggested_fix": "",
@@ -7524,6 +8251,20 @@
         ],
         "conf": 1.0,
         "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22::c::safety_domain_requirement::0_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
         "kind": "safety_constraint",
         "name": "requiresSafety",
         "rule_id": "safety_domain_requirement",
@@ -7612,6 +8353,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22",
+          "front_rear_chassis_pin"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_22_front_r",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -7788,6 +8549,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_rear_chassis_pin",
+            "safety_requirements",
+            "1"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -7888,7 +8673,7 @@
         "object_args": [
           "rear_rear_chassis_pin"
         ],
-        "predicate_count": 12,
+        "predicate_count": 13,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_23",
         "step_index": 23,
@@ -8174,6 +8959,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "rear_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_23::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::rear_rear_chassis_pin",
+            "safety_requirements",
+            "1"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -8275,6 +9084,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -8308,8 +9134,8 @@
         "object_args": [
           "rear_rear_chassis_pin"
         ],
-        "predicate_count": 12,
-        "produced_constraint_count": 4,
+        "predicate_count": 14,
+        "produced_constraint_count": 5,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24",
         "step_index": 24,
         "suggested_fix": "",
@@ -8358,6 +9184,20 @@
         ],
         "conf": 1.0,
         "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24::c::safety_domain_requirement::0_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
         "kind": "safety_constraint",
         "name": "requiresSafety",
         "rule_id": "safety_domain_requirement",
@@ -8446,6 +9286,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24",
+          "rear_rear_chassis_pin"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_24_rear_re",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -8622,6 +9482,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "rear_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::rear_rear_chassis_pin",
+            "safety_requirements",
+            "1"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -8722,7 +9606,7 @@
         "object_args": [
           "front_bracket"
         ],
-        "predicate_count": 9,
+        "predicate_count": 10,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_25",
         "step_index": 25,
@@ -8832,6 +9716,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_25",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_25::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_25_front_b",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -9010,6 +9914,23 @@
       {
         "args": [
           "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26",
           "screwdriver"
         ],
         "conf": 1.0,
@@ -9050,12 +9971,12 @@
         "has_meaningful_evidence": true,
         "has_requirement": true,
         "has_rule_coverage": true,
-        "matched_rule_count": 3,
+        "matched_rule_count": 4,
         "object_args": [
           "front_bracket_screw"
         ],
-        "predicate_count": 11,
-        "produced_constraint_count": 3,
+        "predicate_count": 13,
+        "produced_constraint_count": 4,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26",
         "step_index": 26,
         "suggested_fix": "",
@@ -9079,6 +10000,20 @@
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_install_requires_target_installed",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
         "support": null
       },
       {
@@ -9176,6 +10111,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26",
+          "front_bracket_screw"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_26_front_b",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -9325,6 +10280,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_bracket_screw",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_bracket_screw",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -9392,6 +10371,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -9421,12 +10417,12 @@
         "has_meaningful_evidence": true,
         "has_requirement": true,
         "has_rule_coverage": true,
-        "matched_rule_count": 2,
+        "matched_rule_count": 3,
         "object_args": [
           "front_wheel_assy"
         ],
-        "predicate_count": 9,
-        "produced_constraint_count": 2,
+        "predicate_count": 11,
+        "produced_constraint_count": 3,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27",
         "step_index": 27,
         "suggested_fix": "",
@@ -9450,6 +10446,20 @@
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_install_requires_target_installed",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
         "support": null
       }
     ],
@@ -9535,6 +10545,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27",
+          "front_wheel_assy"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_27_front_w",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -9642,6 +10672,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_wheel_assy",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_wheel_assy",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [
@@ -9742,7 +10796,7 @@
         "object_args": [
           "front_bracket"
         ],
-        "predicate_count": 9,
+        "predicate_count": 10,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_28",
         "step_index": 28,
@@ -9852,6 +10906,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_28",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_28::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_28_front_b",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -10056,7 +11130,7 @@
         "object_args": [
           "front_bracket_screw"
         ],
-        "predicate_count": 11,
+        "predicate_count": 12,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_29",
         "step_index": 29,
@@ -10330,6 +11404,30 @@
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
         }
+      },
+      {
+        "args": [
+          "front_bracket_screw",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_29::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_bracket_screw",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
       }
     ],
     "produced_effect_lifecycle": [],
@@ -10373,6 +11471,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -10402,12 +11517,12 @@
         "has_meaningful_evidence": true,
         "has_requirement": true,
         "has_rule_coverage": true,
-        "matched_rule_count": 2,
+        "matched_rule_count": 3,
         "object_args": [
           "front_wheel_assy"
         ],
-        "predicate_count": 9,
-        "produced_constraint_count": 2,
+        "predicate_count": 11,
+        "produced_constraint_count": 3,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30",
         "step_index": 30,
         "suggested_fix": "",
@@ -10431,6 +11546,20 @@
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_install_requires_target_installed",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
         "support": null
       }
     ],
@@ -10516,6 +11645,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30",
+          "front_wheel_assy"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_30_front_w",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -10619,6 +11768,30 @@
             "components",
             "industreal_component::front_wheel_assy",
             "installation_target"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "front_wheel_assy",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_wheel_assy",
+            "required_conditions",
+            "0"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -11019,7 +12192,7 @@
         "object_args": [
           "short_rear_chassis"
         ],
-        "predicate_count": 8,
+        "predicate_count": 9,
         "produced_constraint_count": 2,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_32",
         "step_index": 32,
@@ -11129,6 +12302,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_32",
+          "short_rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_32::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_32_short_r",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -11282,6 +12475,23 @@
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
         }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
       }
     ],
     "dependency_evidence": [],
@@ -11311,12 +12521,12 @@
         "has_meaningful_evidence": true,
         "has_requirement": true,
         "has_rule_coverage": true,
-        "matched_rule_count": 2,
+        "matched_rule_count": 3,
         "object_args": [
           "rear_wheel_assy"
         ],
-        "predicate_count": 9,
-        "produced_constraint_count": 2,
+        "predicate_count": 11,
+        "produced_constraint_count": 3,
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33",
         "step_index": 33,
         "suggested_fix": "",
@@ -11340,6 +12550,20 @@
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_install_requires_target_installed",
+        "support": null
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
         "support": null
       }
     ],
@@ -11425,6 +12649,26 @@
           ],
           "file": "nodes_components.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33",
+          "rear_wheel_assy"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_plus_psr_error_hints_test_p1_08_assy_0_1_event_33_rear_wh",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       {
@@ -11528,6 +12772,30 @@
             "components",
             "industreal_component::rear_wheel_assy",
             "installation_target"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      {
+        "args": [
+          "rear_wheel_assy",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
+        "predicate_key": "has_required_condition",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::rear_wheel_assy",
+            "required_conditions",
+            "0"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"

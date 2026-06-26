@@ -1,5 +1,5 @@
 check_id,check_name,category,status,severity,artifact,message,evidence_file
-E1.1,Step records produced,adapter,WARNING,warning,step_records.jsonl,All input steps are represented; 2 extra step records were found.,evidence/step_record_coverage.json
+E1.1,Step records produced,adapter,PASS,critical,step_records.jsonl,11 step records cover 11 input steps.,evidence/step_record_coverage.json
 E1.2,Predicate records produced,adapter,PASS,critical,predicates.jsonl,106 predicates reference valid step records.,evidence/predicate_validation_details.json
 E1.3,Layer 3 constraints produced,layer3,PASS,critical,inferred_constraints.csv,"28 constraints produced; names: {'produces': 11, 'requires': 13, 'requiresSafety': 3, 'requiresTool': 1}.",evidence/constraint_summary.json
 E1.4,Layer 4 validation records produced,layer4,PASS,critical,validation_records.jsonl,11 validation records include statuses.,evidence/validation_record_details.json

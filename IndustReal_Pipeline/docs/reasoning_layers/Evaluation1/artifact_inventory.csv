@@ -1,5 +1,5 @@
 artifact_name,path,type,role_in_pipeline,exists,size_bytes,record_count,notes
-nodes_events.csv,D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\neo4j\raw_cad_dataset__all_test_clips\nodes_events.csv,csv,upstream input steps,True,138282,374,
+nodes_events.csv,D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\neo4j\raw_cad_dataset__all_test_clips\nodes_events.csv,csv,upstream input steps,True,242525,659,
 step_records.jsonl,D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\step_records.jsonl,jsonl,adapter step records,True,22647,11,
 predicates.jsonl,D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\predicates.jsonl,jsonl,adapter symbolic evidence,True,74795,106,
 inferred_constraints.csv,D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\inferred_constraints.csv,csv,Layer 3 constraints,True,32728,28,

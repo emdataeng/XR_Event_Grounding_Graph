@@ -307,6 +307,19 @@
       "supporting_step_id": ""
     },
     {
+      "notes": "missing requirement recorded",
+      "requirement_args": "[\"rear_chassis\", \"base\"]",
+      "requirement_name": "secured",
+      "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2",
+      "step_index": 2,
+      "support_is_active": false,
+      "support_is_invalidated": false,
+      "support_is_rejected": false,
+      "support_status": "missing",
+      "supporting_constraint_id": "",
+      "supporting_step_id": ""
+    },
+    {
       "notes": "active support recorded",
       "requirement_args": "[\"rear_chassis\", \"base\"]",
       "requirement_name": "installed",
@@ -346,6 +359,19 @@
       "supporting_step_id": ""
     },
     {
+      "notes": "missing requirement recorded",
+      "requirement_args": "[\"rear_chassis\", \"base\"]",
+      "requirement_name": "secured",
+      "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3",
+      "step_index": 3,
+      "support_is_active": false,
+      "support_is_invalidated": false,
+      "support_is_rejected": false,
+      "support_status": "missing",
+      "supporting_constraint_id": "",
+      "supporting_step_id": ""
+    },
+    {
       "notes": "active support recorded",
       "requirement_args": "[\"base\", \"workspace\"]",
       "requirement_name": "installed",
@@ -357,32 +383,6 @@
       "support_status": "supported",
       "supporting_constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_0::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
       "supporting_step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_0"
-    },
-    {
-      "notes": "active support recorded",
-      "requirement_args": "[\"base\", \"workspace\"]",
-      "requirement_name": "installed",
-      "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6",
-      "step_index": 6,
-      "support_is_active": true,
-      "support_is_invalidated": false,
-      "support_is_rejected": false,
-      "support_status": "supported",
-      "supporting_constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_0::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
-      "supporting_step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_0"
-    },
-    {
-      "notes": "active support recorded",
-      "requirement_args": "[\"front_chassis\", \"base\"]",
-      "requirement_name": "installed",
-      "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7",
-      "step_index": 7,
-      "support_is_active": true,
-      "support_is_invalidated": false,
-      "support_is_rejected": false,
-      "support_status": "supported",
-      "supporting_constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
-      "supporting_step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6"
     }
   ]
 }

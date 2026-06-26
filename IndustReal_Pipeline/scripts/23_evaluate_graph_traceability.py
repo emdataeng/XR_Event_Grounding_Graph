@@ -12,7 +12,7 @@ import csv
 import json
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +30,10 @@ REQUIRED_REASONING_FILES = (
     "explanation_traces.json",
     "effect_history_diagnostics.csv",
 )
+
+
+def local_timestamp() -> str:
+    return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 @dataclass
@@ -52,7 +56,7 @@ class EvaluationContext:
     graph_dir: Path
     output_dir: Path
     strict: bool = False
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    timestamp: str = field(default_factory=local_timestamp)
 
 
 def load_json(path: Path) -> Any:

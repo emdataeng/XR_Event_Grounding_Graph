@@ -5,7 +5,7 @@
       "check_id": "E3.1",
       "check_name": "Requirement support behavior",
       "evidence_file": "requirement_support_results.csv",
-      "message": "45 requirements inspected; 0 inconsistent requirement-support records.",
+      "message": "57 requirements inspected; 0 inconsistent requirement-support records.",
       "scenario": "Requirement support",
       "severity": "critical",
       "status": "PASS"
@@ -65,20 +65,20 @@
   "mode": "od_plus_psr_error_hints",
   "perturbation_run": {
     "active_effects": 16,
-    "constraints": 79,
+    "constraints": 91,
     "effect_history_diagnostics_csv": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\docs\\reasoning_layers\\Evaluation3\\perturbations\\reduced_confidence\\effect_history_diagnostics.csv",
     "explanation_traces_path": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\docs\\reasoning_layers\\Evaluation3\\perturbations\\reduced_confidence\\explanation_traces.json",
     "historical_effects": 32,
     "invalidated_effects": 8,
-    "missing_requirements": 18,
+    "missing_requirements": 30,
     "output_path": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\docs\\reasoning_layers\\Evaluation3\\perturbations\\reduced_confidence\\validation_records.jsonl",
-    "predicates": 326,
+    "predicates": 367,
     "produced_effect_lifecycle": 32,
     "rule_coverage_diagnostics_path": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\docs\\reasoning_layers\\Evaluation3\\perturbations\\reduced_confidence\\rule_coverage_diagnostics.csv",
     "status_counts": {
-      "accepted": 17,
+      "accepted": 13,
       "rejected": 6,
-      "uncertain": 11
+      "uncertain": 15
     },
     "step_records": 34,
     "step_validations_csv": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\docs\\reasoning_layers\\Evaluation3\\perturbations\\reduced_confidence\\step_validations.csv",
@@ -398,6 +398,19 @@
         "supporting_step_id": ""
       },
       {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"rear_chassis\", \"base\"]",
+        "requirement_name": "secured",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_2",
+        "step_index": 2,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
         "notes": "active support recorded",
         "requirement_args": "[\"rear_chassis\", \"base\"]",
         "requirement_name": "installed",
@@ -426,6 +439,19 @@
       {
         "notes": "missing requirement recorded",
         "requirement_args": "[\"base\", \"workspace\"]",
+        "requirement_name": "secured",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3",
+        "step_index": 3,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"rear_chassis\", \"base\"]",
         "requirement_name": "secured",
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_3",
         "step_index": 3,
@@ -502,6 +528,19 @@
         "supporting_step_id": ""
       },
       {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"front_chassis\", \"base\"]",
+        "requirement_name": "secured",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_7",
+        "step_index": 7,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
         "notes": "active support recorded",
         "requirement_args": "[\"rear_chassis\", \"base\"]",
         "requirement_name": "installed",
@@ -555,6 +594,19 @@
       },
       {
         "notes": "missing requirement recorded",
+        "requirement_args": "[\"front_bracket_screw\", \"front_bracket\"]",
+        "requirement_name": "aligned",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11",
+        "step_index": 11,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
+        "notes": "missing requirement recorded",
         "requirement_args": "[]",
         "requirement_name": "screwdriver",
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_11",
@@ -581,8 +633,34 @@
       },
       {
         "notes": "missing requirement recorded",
+        "requirement_args": "[\"front_wheel_assy\", \"front_chassis\"]",
+        "requirement_name": "aligned",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_12",
+        "step_index": 12,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
+        "notes": "missing requirement recorded",
         "requirement_args": "[\"rear_chassis\", \"base\"]",
         "requirement_name": "installed",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13",
+        "step_index": 13,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"rear_wheel_assy\", \"rear_chassis\"]",
+        "requirement_name": "aligned",
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_13",
         "step_index": 13,
         "support_is_active": false,
@@ -749,6 +827,19 @@
         "supporting_step_id": ""
       },
       {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"rear_chassis\", \"base\"]",
+        "requirement_name": "secured",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_22",
+        "step_index": 22,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
         "notes": "active support recorded",
         "requirement_args": "[\"rear_rear_chassis_pin\", \"rear_chassis\"]",
         "requirement_name": "installed",
@@ -801,6 +892,19 @@
         "supporting_step_id": ""
       },
       {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"rear_chassis\", \"base\"]",
+        "requirement_name": "secured",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_24",
+        "step_index": 24,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
         "notes": "active support recorded",
         "requirement_args": "[\"front_chassis\", \"base\"]",
         "requirement_name": "installed",
@@ -828,6 +932,19 @@
       },
       {
         "notes": "missing requirement recorded",
+        "requirement_args": "[\"front_bracket_screw\", \"front_bracket\"]",
+        "requirement_name": "aligned",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26",
+        "step_index": 26,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
+        "notes": "missing requirement recorded",
         "requirement_args": "[]",
         "requirement_name": "screwdriver",
         "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_26",
@@ -851,6 +968,19 @@
         "support_status": "supported",
         "supporting_constraint_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy",
         "supporting_step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6"
+      },
+      {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"front_wheel_assy\", \"front_chassis\"]",
+        "requirement_name": "aligned",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_27",
+        "step_index": 27,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
       },
       {
         "notes": "active support recorded",
@@ -892,6 +1022,19 @@
         "supporting_step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6"
       },
       {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"front_wheel_assy\", \"front_chassis\"]",
+        "requirement_name": "aligned",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_30",
+        "step_index": 30,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
+      },
+      {
         "notes": "active support recorded",
         "requirement_args": "[\"rear_chassis\", \"base\"]",
         "requirement_name": "installed",
@@ -929,17 +1072,30 @@
         "support_status": "missing",
         "supporting_constraint_id": "",
         "supporting_step_id": ""
+      },
+      {
+        "notes": "missing requirement recorded",
+        "requirement_args": "[\"rear_wheel_assy\", \"rear_chassis\"]",
+        "requirement_name": "aligned",
+        "step_id": "step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_33",
+        "step_index": 33,
+        "support_is_active": false,
+        "support_is_invalidated": false,
+        "support_is_rejected": false,
+        "support_status": "missing",
+        "supporting_constraint_id": "",
+        "supporting_step_id": ""
       }
     ]
   },
   "status_distribution": {
-    "accepted": 18,
+    "accepted": 14,
     "rejected": 6,
-    "uncertain": 10
+    "uncertain": 14
   },
   "thresholds": {
     "tau_acc": 0.7,
     "tau_unc": 0.35
   },
-  "timestamp": "2026-05-28T09:31:05+00:00"
+  "timestamp": "2026-06-26T19:02:30+02:00"
 }

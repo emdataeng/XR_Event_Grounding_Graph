@@ -1,11 +1,15 @@
 # ADR-002: Require Alignment for Every Non-Base Component Installation
 
-- Status: Accepted
+- Status: Superseded by ADR-004
 - Date: 2026-06-25
 - Domain model version: `1.2.0`
 - Rule set version: `1.2.0`
 
 ## Context
+
+> Superseded note: ADR-004 narrows the alignment requirement from all non-base
+> component types to `ChassisPin`, `Screw`, and `WheelAssembly`. This record is
+> retained to document the earlier all-component alignment decision.
 
 The domain model previously defined `aligned(component, installation_target)` as
 a required condition only for `ChassisPin`. The corresponding Layer 3 rule also

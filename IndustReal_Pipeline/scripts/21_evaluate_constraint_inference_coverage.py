@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tarfile
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -30,6 +30,10 @@ OPTIONAL_REASONING_FILES = (
     "explanation_traces.json",
 )
 PROVENANCE_FIELDS = ("rule_id", "rule_source", "rule_type", "source_rule", "provenance")
+
+
+def local_timestamp() -> str:
+    return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 @dataclass
@@ -61,9 +65,7 @@ class EvaluationContext:
     strict: bool = False
     restore_preserved: bool = False
     download_missing: bool = False
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
-    )
+    timestamp: str = field(default_factory=local_timestamp)
 
     @property
     def preserved_tarball(self) -> Path:

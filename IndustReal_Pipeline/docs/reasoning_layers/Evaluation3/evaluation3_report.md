@@ -2,7 +2,7 @@
 
 - Evaluated clip/result ID: `raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
 - Mode: `od_plus_psr_error_hints`
-- Timestamp: `2026-05-28T09:31:05+00:00`
+- Timestamp: `2026-06-26T19:02:30+02:00`
 - Reasoning directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
 - Graph directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
 
@@ -10,9 +10,9 @@
 
 | Status | Count |
 | --- | ---: |
-| accepted | 18 |
+| accepted | 14 |
 | rejected | 6 |
-| uncertain | 10 |
+| uncertain | 14 |
 
 ## Effect Lifecycle Summary
 
@@ -26,7 +26,7 @@
 
 | Scenario | Status | Message | Evidence |
 | --- | --- | --- | --- |
-| Requirement support | PASS | 45 requirements inspected; 0 inconsistent requirement-support records. | `requirement_support_results.csv` |
+| Requirement support | PASS | 57 requirements inspected; 0 inconsistent requirement-support records. | `requirement_support_results.csv` |
 | Hard incompatibility | PASS | 2 incompatibility constraints inspected; 0 were not rejected with trace evidence. | `incompatibility_results.csv` |
 | Rejected-step isolation | PASS | 6 rejected steps inspected; 0 rejected-step isolation violations. | `rejected_step_isolation_results.csv` |
 | Removal invalidation | PASS | 10 removal effects inspected; 0 invalidation inconsistencies. | `removal_invalidation_results.csv` |
@@ -34,9 +34,9 @@
 
 ## Requirement Support Summary
 
-- Requirements inspected: 45
+- Requirements inspected: 57
 - Supported: 27
-- Missing: 18
+- Missing: 30
 
 ## Incompatibility Summary
 

@@ -24,8 +24,52 @@ versioning:
 
 Current versions:
 
-- Domain model: `1.2.0`
+- Domain model: `1.3.0`
 - Rule set: `1.3.0`
+
+## 2026-06-26 — Scope alignment to mechanically alignment-sensitive component types
+
+Versions:
+
+- Domain model: `1.3.0`
+- Rule set: `1.3.0`
+
+Decision record:
+
+- [`ADR-004: Scope Alignment Requirements to Mechanically Alignment-Sensitive Types`](decisions/ADR-004-scope-alignment-requirements.md)
+
+### Changed
+
+- Removed the generic alignment requirement from `type_defaults.Component`.
+- Added `aligned($self, $installation_target)` to:
+  - `ChassisPin`
+  - `Screw`
+  - `WheelAssembly`
+- Left `Chassis` and `Bracket` without a hard alignment requirement by default.
+
+### Rationale
+
+The all-component alignment rule made placement-like chassis and bracket
+installations uncertain unless separate alignment evidence existed. Alignment is
+still treated as a real assembly precondition for insertion, fastening, and
+interface-fit operations such as pins, screws, and wheel assemblies.
+
+### Impact
+
+- Fewer installation steps produce implicit `aligned(...)` requirements.
+- Acceptance ratios can increase after rebuilding artifacts because `Chassis`
+  and `Bracket` installations are no longer blocked by missing alignment
+  support.
+- Existing Layer 3, Layer 4, procedural-reasoning graph, and evaluation
+  artifacts must be rebuilt.
+- The Layer 3 rule remains generic: it consumes materialized
+  `hasRequiredCondition` predicates and therefore only fires for types that
+  still configure those requirements.
+
+### Verification
+
+- Updated `tests/test_layer3_ontology_config.py` to verify the new alignment
+  scope and adjusted inferred-constraint counts.
 
 ## 2026-06-25 — Observed installation-target grounding
 
@@ -86,6 +130,9 @@ need stricter target grounding.
   observations, Layer 4 rejection, and the `require_observed` policy.
 
 ## 2026-06-25 — Alignment for all non-base components
+
+Superseded by the 2026-06-26 alignment-scope change. This entry records the
+earlier all-component alignment model for traceability.
 
 Versions:
 

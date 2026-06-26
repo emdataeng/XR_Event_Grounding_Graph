@@ -6,9 +6,9 @@
       "check_id": "E1.1",
       "check_name": "Step records produced",
       "evidence_file": "evidence/step_record_coverage.json",
-      "message": "All input steps are represented; 2 extra step records were found.",
-      "severity": "warning",
-      "status": "WARNING"
+      "message": "11 step records cover 11 input steps.",
+      "severity": "critical",
+      "status": "PASS"
     },
     {
       "artifact": "predicates.jsonl",
@@ -84,7 +84,7 @@
   "clip_result_id": "raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1",
   "counts": {
     "constraints": 28,
-    "events": 374,
+    "events": 659,
     "explanation_traces": 11,
     "graph_edges": 513,
     "graph_nodes": 198,
@@ -117,11 +117,8 @@
       "steps_without_predicates": []
     },
     "step_records": {
-      "expected_input_steps": 9,
-      "extra_source_event_ids": [
-        "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
-        "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9"
-      ],
+      "expected_input_steps": 11,
+      "extra_source_event_ids": [],
       "missing_source_event_ids": [],
       "step_records": 11
     },
@@ -151,5 +148,5 @@
     "validations": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\results\\reasoning_layers\\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\\validation_records.jsonl"
   },
   "run_id": "raw_cad_dataset__all_test_clips",
-  "timestamp": "2026-05-28T09:30:56+00:00"
+  "timestamp": "2026-06-26T18:59:45+02:00"
 }

@@ -15,7 +15,7 @@ import shutil
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +44,10 @@ GRAPH_FILES = (
 )
 
 
+def local_timestamp() -> str:
+    return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
 @dataclass
 class CheckResult:
     check_id: str
@@ -64,7 +68,7 @@ class EvaluationContext:
     graph_dir: Path | None
     output_dir: Path
     strict: bool = False
-    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds"))
+    timestamp: str = field(default_factory=local_timestamp)
 
     @property
     def config_path(self) -> Path:

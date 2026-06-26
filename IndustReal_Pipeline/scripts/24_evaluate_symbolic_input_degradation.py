@@ -10,7 +10,7 @@ import shutil
 import sys
 from collections import Counter
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
@@ -46,6 +46,10 @@ SCENARIOS = (
 )
 
 
+def local_timestamp() -> str:
+    return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
 @dataclass
 class EvaluationContext:
     project_root: Path
@@ -53,9 +57,7 @@ class EvaluationContext:
     reasoning_dir: Path
     output_dir: Path
     strict: bool = False
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
-    )
+    timestamp: str = field(default_factory=local_timestamp)
 
     @property
     def config_path(self) -> Path:

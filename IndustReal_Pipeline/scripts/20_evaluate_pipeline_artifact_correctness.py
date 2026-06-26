@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tarfile
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -34,6 +34,10 @@ CHECKS = [
     ("E1.8", "Rejected-step dependency rule respected", "graph"),
     ("E1.9", "Rule coverage diagnostics", "diagnostics"),
 ]
+
+
+def local_timestamp() -> str:
+    return datetime.now().astimezone().isoformat(timespec="seconds")
 
 
 @dataclass
@@ -74,9 +78,7 @@ class EvaluationContext:
     strict: bool = False
     download_missing: bool = False
     restore_preserved: bool = False
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
-    )
+    timestamp: str = field(default_factory=local_timestamp)
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:

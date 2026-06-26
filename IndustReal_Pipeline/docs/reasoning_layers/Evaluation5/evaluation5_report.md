@@ -1,7 +1,7 @@
 # Evaluation 5 Report: Symbolic Input Degradation
 
 - Evaluated clip/result ID: `raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
-- Timestamp: `2026-06-15T12:32:41+00:00`
+- Timestamp: `2026-06-26T19:05:33+02:00`
 - Reasoning directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
 - Output directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\docs\reasoning_layers\Evaluation5`
 
@@ -13,15 +13,15 @@ This evaluation measures symbolic robustness under controlled degradation. It do
 
 | Status | Count |
 | --- | ---: |
-| accepted | 18 |
+| accepted | 14 |
 | rejected | 6 |
-| uncertain | 10 |
+| uncertain | 14 |
 
 ## Perturbation Outcomes
 
 | Perturbation | Status | Transition | Conservative | Perturbed distribution |
 | --- | --- | --- | --- | --- |
-| Lower predicate confidence below threshold | PASS | accepted->uncertain | True | `{'accepted': 17, 'rejected': 10, 'uncertain': 7}` |
+| Lower predicate confidence below threshold | PASS | accepted->uncertain | True | `{'accepted': 13, 'rejected': 10, 'uncertain': 11}` |
 | Remove a required support predicate | PASS | accepted->rejected | True | `{'accepted': 1, 'rejected': 33}` |
 | Replace an object type with an incompatible type | PASS | accepted->uncertain | True | `{'rejected': 33, 'uncertain': 1}` |
 | Inject an explicit error action or incompatibility | PASS | accepted->rejected | True | `{'rejected': 34}` |
@@ -36,9 +36,9 @@ This evaluation measures symbolic robustness under controlled degradation. It do
 - Baseline to perturbed status: `accepted->uncertain`
 - What was changed: all symbolic predicates attached to the selected accepted step had their confidence lowered.
 - New confidence: `0.175`; this is below `tau_unc`, so the evidence is insufficient for acceptance.
-- Changed predicates: 8 records covering `hasAction, hasInstallTarget, hasLabel, hasTimeWindow, isA, requiresInstalledBefore, usesObject`.
+- Changed predicates: 9 records covering `allowsDomainAssumedInstallTarget, hasAction, hasInstallTarget, hasLabel, hasTimeWindow, isA, requiresInstalledBefore, usesObject`.
 - Why this target: the step was accepted and depended on an earlier produced effect, making it suitable for checking whether low-confidence evidence prevents clean acceptance.
-- Observed consequence: the target became `uncertain`; the perturbed clip distribution was `{'accepted': 17, 'rejected': 10, 'uncertain': 7}`.
+- Observed consequence: the target became `uncertain`; the perturbed clip distribution was `{'accepted': 13, 'rejected': 10, 'uncertain': 11}`.
 - Diagnostic evidence: the degraded confidence was preserved in the explanation trace (`diagnostic_visible=True`).
 - Exact perturbed input: `evidence/perturbation_inputs/confidence_degradation/perturbation.json`
 - Complete rerun output: `evidence/perturbation_outputs/confidence_degradation/`
@@ -96,13 +96,13 @@ This evaluation measures symbolic robustness under controlled degradation. It do
 - Removed effect constraint: `step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1::event_6::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy`.
 - Baseline dependent steps affected: `7`.
 - Per-step consequences:
-  - `event_7`: `uncertain -> rejected`, support removed=`True`, missing requirements=`3`.
+  - `event_7`: `uncertain -> rejected`, support removed=`True`, missing requirements=`4`.
   - `event_10`: `accepted -> rejected`, support removed=`True`, missing requirements=`1`.
-  - `event_12`: `accepted -> rejected`, support removed=`True`, missing requirements=`1`.
+  - `event_12`: `uncertain -> rejected`, support removed=`True`, missing requirements=`2`.
   - `event_25`: `accepted -> rejected`, support removed=`True`, missing requirements=`1`.
-  - `event_27`: `accepted -> rejected`, support removed=`True`, missing requirements=`1`.
+  - `event_27`: `uncertain -> rejected`, support removed=`True`, missing requirements=`2`.
   - `event_28`: `accepted -> rejected`, support removed=`True`, missing requirements=`1`.
-  - `event_30`: `accepted -> rejected`, support removed=`True`, missing requirements=`1`.
+  - `event_30`: `uncertain -> rejected`, support removed=`True`, missing requirements=`2`.
 - Rejected-support violations after removal: `0`.
 - Trace evidence was preserved for every affected dependent: `True`.
 - Exact perturbed input: `evidence/perturbation_inputs/removed_produced_effect/perturbation.json`

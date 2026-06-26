@@ -29,6 +29,16 @@ than silently falling back to hard-coded values.
 
 ## Timestamped Logs
 
-For timestamped experiment outputs, write structured log timestamps in local
-time with an explicit UTC offset, matching the timezone used in output
-filenames. Do not mix local-time filenames with UTC log entries.
+For any generated timestamp, use local time with an explicit UTC offset. This
+applies to structured logs, reports, JSON summaries, manifests, filenames, and
+experiment or evaluation outputs. Do not use UTC timestamps for generated
+artifacts unless the user explicitly requests UTC.
+
+In Python, prefer:
+
+```python
+datetime.now().astimezone().isoformat(timespec="seconds")
+```
+
+Keep timestamped filenames and timestamp fields in the same timezone; do not mix
+local-time filenames with UTC log or report entries.

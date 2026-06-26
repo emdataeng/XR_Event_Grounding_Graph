@@ -327,7 +327,7 @@
     {
       "properties": {
         "confidence": 1.0,
-        "provisional": false,
+        "provisional": true,
         "required_condition": {
           "args": [
             "front_wheel_assy",
@@ -350,8 +350,8 @@
             "name": "installed"
           },
           "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_in",
-          "producer_status": "accepted",
-          "provisional": false,
+          "producer_status": "uncertain",
+          "provisional": true,
           "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
           "type": "previous_produced_effect"
         }
@@ -370,6 +370,12 @@
       "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_i",
       "target": "Rule::effect_install_component_on_target",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_a",
+      "target": "Rule::implicit_domain_required_condition",
       "type": "DERIVED_FROM"
     },
     {
@@ -416,6 +422,12 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
+      "target": "Rule::safety_domain_requirement",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_3_in",
       "target": "Rule::effect_install_component_on_target",
       "type": "DERIVED_FROM"
@@ -452,6 +464,12 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_se",
+      "target": "Rule::safety_domain_requirement",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_in",
       "target": "Rule::effect_install_component_on_target",
       "type": "DERIVED_FROM"
@@ -476,6 +494,12 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
+      "target": "Rule::safety_domain_requirement",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_6_in",
       "target": "Rule::effect_install_component_on_target",
       "type": "DERIVED_FROM"
@@ -490,6 +514,12 @@
       "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_in",
       "target": "Rule::effect_install_component_on_target",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_al",
+      "target": "Rule::implicit_domain_required_condition",
       "type": "DERIVED_FROM"
     },
     {
@@ -512,6 +542,12 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_al",
+      "target": "Rule::implicit_domain_required_condition",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::precondition_install_requires_target_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_in",
       "target": "Rule::precondition_install_requires_target_installed",
       "type": "DERIVED_FROM"
@@ -526,6 +562,12 @@
       "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::c::precondition_remove_requires_component_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_9_in",
       "target": "Rule::precondition_remove_requires_component_installed",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_0_base",
+      "target": "Source::a1b66170744afd44",
       "type": "DERIVED_FROM"
     },
     {
@@ -572,6 +614,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
+      "target": "Source::a1b66170744afd44",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_install",
       "target": "Source::71af7a188e6b809a",
       "type": "DERIVED_FROM"
@@ -592,6 +640,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasParentComponent::rear_wheel_assy_rear_chassis",
       "target": "Source::64ff9391b0129efa",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
+      "target": "Source::1df0d27fe074e11f",
       "type": "DERIVED_FROM"
     },
     {
@@ -622,6 +676,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
       "target": "Source::3e9e862a166e7097",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_1_rear_chassis",
+      "target": "Source::a1b66170744afd44",
       "type": "DERIVED_FROM"
     },
     {
@@ -674,6 +734,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
+      "target": "Source::a1b66170744afd44",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_install",
       "target": "Source::71af7a188e6b809a",
       "type": "DERIVED_FROM"
@@ -710,6 +776,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+      "target": "Source::d704eb7975c0f4cc",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasTimeWindow::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_70_9_118_7",
       "target": "Source::b76dc6b0163fce4c",
       "type": "DERIVED_FROM"
@@ -742,6 +814,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
       "target": "Source::3e9e862a166e7097",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_3_front_chassis",
+      "target": "Source::a1b66170744afd44",
       "type": "DERIVED_FROM"
     },
     {
@@ -794,6 +872,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_front_chassis_pin",
+      "target": "Source::a1b66170744afd44",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_install",
       "target": "Source::71af7a188e6b809a",
       "type": "DERIVED_FROM"
@@ -826,6 +910,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_base_workspace",
       "target": "Source::8de1f4c02f5c4126",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
+      "target": "Source::d0a4a29d48dc18d3",
       "type": "DERIVED_FROM"
     },
     {
@@ -866,6 +956,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
+      "target": "Source::a1b66170744afd44",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_install",
       "target": "Source::71af7a188e6b809a",
       "type": "DERIVED_FROM"
@@ -902,6 +998,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+      "target": "Source::2ab77044ed9a861a",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasTimeWindow::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_178_8_273_5",
       "target": "Source::b76dc6b0163fce4c",
       "type": "DERIVED_FROM"
@@ -934,6 +1036,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
       "target": "Source::3e9e862a166e7097",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_6_front_bracket",
+      "target": "Source::a1b66170744afd44",
       "type": "DERIVED_FROM"
     },
     {
@@ -992,6 +1100,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_front_bracket_screw",
+      "target": "Source::a1b66170744afd44",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_install",
       "target": "Source::71af7a188e6b809a",
       "type": "DERIVED_FROM"
@@ -1012,6 +1126,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasParentComponent::front_bracket_screw_front_bracket",
       "target": "Source::bc6bf5b90e5e8760",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+      "target": "Source::f3896b3fb43c1a58",
       "type": "DERIVED_FROM"
     },
     {
@@ -1058,6 +1178,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_front_wheel_assy",
+      "target": "Source::a1b66170744afd44",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_install",
       "target": "Source::71af7a188e6b809a",
       "type": "DERIVED_FROM"
@@ -1078,6 +1204,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasParentComponent::front_wheel_assy_front_chassis",
       "target": "Source::87ddf6c8d2a73e60",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+      "target": "Source::e7214519316ac756",
       "type": "DERIVED_FROM"
     },
     {
@@ -1132,6 +1264,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasParentComponent::front_wheel_assy_front_chassis",
       "target": "Source::87ddf6c8d2a73e60",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+      "target": "Source::e7214519316ac756",
       "type": "DERIVED_FROM"
     },
     {
@@ -1191,6 +1329,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_a",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::precondition_install_requires_target_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_i",
       "type": "HAS_CONSTRAINT"
     },
@@ -1216,6 +1360,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::0_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
       "type": "HAS_CONSTRAINT"
     },
     {
@@ -1256,6 +1406,12 @@
     },
     {
       "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_se",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_in",
       "type": "HAS_CONSTRAINT"
@@ -1280,6 +1436,12 @@
     },
     {
       "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_6_in",
       "type": "HAS_CONSTRAINT"
@@ -1299,6 +1461,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_al",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::precondition_install_requires_target_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_in",
       "type": "HAS_CONSTRAINT"
     },
@@ -1312,6 +1480,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_in",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_al",
       "type": "HAS_CONSTRAINT"
     },
     {
@@ -1358,6 +1532,18 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_a",
+      "target": "Entity::rear_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_a",
+      "target": "Entity::rear_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::precondition_install_requires_target_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_i",
       "target": "Entity::base",
       "type": "HAS_ENTITY"
@@ -1442,6 +1628,18 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
+      "target": "Entity::base",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
+      "target": "Entity::rear_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_3_in",
       "target": "Entity::base",
       "type": "HAS_ENTITY"
@@ -1514,6 +1712,18 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_se",
+      "target": "Entity::base",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_se",
+      "target": "Entity::front_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_in",
       "target": "Entity::rear_chassis",
       "type": "HAS_ENTITY"
@@ -1558,6 +1768,18 @@
       "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::0_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
       "target": "Entity::workspace",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
+      "target": "Entity::base",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
+      "target": "Entity::rear_chassis",
       "type": "HAS_ENTITY"
     },
     {
@@ -1598,6 +1820,18 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_al",
+      "target": "Entity::front_bracket",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_al",
+      "target": "Entity::front_bracket_screw",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::precondition_install_requires_target_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_in",
       "target": "Entity::front_bracket",
       "type": "HAS_ENTITY"
@@ -1623,6 +1857,18 @@
     {
       "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_in",
+      "target": "Entity::front_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_al",
+      "target": "Entity::front_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_al",
       "target": "Entity::front_wheel_assy",
       "type": "HAS_ENTITY"
     },
@@ -1660,6 +1906,12 @@
       "properties": {},
       "source": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::c::precondition_remove_requires_component_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_9_in",
       "target": "Entity::front_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_0_base",
+      "target": "Entity::base",
       "type": "HAS_ENTITY"
     },
     {
@@ -1700,6 +1952,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
+      "target": "Entity::rear_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasInstallTarget::rear_wheel_assy_rear_chassis",
       "target": "Entity::rear_chassis",
       "type": "HAS_ENTITY"
@@ -1725,6 +1983,18 @@
     {
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasParentComponent::rear_wheel_assy_rear_chassis",
+      "target": "Entity::rear_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
+      "target": "Entity::rear_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
       "target": "Entity::rear_wheel_assy",
       "type": "HAS_ENTITY"
     },
@@ -1762,6 +2032,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
       "target": "Entity::rear_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_1_rear_chassis",
+      "target": "Entity::rear_chassis",
       "type": "HAS_ENTITY"
     },
     {
@@ -1816,6 +2092,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_1_rear_chassis",
       "target": "Entity::rear_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
+      "target": "Entity::front_rear_chassis_pin",
       "type": "HAS_ENTITY"
     },
     {
@@ -1880,6 +2162,24 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+      "target": "Entity::base",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+      "target": "Entity::front_rear_chassis_pin",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+      "target": "Entity::rear_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::isA::front_rear_chassis_pin_chassispin",
       "target": "Entity::front_rear_chassis_pin",
       "type": "HAS_ENTITY"
@@ -1918,6 +2218,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
       "target": "Entity::front_rear_chassis_pin",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_3_front_chassis",
+      "target": "Entity::front_chassis",
       "type": "HAS_ENTITY"
     },
     {
@@ -1972,6 +2278,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_3_front_chassis",
       "target": "Entity::front_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_front_chassis_pin",
+      "target": "Entity::front_chassis_pin",
       "type": "HAS_ENTITY"
     },
     {
@@ -2036,6 +2348,24 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
+      "target": "Entity::base",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
+      "target": "Entity::front_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
+      "target": "Entity::front_chassis_pin",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::isA::front_chassis_pin_chassispin",
       "target": "Entity::front_chassis_pin",
       "type": "HAS_ENTITY"
@@ -2074,6 +2404,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_front_chassis_pin",
       "target": "Entity::front_chassis_pin",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
+      "target": "Entity::rear_rear_chassis_pin",
       "type": "HAS_ENTITY"
     },
     {
@@ -2138,6 +2474,24 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+      "target": "Entity::base",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+      "target": "Entity::rear_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+      "target": "Entity::rear_rear_chassis_pin",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::isA::rear_rear_chassis_pin_chassispin",
       "target": "Entity::rear_rear_chassis_pin",
       "type": "HAS_ENTITY"
@@ -2176,6 +2530,12 @@
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
       "target": "Entity::rear_rear_chassis_pin",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_6_front_bracket",
+      "target": "Entity::front_bracket",
       "type": "HAS_ENTITY"
     },
     {
@@ -2246,6 +2606,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_front_bracket_screw",
+      "target": "Entity::front_bracket_screw",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasInstallTarget::front_bracket_screw_front_bracket",
       "target": "Entity::front_bracket",
       "type": "HAS_ENTITY"
@@ -2271,6 +2637,18 @@
     {
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasParentComponent::front_bracket_screw_front_bracket",
+      "target": "Entity::front_bracket_screw",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+      "target": "Entity::front_bracket",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
       "target": "Entity::front_bracket_screw",
       "type": "HAS_ENTITY"
     },
@@ -2330,6 +2708,12 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_front_wheel_assy",
+      "target": "Entity::front_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasInstallTarget::front_wheel_assy_front_chassis",
       "target": "Entity::front_chassis",
       "type": "HAS_ENTITY"
@@ -2355,6 +2739,18 @@
     {
       "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasParentComponent::front_wheel_assy_front_chassis",
+      "target": "Entity::front_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+      "target": "Entity::front_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
       "target": "Entity::front_wheel_assy",
       "type": "HAS_ENTITY"
     },
@@ -2426,6 +2822,18 @@
     },
     {
       "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+      "target": "Entity::front_chassis",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+      "target": "Entity::front_wheel_assy",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::isA::front_wheel_assy_component",
       "target": "Entity::front_wheel_assy",
       "type": "HAS_ENTITY"
@@ -2459,6 +2867,12 @@
       "source": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_9_front_wheel_assy",
       "target": "Entity::front_wheel_assy",
       "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_0_base",
+      "type": "HAS_PREDICATE"
     },
     {
       "properties": {},
@@ -2500,6 +2914,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_0_base",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_1_rear_chassis",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2553,6 +2973,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_install",
       "type": "HAS_PREDICATE"
     },
@@ -2572,6 +2998,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasParentComponent::rear_wheel_assy_rear_chassis",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2602,6 +3034,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2643,6 +3081,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasTimeWindow::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_70_9_118_7",
       "type": "HAS_PREDICATE"
     },
@@ -2674,6 +3118,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_3_front_chassis",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2727,6 +3177,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_front_chassis_pin",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_install",
       "type": "HAS_PREDICATE"
     },
@@ -2758,6 +3214,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_base_workspace",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2799,6 +3261,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_install",
       "type": "HAS_PREDICATE"
     },
@@ -2835,6 +3303,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasTimeWindow::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_178_8_273_5",
       "type": "HAS_PREDICATE"
     },
@@ -2866,6 +3340,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::usesObject::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_6_front_bracket",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2925,6 +3405,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_front_bracket_screw",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_install",
       "type": "HAS_PREDICATE"
     },
@@ -2944,6 +3430,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasParentComponent::front_bracket_screw_front_bracket",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2991,6 +3483,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_front_wheel_assy",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_install",
       "type": "HAS_PREDICATE"
     },
@@ -3010,6 +3508,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasParentComponent::front_wheel_assy_front_chassis",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
       "type": "HAS_PREDICATE"
     },
     {
@@ -3064,6 +3568,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
       "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasParentComponent::front_wheel_assy_front_chassis",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
+      "target": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
       "type": "HAS_PREDICATE"
     },
     {
@@ -3237,6 +3747,12 @@
     {
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_a",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::precondition_install_requires_target_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_i",
       "type": "REQUIRES"
     },
@@ -3256,6 +3772,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::0_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
       "type": "REQUIRES"
     },
     {
@@ -3284,6 +3806,12 @@
     },
     {
       "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_se",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_al",
       "type": "REQUIRES"
@@ -3302,8 +3830,20 @@
     },
     {
       "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::c::precondition_install_requires_target_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_6_in",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_al",
       "type": "REQUIRES"
     },
     {
@@ -3316,6 +3856,12 @@
       "properties": {},
       "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
       "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::tool_domain_requirement::0_0::requirestool::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_sc",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+      "target": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_al",
       "type": "REQUIRES"
     },
     {
@@ -3510,7 +4056,7 @@
       "type": "USES"
     }
   ],
-  "graph_name": "procedural_reasoning_graph::raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1",
+  "graph_name": "procedural_reasoning_graph",
   "nodes": [
     {
       "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_0_in",
@@ -3563,6 +4109,32 @@
           "type": "same_step_constraint"
         },
         "support_status": "observed"
+      },
+      "type": "Constraint"
+    },
+    {
+      "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_a",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_a",
+        "display_label": "requires aligned(rear_wheel_assy, rear_chassis) [missing]",
+        "display_name": "requires aligned",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_10_a",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "missing"
       },
       "type": "Constraint"
     },
@@ -3751,6 +4323,32 @@
       "type": "Constraint"
     },
     {
+      "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
+        "display_label": "requires safety secured(rear_chassis, base) [missing]",
+        "display_name": "requires safety secured",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_2_se",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "missing"
+      },
+      "type": "Constraint"
+    },
+    {
       "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_3_in",
       "properties": {
         "args": [
@@ -3909,6 +4507,32 @@
       "type": "Constraint"
     },
     {
+      "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_se",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
+          "secured",
+          "front_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_se",
+        "display_label": "requires safety secured(front_chassis, base) [missing]",
+        "display_name": "requires safety secured",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_4_se",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "missing"
+      },
+      "type": "Constraint"
+    },
+    {
       "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_in",
       "properties": {
         "args": [
@@ -4014,6 +4638,32 @@
       "type": "Constraint"
     },
     {
+      "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
+        "display_label": "requires safety secured(rear_chassis, base) [missing]",
+        "display_name": "requires safety secured",
+        "kind": "safety_constraint",
+        "name": "requiresSafety",
+        "rule_id": "safety_domain_requirement",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::c::safety_domain_requirement::1_0::requiressafety::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_5_se",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "missing"
+      },
+      "type": "Constraint"
+    },
+    {
       "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_6_in",
       "properties": {
         "args": [
@@ -4094,6 +4744,32 @@
       "type": "Constraint"
     },
     {
+      "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_al",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_al",
+        "display_label": "requires aligned(front_bracket_screw, front_bracket) [missing]",
+        "display_name": "requires aligned",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_al",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "missing"
+      },
+      "type": "Constraint"
+    },
+    {
       "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::c::precondition_install_requires_target_installed::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_7_in",
       "properties": {
         "args": [
@@ -4168,6 +4844,32 @@
           "type": "same_step_constraint"
         },
         "support_status": "observed"
+      },
+      "type": "Constraint"
+    },
+    {
+      "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_al",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_al",
+        "display_label": "requires aligned(front_wheel_assy, front_chassis) [missing]",
+        "display_name": "requires aligned",
+        "kind": "implicit_assembly_condition",
+        "name": "requires",
+        "rule_id": "implicit_domain_required_condition",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::implicit_domain_required_condition::0_0::requires::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_al",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "missing"
       },
       "type": "Constraint"
     },
@@ -4415,6 +5117,34 @@
       "type": "Entity"
     },
     {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_0_base",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_0, base)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_0_base",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_0_base",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_0_install",
       "properties": {
         "args": [
@@ -4615,6 +5345,34 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
+          "rear_wheel_assy"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_10, rear_wheel_assy)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_rear_wheel_assy",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_10_install",
       "properties": {
         "args": [
@@ -4720,6 +5478,38 @@
             "components",
             "industreal_component::rear_wheel_assy",
             "parent_component"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
+      "properties": {
+        "args": [
+          "rear_wheel_assy",
+          "aligned",
+          "rear_wheel_assy",
+          "rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasRequiredCondition(rear_wheel_assy, aligned, rear_wheel_assy, rear_chassis)",
+        "display_name": "hasRequiredCondition",
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
+        "predicate_key": "has_required_condition",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10::p::hasRequiredCondition::rear_wheel_assy_aligned_rear_wheel_assy_rear_chassis",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::rear_wheel_assy",
+            "required_conditions",
+            "0"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -4869,6 +5659,34 @@
           ],
           "file": "edges_event_component.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_1_rear_chassis",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1",
+          "rear_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_1, rear_chassis)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_1_rear_chassis",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_1_rear_chassis",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       "type": "Predicate"
@@ -5104,6 +5922,34 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2",
+          "front_rear_chassis_pin"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_2, front_rear_chassis_pin)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_front_rear_chassis_pin",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_2_install",
       "properties": {
         "args": [
@@ -5273,6 +6119,38 @@
             "industreal_component::front_rear_chassis_pin",
             "safety_requirements",
             "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+      "properties": {
+        "args": [
+          "front_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasSafetyRequirement(front_rear_chassis_pin, secured, rear_chassis, base)",
+        "display_name": "hasSafetyRequirement",
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2::p::hasSafetyRequirement::front_rear_chassis_pin_secured_rear_chassis_base",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_rear_chassis_pin",
+            "safety_requirements",
+            "1"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -5451,6 +6329,34 @@
           ],
           "file": "edges_event_component.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_3_front_chassis",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3",
+          "front_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_3, front_chassis)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_3_front_chassis",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_3_front_chassis",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       "type": "Predicate"
@@ -5686,6 +6592,34 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_front_chassis_pin",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4",
+          "front_chassis_pin"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_4, front_chassis_pin)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_front_chassis_pin",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_front_chassis_pin",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_4_install",
       "properties": {
         "args": [
@@ -5855,6 +6789,38 @@
             "industreal_component::front_chassis_pin",
             "safety_requirements",
             "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
+      "properties": {
+        "args": [
+          "front_chassis_pin",
+          "secured",
+          "front_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasSafetyRequirement(front_chassis_pin, secured, front_chassis, base)",
+        "display_name": "hasSafetyRequirement",
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4::p::hasSafetyRequirement::front_chassis_pin_secured_front_chassis_base",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_chassis_pin",
+            "safety_requirements",
+            "1"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -6038,6 +7004,34 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5",
+          "rear_rear_chassis_pin"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_5, rear_rear_chassis_pin)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_rear_rear_chassis_pin",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_5_install",
       "properties": {
         "args": [
@@ -6207,6 +7201,38 @@
             "industreal_component::rear_rear_chassis_pin",
             "safety_requirements",
             "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+      "properties": {
+        "args": [
+          "rear_rear_chassis_pin",
+          "secured",
+          "rear_chassis",
+          "base"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasSafetyRequirement(rear_rear_chassis_pin, secured, rear_chassis, base)",
+        "display_name": "hasSafetyRequirement",
+        "name": "hasSafetyRequirement",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+        "predicate_key": "has_safety_requirement",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5::p::hasSafetyRequirement::rear_rear_chassis_pin_secured_rear_chassis_base",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::rear_rear_chassis_pin",
+            "safety_requirements",
+            "1"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -6385,6 +7411,34 @@
           ],
           "file": "edges_event_component.csv",
           "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_6_front_bracket",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_6, front_bracket)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_6_front_bracket",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_6_front_bracket",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
         }
       },
       "type": "Predicate"
@@ -6649,6 +7703,34 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_front_bracket_screw",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7",
+          "front_bracket_screw"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_7, front_bracket_screw)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_front_bracket_screw",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_front_bracket_screw",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_7_install",
       "properties": {
         "args": [
@@ -6754,6 +7836,38 @@
             "components",
             "industreal_component::front_bracket_screw",
             "parent_component"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+      "properties": {
+        "args": [
+          "front_bracket_screw",
+          "aligned",
+          "front_bracket_screw",
+          "front_bracket"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasRequiredCondition(front_bracket_screw, aligned, front_bracket_screw, front_bracket)",
+        "display_name": "hasRequiredCondition",
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+        "predicate_key": "has_required_condition",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7::p::hasRequiredCondition::front_bracket_screw_aligned_front_bracket_screw_front_bracket",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_bracket_screw",
+            "required_conditions",
+            "0"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -6966,6 +8080,34 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_front_wheel_assy",
+      "properties": {
+        "args": [
+          "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
+          "front_wheel_assy"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "allowsDomainAssumedInstallTarget(event_8, front_wheel_assy)",
+        "display_name": "allowsDomainAssumedInstallTarget",
+        "name": "allowsDomainAssumedInstallTarget",
+        "notes": "No observed installation target was supplied; domain-assumed fallback is enabled.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_front_wheel_assy",
+        "predicate_key": "allows_domain_assumed_install_target",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::allowsDomainAssumedInstallTarget::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_front_wheel_assy",
+        "source": {
+          "fields": [
+            "installation_target",
+            "missing_observation_policy"
+          ],
+          "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+          "type": "configuration"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasAction::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_8_install",
       "properties": {
         "args": [
@@ -7071,6 +8213,38 @@
             "components",
             "industreal_component::front_wheel_assy",
             "parent_component"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+      "properties": {
+        "args": [
+          "front_wheel_assy",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasRequiredCondition(front_wheel_assy, aligned, front_wheel_assy, front_chassis)",
+        "display_name": "hasRequiredCondition",
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+        "predicate_key": "has_required_condition",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_wheel_assy",
+            "required_conditions",
+            "0"
           ],
           "file": "config/domain_config.yaml",
           "type": "existing_graph_csv"
@@ -7338,6 +8512,38 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+      "properties": {
+        "args": [
+          "front_wheel_assy",
+          "aligned",
+          "front_wheel_assy",
+          "front_chassis"
+        ],
+        "category": "entity_metadata",
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasRequiredCondition(front_wheel_assy, aligned, front_wheel_assy, front_chassis)",
+        "display_name": "hasRequiredCondition",
+        "name": "hasRequiredCondition",
+        "notes": "Derived from manually authored domain_config.yaml.",
+        "predicate_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+        "predicate_key": "has_required_condition",
+        "short_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasRequiredCondition::front_wheel_assy_aligned_front_wheel_assy_front_chassis",
+        "source": {
+          "fields": [
+            "components",
+            "industreal_component::front_wheel_assy",
+            "required_conditions",
+            "0"
+          ],
+          "file": "config/domain_config.yaml",
+          "type": "existing_graph_csv"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9::p::hasTimeWindow::step_raw_cad_dataset_all_test_clips_od_only_test_p1_03_assy_0_1_event_9_273_5",
       "properties": {
         "args": [
@@ -7588,6 +8794,24 @@
       "type": "Source"
     },
     {
+      "id": "Source::1df0d27fe074e11f",
+      "properties": {
+        "display_label": "existing_graph_csv:domain_config.yaml",
+        "display_name": "existing_graph_csv:domain_config.yaml",
+        "fields": [
+          "components",
+          "industreal_component::rear_wheel_assy",
+          "required_conditions",
+          "0"
+        ],
+        "file": "config/domain_config.yaml",
+        "short_id": "1df0d27fe074e11f",
+        "source_id": "1df0d27fe074e11f",
+        "source_type": "existing_graph_csv"
+      },
+      "type": "Source"
+    },
+    {
       "id": "Source::24c437a3c36506f7",
       "properties": {
         "display_label": "existing_graph_csv:domain_config.yaml",
@@ -7600,6 +8824,24 @@
         "file": "config/domain_config.yaml",
         "short_id": "24c437a3c36506f7",
         "source_id": "24c437a3c36506f7",
+        "source_type": "existing_graph_csv"
+      },
+      "type": "Source"
+    },
+    {
+      "id": "Source::2ab77044ed9a861a",
+      "properties": {
+        "display_label": "existing_graph_csv:domain_config.yaml",
+        "display_name": "existing_graph_csv:domain_config.yaml",
+        "fields": [
+          "components",
+          "industreal_component::rear_rear_chassis_pin",
+          "safety_requirements",
+          "1"
+        ],
+        "file": "config/domain_config.yaml",
+        "short_id": "2ab77044ed9a861a",
+        "source_id": "2ab77044ed9a861a",
         "source_type": "existing_graph_csv"
       },
       "type": "Source"
@@ -8049,6 +9291,22 @@
       "type": "Source"
     },
     {
+      "id": "Source::a1b66170744afd44",
+      "properties": {
+        "display_label": "configuration:observation_contract.yaml",
+        "display_name": "configuration:observation_contract.yaml",
+        "fields": [
+          "installation_target",
+          "missing_observation_policy"
+        ],
+        "file": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\config\\observation_contract.yaml",
+        "short_id": "a1b66170744afd44",
+        "source_id": "a1b66170744afd44",
+        "source_type": "configuration"
+      },
+      "type": "Source"
+    },
+    {
       "id": "Source::b76dc6b0163fce4c",
       "properties": {
         "display_label": "existing_graph_csv:nodes_events.csv",
@@ -8082,6 +9340,24 @@
       "type": "Source"
     },
     {
+      "id": "Source::d0a4a29d48dc18d3",
+      "properties": {
+        "display_label": "existing_graph_csv:domain_config.yaml",
+        "display_name": "existing_graph_csv:domain_config.yaml",
+        "fields": [
+          "components",
+          "industreal_component::front_chassis_pin",
+          "safety_requirements",
+          "1"
+        ],
+        "file": "config/domain_config.yaml",
+        "short_id": "d0a4a29d48dc18d3",
+        "source_id": "d0a4a29d48dc18d3",
+        "source_type": "existing_graph_csv"
+      },
+      "type": "Source"
+    },
+    {
       "id": "Source::d7035e1df3c0c20c",
       "properties": {
         "display_label": "existing_graph_csv:domain_config.yaml",
@@ -8094,6 +9370,24 @@
         "file": "config/domain_config.yaml",
         "short_id": "d7035e1df3c0c20c",
         "source_id": "d7035e1df3c0c20c",
+        "source_type": "existing_graph_csv"
+      },
+      "type": "Source"
+    },
+    {
+      "id": "Source::d704eb7975c0f4cc",
+      "properties": {
+        "display_label": "existing_graph_csv:domain_config.yaml",
+        "display_name": "existing_graph_csv:domain_config.yaml",
+        "fields": [
+          "components",
+          "industreal_component::front_rear_chassis_pin",
+          "safety_requirements",
+          "1"
+        ],
+        "file": "config/domain_config.yaml",
+        "short_id": "d704eb7975c0f4cc",
+        "source_id": "d704eb7975c0f4cc",
         "source_type": "existing_graph_csv"
       },
       "type": "Source"
@@ -8186,6 +9480,24 @@
       "type": "Source"
     },
     {
+      "id": "Source::e7214519316ac756",
+      "properties": {
+        "display_label": "existing_graph_csv:domain_config.yaml",
+        "display_name": "existing_graph_csv:domain_config.yaml",
+        "fields": [
+          "components",
+          "industreal_component::front_wheel_assy",
+          "required_conditions",
+          "0"
+        ],
+        "file": "config/domain_config.yaml",
+        "short_id": "e7214519316ac756",
+        "source_id": "e7214519316ac756",
+        "source_type": "existing_graph_csv"
+      },
+      "type": "Source"
+    },
+    {
       "id": "Source::ec931313101ae37a",
       "properties": {
         "display_label": "existing_graph_csv:domain_config.yaml",
@@ -8199,6 +9511,24 @@
         "file": "config/domain_config.yaml",
         "short_id": "ec931313101ae37a",
         "source_id": "ec931313101ae37a",
+        "source_type": "existing_graph_csv"
+      },
+      "type": "Source"
+    },
+    {
+      "id": "Source::f3896b3fb43c1a58",
+      "properties": {
+        "display_label": "existing_graph_csv:domain_config.yaml",
+        "display_name": "existing_graph_csv:domain_config.yaml",
+        "fields": [
+          "components",
+          "industreal_component::front_bracket_screw",
+          "required_conditions",
+          "0"
+        ],
+        "file": "config/domain_config.yaml",
+        "short_id": "f3896b3fb43c1a58",
+        "source_id": "f3896b3fb43c1a58",
         "source_type": "existing_graph_csv"
       },
       "type": "Source"
@@ -8293,13 +9623,13 @@
         "clip": "03_assy_0_1",
         "clip_result_id": "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1",
         "confidence": 1.0,
-        "display_label": "Step 10 [accepted]",
+        "display_label": "Step 10 [uncertain]",
         "display_name": "Step 10",
         "has_expected_effect": true,
         "has_rule_coverage": true,
         "index": 10,
         "invalidates_effect_count": 0,
-        "matched_rule_count": 2,
+        "matched_rule_count": 3,
         "mode": "od_only",
         "object_ids": [
           "industreal_component::rear_wheel_assy"
@@ -8311,12 +9641,12 @@
         "object_types": [
           "rear_wheel_assy"
         ],
-        "produced_constraint_count": 2,
+        "produced_constraint_count": 3,
         "run_id": "raw_cad_dataset__all_test_clips",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "event_10",
         "source_event_id": "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
-        "status": "accepted",
+        "status": "uncertain",
         "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10",
         "unsupported_action": false,
         "warning_count": 0
@@ -8351,7 +9681,7 @@
         "object_types": [
           "front_rear_chassis_pin"
         ],
-        "produced_constraint_count": 4,
+        "produced_constraint_count": 5,
         "run_id": "raw_cad_dataset__all_test_clips",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "event_2",
@@ -8431,7 +9761,7 @@
         "object_types": [
           "front_chassis_pin"
         ],
-        "produced_constraint_count": 4,
+        "produced_constraint_count": 5,
         "run_id": "raw_cad_dataset__all_test_clips",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "event_4",
@@ -8471,7 +9801,7 @@
         "object_types": [
           "rear_rear_chassis_pin"
         ],
-        "produced_constraint_count": 4,
+        "produced_constraint_count": 5,
         "run_id": "raw_cad_dataset__all_test_clips",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "event_5",
@@ -8539,7 +9869,7 @@
         "has_rule_coverage": true,
         "index": 7,
         "invalidates_effect_count": 0,
-        "matched_rule_count": 3,
+        "matched_rule_count": 4,
         "mode": "od_only",
         "object_ids": [
           "industreal_component::front_bracket_screw"
@@ -8551,7 +9881,7 @@
         "object_types": [
           "front_bracket_screw"
         ],
-        "produced_constraint_count": 3,
+        "produced_constraint_count": 4,
         "run_id": "raw_cad_dataset__all_test_clips",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "event_7",
@@ -8573,13 +9903,13 @@
         "clip": "03_assy_0_1",
         "clip_result_id": "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1",
         "confidence": 1.0,
-        "display_label": "Step 8 [accepted]",
+        "display_label": "Step 8 [uncertain]",
         "display_name": "Step 8",
         "has_expected_effect": true,
         "has_rule_coverage": true,
         "index": 8,
         "invalidates_effect_count": 0,
-        "matched_rule_count": 2,
+        "matched_rule_count": 3,
         "mode": "od_only",
         "object_ids": [
           "industreal_component::front_wheel_assy"
@@ -8591,12 +9921,12 @@
         "object_types": [
           "front_wheel_assy"
         ],
-        "produced_constraint_count": 2,
+        "produced_constraint_count": 3,
         "run_id": "raw_cad_dataset__all_test_clips",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "event_8",
         "source_event_id": "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
-        "status": "accepted",
+        "status": "uncertain",
         "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
         "unsupported_action": false,
         "warning_count": 0
@@ -8613,7 +9943,7 @@
         "clip": "03_assy_0_1",
         "clip_result_id": "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1",
         "confidence": 1.0,
-        "display_label": "Step 9 [accepted]",
+        "display_label": "Step 9 [uncertain]",
         "display_name": "Step 9",
         "has_expected_effect": true,
         "has_rule_coverage": true,
@@ -8638,7 +9968,7 @@
             "invalidated_by_step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
             "produced_by_constraint_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_8_in",
             "produced_by_step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8",
-            "producer_status": "accepted"
+            "producer_status": "uncertain"
           }
         ],
         "invalidates_effect_count": 1,
@@ -8659,7 +9989,7 @@
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "event_9",
         "source_event_id": "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
-        "status": "accepted",
+        "status": "uncertain",
         "step_id": "step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9",
         "unsupported_action": false,
         "warning_count": 0
