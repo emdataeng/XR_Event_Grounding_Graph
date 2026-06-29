@@ -283,7 +283,7 @@ The `symbolic_domain` condition uses deterministic sequence-window retrieval rat
 
 Run settings live in `configs/config.yaml`. Shared OpenAI-compatible API settings live in `experiments/shared/configs/llm_api.yaml`. Prompt templates live in `configs/prompts.yaml`, including the normal chat prompts and the LM Studio fallback message used when a model template rejects the `system` role.
 
-Operator prompts for the novice test cases live in `experiments/shared/configs/novice_questions.yaml`. They are grouped by `risk_type` so cases can be removed or curated easily. The `question` field is sent to the LLM as the operator question; `risk_type` and `expected_answer_elements` are evaluation-only fields and must not be sent to the LLM.
+Operator prompts for the novice test cases live in `experiments/shared/configs/novice_questions.yaml`. The current battery is grouped by `scenario` from `experiments/docs_experiments/battery_of_questions_v1.md` so scenario-level reports can be inspected directly. The `question` field is sent to the LLM as the operator question; `scenario`, `risk_type`, `status`, and `expected_answer_elements` are evaluation-only fields and must not be sent to the LLM.
 
 ## Run Commands
 
@@ -325,7 +325,7 @@ outputs/responses_steps_only_20260618T184039+0200.jsonl
 
 Each condition gets a separate file because its name is part of the filename, for example `responses_symbolic_domain_20260618T184039+0200.jsonl`.
 
-Each JSONL row includes `risk_type` and `expected_answer_elements` for evaluation, but those fields are not included in prompts sent to the LLM.
+Each JSONL row includes `scenario`, `risk_type`, `status`, and `expected_answer_elements` for evaluation, but those fields are not included in prompts sent to the LLM.
 
 Upstream identifiers are preserved in response artifacts for traceability, while
 LLM-facing step lists, predicates, and graph evidence use compact aliases such
@@ -348,7 +348,7 @@ Every successful experiment run automatically writes a matching prompt-report sn
 outputs/prompt_reports/steps_only_20260618T184039+0200/
 ```
 
-Those Markdown reports document the prompt content associated with the response file from that run. Reports are grouped by `risk_type`. To avoid repeating large invariant blocks, each file shows shared context once, followed by the step id, question, and selected predicates or graph evidence that vary by case.
+Those Markdown reports document the prompt content associated with the response file from that run. Reports are grouped by `scenario` when scenario metadata is present, otherwise by `risk_type` for older test-case files. To avoid repeating large invariant blocks, each file shows shared context once, followed by the step id, question, and selected predicates or graph evidence that vary by case.
 
 Reports generated as part of a run also include the run-wide minimum, maximum, and average prompt interaction times and total experiment time. Standalone report exports state that runtime timing statistics are unavailable.
 

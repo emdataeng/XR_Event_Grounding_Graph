@@ -3,6 +3,36 @@
 
 default_intent: current_step_context
 
+intent_by_case_id:
+  q01_sequence_control_current_and_next_action: sequence_context
+  q02_sequence_control_named_part_mismatch: component_check
+  q03_direct_installation_target: installation_check
+  q04_wrong_part_target_check: installation_check
+  q05_nested_prerequisite: installation_check
+  q06_front_rear_chassis_pin_readiness: installation_check
+  q07_component_alignment: installation_check
+  q08_front_bracket_screw_troubleshooting: installation_check
+  q09_root_component_alignment_exception: installation_check
+  q10_alignment_requirement_versus_satisfaction: evidence_confidence
+  q11_front_chassis_pin_safety_prerequisites: installation_check
+  q12_rear_chassis_pin_safety_prerequisites: installation_check
+  q13_securing_is_not_installation: installation_check
+  q14_required_tool_versus_observed_tool_use: tool_context
+  q15_unsupported_tool_proposal: tool_context
+  q16_combined_requirements: installation_check
+  q17_removal_precondition: removal_or_rework_check
+  q18_removal_invalidates_installed_state: removal_or_rework_check
+  q19_reinstallation_guidance_after_removal: removal_or_rework_check
+  q20_high_confidence_but_uncertain_validation: evidence_confidence
+  q21_why_accepted: evidence_confidence
+  q22_provenance_of_an_inferred_requirement: evidence_confidence
+  q23_relation_label_precision: current_step_context
+  q24_multiple_missing_requirements: installation_check
+  q25_video_confirmation: evidence_confidence
+  q26_unmodeled_torque: current_step_context
+  q27_unknown_step: current_step_context
+  q28_ambiguous_okay_question: current_step_context
+
 intent_by_risk_type:
   sequence_error: sequence_context
   component_confusion: component_check

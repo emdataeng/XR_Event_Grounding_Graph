@@ -74,6 +74,16 @@ def build_query_plan(
 
 def select_intent(test_case: dict[str, Any], template_config: dict[str, Any]) -> str:
     """Select an intent from risk type with a few question-keyword overrides."""
+    case_id = str(test_case.get("case_id") or "")
+    intent_by_case_id = template_config.get("intent_by_case_id") or {}
+    if isinstance(intent_by_case_id, dict) and case_id in intent_by_case_id:
+        return str(intent_by_case_id[case_id])
+
+    scenario = str(test_case.get("scenario") or "")
+    intent_by_scenario = template_config.get("intent_by_scenario") or {}
+    if isinstance(intent_by_scenario, dict) and scenario in intent_by_scenario:
+        return str(intent_by_scenario[scenario])
+
     question = str(test_case.get("question") or "").lower()
     if any(term in question for term in ("tool", "screwdriver", "force")):
         return "tool_context"

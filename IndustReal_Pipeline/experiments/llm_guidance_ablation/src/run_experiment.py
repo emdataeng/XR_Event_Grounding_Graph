@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -63,25 +63,33 @@ def load_test_cases(config: dict[str, Any]) -> list[dict[str, Any]]:
     if isinstance(test_cases, list):
         return test_cases
 
+    scenario_groups = data.get("scenario_groups")
+    if isinstance(scenario_groups, dict):
+        return flatten_grouped_cases(scenario_groups, group_field="scenario")
+
     risk_groups = data.get("risk_groups")
     if isinstance(risk_groups, dict):
-        return flatten_risk_groups(risk_groups)
+        return flatten_grouped_cases(risk_groups, group_field="risk_type")
 
-    raise ValueError(f"Expected 'test_cases' list or 'risk_groups' mapping in {test_cases_path}")
+    raise ValueError(
+        f"Expected 'test_cases' list, 'scenario_groups' mapping, or 'risk_groups' mapping in {test_cases_path}"
+    )
 
 
-def flatten_risk_groups(risk_groups: dict[str, Any]) -> list[dict[str, Any]]:
-    """Flatten risk-grouped test cases while preserving the group as risk_type."""
+def flatten_grouped_cases(groups: dict[str, Any], group_field: str) -> list[dict[str, Any]]:
+    """Flatten grouped test cases while preserving the group as metadata."""
     test_cases = []
-    for risk_type, grouped_cases in risk_groups.items():
+    for group_name, grouped_cases in groups.items():
         if not isinstance(grouped_cases, list):
-            raise ValueError(f"Expected risk group '{risk_type}' to contain a list of cases.")
+            raise ValueError(f"Expected {group_field} group '{group_name}' to contain a list of cases.")
 
         for test_case in grouped_cases:
             if not isinstance(test_case, dict):
-                raise ValueError(f"Expected each case in risk group '{risk_type}' to be a mapping.")
+                raise ValueError(f"Expected each case in {group_field} group '{group_name}' to be a mapping.")
             flattened_case = dict(test_case)
-            flattened_case.setdefault("risk_type", risk_type)
+            flattened_case.setdefault(group_field, group_name)
+            if group_field == "scenario":
+                flattened_case.setdefault("risk_type", group_name)
             test_cases.append(flattened_case)
     return test_cases
 
@@ -298,9 +306,11 @@ def run_experiment(
                         },
                         "question": test_case.get("question"),
                         "response": response,
+                        "scenario": test_case.get("scenario"),
                         "risk_type": test_case.get("risk_type"),
+                        "status": test_case.get("status"),
                         "expected_answer_elements": test_case.get("expected_answer_elements"),
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),
                     }
                     output_handle.write(json.dumps(row, ensure_ascii=False) + "\n")
                     output_handle.flush()

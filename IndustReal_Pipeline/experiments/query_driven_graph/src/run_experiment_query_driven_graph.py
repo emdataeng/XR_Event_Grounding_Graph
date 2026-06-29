@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -66,19 +66,30 @@ def load_test_cases(config: dict[str, Any]) -> list[dict[str, Any]]:
 
     if isinstance(data.get("test_cases"), list):
         return list(data["test_cases"])
+    scenario_groups = data.get("scenario_groups")
+    if isinstance(scenario_groups, dict):
+        return flatten_grouped_cases(scenario_groups, group_field="scenario")
+
     risk_groups = data.get("risk_groups")
     if not isinstance(risk_groups, dict):
-        raise ValueError(f"Expected 'test_cases' list or 'risk_groups' mapping in {path}")
+        raise ValueError(f"Expected 'test_cases' list, 'scenario_groups' mapping, or 'risk_groups' mapping in {path}")
 
+    return flatten_grouped_cases(risk_groups, group_field="risk_type")
+
+
+def flatten_grouped_cases(groups: dict[str, Any], group_field: str) -> list[dict[str, Any]]:
+    """Flatten grouped cases while preserving the group as evaluation metadata."""
     cases: list[dict[str, Any]] = []
-    for risk_type, grouped_cases in risk_groups.items():
+    for group_name, grouped_cases in groups.items():
         if not isinstance(grouped_cases, list):
-            raise ValueError(f"Expected risk group '{risk_type}' to contain a list.")
+            raise ValueError(f"Expected {group_field} group '{group_name}' to contain a list.")
         for case in grouped_cases:
             if not isinstance(case, dict):
-                raise ValueError(f"Expected each case in risk group '{risk_type}' to be a mapping.")
+                raise ValueError(f"Expected each case in {group_field} group '{group_name}' to be a mapping.")
             flattened = dict(case)
-            flattened.setdefault("risk_type", risk_type)
+            flattened.setdefault(group_field, group_name)
+            if group_field == "scenario":
+                flattened.setdefault("risk_type", group_name)
             cases.append(flattened)
     return cases
 
@@ -289,10 +300,12 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     "response": response,
                     "llm_status": llm_status,
                     "llm_error": llm_error,
+                    "scenario": test_case.get("scenario"),
                     "risk_type": test_case.get("risk_type"),
+                    "status": test_case.get("status"),
                     "expected_answer_elements": test_case.get("expected_answer_elements"),
                     "duration_seconds": round(duration, 6),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),
                 }
                 rows.append(row)
                 output_handle.write(json.dumps(row, ensure_ascii=False) + "\n")

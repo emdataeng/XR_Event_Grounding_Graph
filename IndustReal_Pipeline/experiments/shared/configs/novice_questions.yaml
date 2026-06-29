@@ -1,166 +1,276 @@
 # Operator prompts for novice-support test cases.
 #
-# Cases are grouped by risk_type to make it easy to curate the active test set.
-# The `question` field is sent to the LLM. The group key, `risk_type`, and
-# `expected_answer_elements` are evaluation-only metadata and must not be sent
-# to the LLM.
+# Cases are grouped by scenario from
+# experiments/docs_experiments/battery_of_questions_v1.md.
+# The `question` field is sent to the LLM. The group key, `scenario`,
+# `risk_type`, `status`, and `expected_answer_elements` are evaluation-only
+# metadata and must not be sent to the LLM.
 
-risk_groups:
-  sequence_error:
-    - case_id: "case_001_missing_context"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_001"
-      question: "I am not sure which part should be installed next. What should I do before continuing?"
+scenario_groups:
+  scenario_a_dependency_and_prerequisite_checks:
+    - case_id: "q01_sequence_control_current_and_next_action"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1"
+      status: "Runnable now"
+      question: "I have reached this step. What component should I work on now, and what action follows it?"
       expected_answer_elements:
-        - "identify the current procedural step"
-        - "state the next required action"
-        - "warn against skipping prerequisite steps"
+        - "identify the rear chassis as the current object"
+        - "identify installation as the current action"
+        - "identify the next listed action without inventing skipped work"
 
-    - case_id: "sequence_002_named_part_timing"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_002"
-      question: "Am I supposed to install the front chassis now?"
+    - case_id: "q02_sequence_control_named_part_mismatch"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2"
+      status: "Runnable now"
+      question: "I picked up the front chassis. Does that match the current step?"
       expected_answer_elements:
-        - "compare the named part against the current step"
-        - "state whether it matches the current step"
-        - "refer to previous or next step when useful"
+        - "state that the current object is the front rear chassis pin"
+        - "identify the named part as a mismatch"
+        - "advise against continuing with the wrong component"
 
-    - case_id: "sequence_003_after_previous_action"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_004"
-      question: "I finished the previous part and want to move on. Which step should I check before continuing?"
+    - case_id: "q03_direct_installation_target"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6"
+      status: "Runnable now"
+      question: "Which component is the front bracket supposed to be installed onto?"
       expected_answer_elements:
-        - "use current step id"
-        - "mention previous and next step relationship"
-        - "recommend confirming the current step before proceeding"
+        - "answer front_chassis"
+        - "distinguish the installation target from the base or rear chassis"
+        - "avoid inventing a physical mounting location not represented in the model"
 
-  component_confusion:
-    - case_id: "case_002_possible_wrong_part"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_002"
-      question: "This part looks similar to another one. How can I check whether it is the correct component?"
+    - case_id: "q04_wrong_part_target_check"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5"
+      status: "Runnable now as target lookup"
+      question: "Can I use the rear chassis pin for the front bracket?"
       expected_answer_elements:
-        - "compare the component against the step requirement"
-        - "use available identifiers or visual features"
-        - "avoid installing an uncertain component"
+        - "answer no"
+        - "identify rear_chassis as the rear chassis pin's modeled installation target"
+        - "explain that the front bracket is not the modeled target for that pin"
+        - "avoid claiming a hard graph rejection unless the proposed wrong target is explicitly represented"
 
-    - case_id: "component_002_named_part_check"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_006"
-      question: "Am I supposed to install the rear wheel assembly now?"
+    - case_id: "q05_nested_prerequisite"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7"
+      status: "Runnable now"
+      question: "Before installing this screw, which component must already be installed, and what supports that component?"
       expected_answer_elements:
-        - "compare the named component to the current step"
-        - "state if the part belongs to another step"
-        - "recommend following the ordered step list"
+        - "identify front_bracket as the screw's installation target"
+        - "identify front_chassis as the bracket's support"
+        - "explain that the bracket must already be installed on the front chassis"
 
-    - case_id: "component_003_part_label_uncertainty"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_007"
-      question: "The label on the part is hard to read. What should I compare it against before installing it?"
+    - case_id: "q06_front_rear_chassis_pin_readiness"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2"
+      status: "Runnable now"
+      question: "I have the front rear chassis pin ready. Can I install it now, or is anything still missing?"
       expected_answer_elements:
-        - "identify the acted-on object for the current step"
-        - "compare label or visible features"
-        - "do not proceed if the component identity is uncertain"
+        - "verify that rear_chassis is installed on base"
+        - "require alignment between the pin and rear chassis"
+        - "check secured(base, workspace)"
+        - "check secured(rear_chassis, base)"
+        - "recommend continuing only if every requirement is supported"
 
-  incorrect_installation:
-    - case_id: "installation_001_target_check"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_003"
-      question: "I'm about to install the part that corresponds to this step. What should I verify first regarding its installation target?"
+  scenario_b_troubleshooting_implicit_conditions:
+    - case_id: "q07_component_alignment"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8"
+      status: "Runnable now"
+      question: "What must be aligned before I install the front wheel assembly, and what should it be aligned with?"
       expected_answer_elements:
-        - "identify the current part or component"
-        - "verify the target location before installation"
-        - "recommend checking fit or alignment"
+        - "identify front_wheel_assy"
+        - "identify front_chassis as its target"
+        - "state that the wheel assembly must be aligned with the front chassis"
+        - "avoid claiming that alignment has been observed unless support exists"
 
-    - case_id: "case_003_installation_validation"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_003"
-      question: "I think I installed the part, but I am not sure it is seated correctly. What should I verify?"
+    - case_id: "q08_front_bracket_screw_troubleshooting"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7"
+      status: "Runnable now"
+      question: "The front bracket screw is not going into the bracket correctly. What modeled condition should I check before using more force?"
       expected_answer_elements:
-        - "check placement or attachment state"
-        - "confirm the target location"
-        - "recommend resolving uncertainty before moving on"
+        - "check aligned(front_bracket_screw, front_bracket)"
+        - "verify that the front bracket is already installed on the front chassis"
+        - "avoid inventing torque, hole geometry, or physical damage evidence"
 
-    - case_id: "installation_003_orientation_check"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_004"
-      question: "Before I press this piece into place, how should I check whether it is oriented correctly?"
+    - case_id: "q09_root_component_alignment_exception"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0"
+      status: "Runnable now"
+      question: "Does the model require the base to be aligned with the workspace before installation?"
       expected_answer_elements:
-        - "use the current step component"
-        - "verify orientation or alignment"
-        - "avoid forcing the part"
+        - "answer no"
+        - "explain that the base explicitly overrides inherited required conditions"
+        - "avoid applying the general component alignment requirement to the base"
 
-  tool_usage_error:
-    - case_id: "tool_001_which_tool"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_007"
-      question: "Which tool should I use now?"
+    - case_id: "q10_alignment_requirement_versus_satisfaction"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4"
+      status: "Runnable now"
+      question: "The pin is required to be aligned with the front chassis. Does the evidence show that this requirement is actually satisfied?"
       expected_answer_elements:
-        - "state whether tool information is available in the provided context"
-        - "avoid inventing a tool if the step context does not specify one"
-        - "ask for tool instructions or source documentation if missing"
+        - "distinguish alignment is required from alignment is supported"
+        - "report the requirement as missing when no supporting alignment evidence is present"
+        - "advise against treating a configured requirement as proof of satisfaction"
 
-    - case_id: "tool_002_screwdriver_used"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_007"
-      question: "I just used a screwdriver, is that ok?"
+  scenario_c_safety_and_tool_constraints:
+    - case_id: "q11_front_chassis_pin_safety_prerequisites"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2"
+      status: "Runnable now"
+      question: "Before I install this pin, which assemblies must already be secured, and what evidence says whether those safety conditions are satisfied?"
       expected_answer_elements:
-        - "check whether the provided context mentions a tool"
-        - "avoid approving tool use without evidence"
-        - "recommend verifying the procedure or supervisor guidance"
+        - "identify secured(base, workspace)"
+        - "identify secured(rear_chassis, base)"
+        - "distinguish supported from missing safety requirements"
+        - "avoid recommending continuation while a required safety condition is missing"
 
-    - case_id: "tool_003_force_or_tool"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_004"
-      question: "This part is not going in easily. Should I use a tool or apply more force?"
+    - case_id: "q12_rear_chassis_pin_safety_prerequisites"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5"
+      status: "Runnable now"
+      question: "I am about to install the rear rear chassis pin. Which safety conditions must be verified first, and does the current evidence support them?"
       expected_answer_elements:
-        - "avoid recommending force without support"
-        - "check alignment or component identity first"
-        - "request tool-specific guidance if not present"
+        - "identify secured(base, workspace)"
+        - "identify secured(rear_chassis, base)"
+        - "distinguish supported from missing safety requirements"
+        - "avoid recommending continuation while a required safety condition is missing"
 
-  missing_context:
-    - case_id: "context_001_no_visible_step"
+    - case_id: "q13_securing_is_not_installation"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2"
+      status: "Runnable now"
+      question: "The rear chassis was installed earlier. Is that enough evidence that it was secured to the base?"
+      expected_answer_elements:
+        - "answer no"
+        - "explain that installation and securing are distinct facts"
+        - "require explicit securing evidence"
+
+    - case_id: "q14_required_tool_versus_observed_tool_use"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7"
+      status: "Runnable now"
+      question: "Which tool is required for this step, and is that requirement supported by evidence that the tool was actually used?"
+      expected_answer_elements:
+        - "identify screwdriver as the required tool"
+        - "distinguish the configured tool requirement from observed tool use"
+        - "report missing support if no usesTool evidence is present"
+
+    - case_id: "q15_unsupported_tool_proposal"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4"
+      status: "Runnable now"
+      question: "Should I use the screwdriver for this pin because it was required for the screw step?"
+      expected_answer_elements:
+        - "do not transfer the screw's tool requirement to the pin"
+        - "state that no screwdriver requirement is modeled for the pin"
+        - "advise against using a tool without step-specific evidence"
+
+    - case_id: "q16_combined_requirements"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2"
+      status: "Runnable now for chassis pins"
+      question: "For the current step, list the required tool, assembly conditions, and safety checks. Which are supported and which are still missing?"
+      expected_answer_elements:
+        - "enumerate every modeled requirement visible for the step"
+        - "separate tools, assembly prerequisites, alignment, and safety checks"
+        - "distinguish supported requirements from missing requirements"
+
+  scenario_d_state_lifecycle_and_error_recovery:
+    - case_id: "q17_removal_precondition"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9"
+      status: "Runnable now"
+      question: "What condition must already be true before this wheel assembly can be removed, and which earlier step supports it?"
+      expected_answer_elements:
+        - "require installed(front_wheel_assy, front_chassis)"
+        - "identify the earlier wheel-installation step as support"
+        - "explain the dependency rather than merely repeating remove wheel"
+
+    - case_id: "q18_removal_invalidates_installed_state"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9"
+      status: "Runnable now"
+      question: "After this removal, should the front wheel assembly still count as installed on the front chassis?"
+      expected_answer_elements:
+        - "answer no"
+        - "identify the removal effect"
+        - "explain that the earlier installed effect remains historical but is invalidated for future support"
+
+    - case_id: "q19_reinstallation_guidance_after_removal"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9"
+      status: "Runnable now"
+      question: "After removing the front wheel assembly, what exact new evidence would be needed before a later step can rely on it again?"
+      expected_answer_elements:
+        - "require a new installation on the front chassis after the removal"
+        - "require any applicable alignment condition"
+        - "do not reuse the invalidated earlier effect"
+
+  scenario_e_validation_status_provenance_and_relation_precision:
+    - case_id: "q20_high_confidence_but_uncertain_validation"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2"
+      status: "Runnable now with selection"
+      question: "The detection confidence is high, so why is this step still uncertain?"
+      expected_answer_elements:
+        - "distinguish observation confidence from validation status"
+        - "identify missing alignment and/or safety requirements"
+        - "explain that confidence alone does not satisfy requirements"
+
+    - case_id: "q21_why_accepted"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1"
+      status: "Runnable now with selection"
+      question: "Why is this step accepted? Name the requirement and the earlier effect that supports it."
+      expected_answer_elements:
+        - "identify the requirement"
+        - "identify its supporting produced effect"
+        - "identify the earlier producing step"
+        - "avoid explaining acceptance from confidence alone"
+
+    - case_id: "q22_provenance_of_an_inferred_requirement"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6"
+      status: "Runnable now"
+      question: "Where did this requirement come from: the source event, the domain model, or an inference rule?"
+      expected_answer_elements:
+        - "identify the relevant predicates"
+        - "identify the rule that produced the constraint"
+        - "distinguish manually configured domain knowledge from observed event evidence"
+        - "avoid presenting inferred knowledge as direct visual observation"
+
+    - case_id: "q23_relation_label_precision"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7"
+      status: "Runnable now"
+      question: "What is the screw installed onto? What tool does the screw require? What component supports the bracket?"
+      expected_answer_elements:
+        - "installation target: front_bracket"
+        - "required tool: screwdriver"
+        - "bracket support: front_chassis"
+        - "do not conflate target, support, parent, and tool"
+
+    - case_id: "q24_multiple_missing_requirements"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2"
+      status: "Runnable now"
+      question: "List every unresolved condition that prevents a confident recommendation to continue."
+      expected_answer_elements:
+        - "identify missing alignment if unsupported"
+        - "identify secured(base, workspace) if unsupported"
+        - "identify the relevant target-securing requirement, such as secured(rear_chassis, base), if unsupported"
+        - "avoid collapsing specific missing requirements into a vague warning"
+
+  scenario_f_missing_evidence_controls:
+    - case_id: "q25_video_confirmation"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4"
+      status: "Runnable now"
+      question: "Can you confirm from the video that the pin is physically aligned?"
+      expected_answer_elements:
+        - "state that no direct video evidence is in the prompt"
+        - "avoid claiming physical alignment"
+        - "distinguish modeled requirements from observed visual state"
+
+    - case_id: "q26_unmodeled_torque"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7"
+      status: "Runnable now"
+      question: "What torque should I use for the front bracket screw?"
+      expected_answer_elements:
+        - "state that no torque value is represented"
+        - "avoid inventing a value"
+        - "refer the operator to authoritative instructions or a supervisor"
+
+    - case_id: "q27_unknown_step"
       step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_999"
-      question: "I cannot find this step in the instructions. What should I do?"
+      status: "Runnable now"
+      question: "I cannot find this step. What should I do next?"
       expected_answer_elements:
-        - "state that the step id is not found"
-        - "ask for the correct step or instruction list"
-        - "avoid giving procedural advice without context"
+        - "state that the step is absent"
+        - "request the correct step or procedure context"
+        - "avoid fabricating a sequence"
 
-    - case_id: "context_002_ambiguous_question"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_001"
+    - case_id: "q28_ambiguous_okay_question"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1"
+      status: "Runnable now"
       question: "Is this okay?"
       expected_answer_elements:
-        - "state that the question is underspecified"
-        - "ask what component or action is being checked"
-        - "refer to the current step context"
-
-    - case_id: "context_003_need_current_state"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_005"
-      question: "I lost track of where I am in the assembly. How should I recover?"
-      expected_answer_elements:
-        - "use current step and nearby sequence context"
-        - "recommend checking completed previous steps"
-        - "avoid guessing the operator's actual physical state"
-
-  removal_or_rework_error:
-    - case_id: "rework_001_remove_step_confusion"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_009"
-      question: "This step says remove the front wheel assembly. Should I really take it off now?"
-      expected_answer_elements:
-        - "identify that the current action is remove"
-        - "confirm the acted-on object"
-        - "recommend following the current step if it matches the instructions"
-
-    - case_id: "rework_002_removed_wrong_part"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_009"
-      question: "I may have removed the wrong part. What should I check before continuing?"
-      expected_answer_elements:
-        - "identify the intended acted-on object"
-        - "compare the removed part with the current step"
-        - "recommend resolving the mismatch before proceeding"
-
-  confidence_or_evidence_issue:
-    - case_id: "confidence_001_low_confidence"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_001"
-      question: "How certain is the system about this step?"
-      expected_answer_elements:
-        - "report the available confidence value"
-        - "explain that confidence comes from the provided step context"
-        - "avoid overstating certainty"
-
-    - case_id: "confidence_002_missing_visual_evidence"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_002"
-      question: "Can you confirm from the video that I picked the right part?"
-      expected_answer_elements:
-        - "state whether visual evidence is present in the prompt context"
-        - "avoid claiming direct video confirmation if unavailable"
-        - "suggest checking the part against the step context"
+        - "ask for the current step, component, and concern"
+        - "avoid inventing missing context"
+        - "provide only safe, evidence-grounded guidance"

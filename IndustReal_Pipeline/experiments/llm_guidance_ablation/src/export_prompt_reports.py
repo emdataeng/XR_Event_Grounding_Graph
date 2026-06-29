@@ -6,7 +6,7 @@ import argparse
 import re
 import sys
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -39,7 +39,7 @@ def export_prompt_reports(
     artifacts: dict[str, Any] | None = None,
     run_statistics: dict[str, Any] | None = None,
 ) -> list[Path]:
-    """Write one Markdown file per risk type documenting LLM requests."""
+    """Write one Markdown file per scenario or risk type documenting LLM requests."""
     if test_cases is None or artifacts is None:
         from run_experiment import load_artifacts, load_test_cases
 
@@ -50,13 +50,15 @@ def export_prompt_reports(
     report_dir.mkdir(parents=True, exist_ok=True)
 
     written_paths = []
-    for risk_type, grouped_cases in _group_cases_by_risk_type(test_cases).items():
-        path = report_dir / f"{_slug(risk_type)}_{condition.value}.md"
+    group_field = _report_group_field(test_cases)
+    for group_name, grouped_cases in _group_cases(test_cases, group_field).items():
+        path = report_dir / f"{_slug(group_name)}_{condition.value}.md"
         path.write_text(
             render_prompt_report_group(
                 config,
                 condition,
-                risk_type,
+                group_name,
+                group_field,
                 grouped_cases,
                 artifacts,
                 run_statistics=run_statistics,
@@ -70,12 +72,13 @@ def export_prompt_reports(
 def render_prompt_report_group(
     config: dict[str, Any],
     condition: PromptCondition,
-    risk_type: str,
+    group_name: str,
+    group_field: str,
     test_cases: list[dict[str, Any]],
     artifacts: dict[str, Any],
     run_statistics: dict[str, Any] | None = None,
 ) -> str:
-    """Render one Markdown report containing all prompts for a risk type."""
+    """Render one Markdown report containing all prompts for one report group."""
     step_list_loaded = bool(artifacts.get("step_list"))
     symbolic_domain_included = condition is PromptCondition.SYMBOLIC_DOMAIN
     graph_grounded_included = condition is PromptCondition.GRAPH_GROUNDED
@@ -87,12 +90,14 @@ def render_prompt_report_group(
     case_sections = [render_prompt_case_section(test_case, condition, artifacts) for test_case in test_cases]
     shared_rules = _render_shared_rules(condition, artifacts)
 
-    return f"""# Prompt Report: {risk_type}
+    group_label = group_field.replace("_", " ").title()
 
-Generated at: {datetime.now(timezone.utc).isoformat()}
+    return f"""# Prompt Report: {group_name}
+
+Generated at: {datetime.now().astimezone().isoformat(timespec="seconds")}
 
 - Condition: `{condition.value}`
-- Risk type: `{risk_type}`
+- {group_label}: `{group_name}`
 - Cases in this report: `{len(test_cases)}`
 
 ## API Request Settings
@@ -199,6 +204,8 @@ def render_prompt_case_section(
 These fields are saved in experiment outputs for evaluation only.
 
 - Risk type: `{test_case.get("risk_type")}`
+- Scenario: `{test_case.get("scenario")}`
+- Status: `{test_case.get("status")}`
 - Expected answer elements:
 {_render_expected_elements(test_case.get("expected_answer_elements"))}
 """
@@ -280,12 +287,19 @@ def _render_run_statistics(statistics: dict[str, Any] | None) -> str:
     )
 
 
-def _group_cases_by_risk_type(test_cases: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-    """Group flattened test cases by risk type while preserving order."""
+def _report_group_field(test_cases: list[dict[str, Any]]) -> str:
+    """Choose the report grouping metadata field."""
+    if any(test_case.get("scenario") for test_case in test_cases):
+        return "scenario"
+    return "risk_type"
+
+
+def _group_cases(test_cases: list[dict[str, Any]], group_field: str) -> dict[str, list[dict[str, Any]]]:
+    """Group flattened test cases by a metadata field while preserving order."""
     grouped_cases: dict[str, list[dict[str, Any]]] = {}
     for test_case in test_cases:
-        risk_type = str(test_case.get("risk_type") or "unclassified")
-        grouped_cases.setdefault(risk_type, []).append(test_case)
+        group_name = str(test_case.get(group_field) or "unclassified")
+        grouped_cases.setdefault(group_name, []).append(test_case)
     return grouped_cases
 
 

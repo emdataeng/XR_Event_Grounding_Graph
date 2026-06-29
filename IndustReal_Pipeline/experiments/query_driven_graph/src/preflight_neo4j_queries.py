@@ -44,15 +44,33 @@ def load_config(path: str | Path) -> dict[str, Any]:
 def load_test_cases(path: Path) -> list[dict[str, Any]]:
     with path.open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
+    if isinstance(data.get("test_cases"), list):
+        return list(data["test_cases"])
+
+    scenario_groups = data.get("scenario_groups")
+    if isinstance(scenario_groups, dict):
+        return flatten_grouped_cases(scenario_groups, group_field="scenario")
+
     risk_groups = data.get("risk_groups")
     if not isinstance(risk_groups, dict):
-        raise ValueError(f"Expected risk_groups in {path}")
+        raise ValueError(f"Expected test_cases, scenario_groups, or risk_groups in {path}")
 
+    return flatten_grouped_cases(risk_groups, group_field="risk_type")
+
+
+def flatten_grouped_cases(groups: dict[str, Any], group_field: str) -> list[dict[str, Any]]:
+    """Flatten grouped cases while preserving the group as evaluation metadata."""
     cases = []
-    for risk_type, grouped_cases in risk_groups.items():
+    for group_name, grouped_cases in groups.items():
+        if not isinstance(grouped_cases, list):
+            raise ValueError(f"Expected {group_field} group '{group_name}' to contain a list.")
         for case in grouped_cases or []:
+            if not isinstance(case, dict):
+                raise ValueError(f"Expected each case in {group_field} group '{group_name}' to be a mapping.")
             flattened = dict(case)
-            flattened.setdefault("risk_type", risk_type)
+            flattened.setdefault(group_field, group_name)
+            if group_field == "scenario":
+                flattened.setdefault("risk_type", group_name)
             cases.append(flattened)
     return cases
 
