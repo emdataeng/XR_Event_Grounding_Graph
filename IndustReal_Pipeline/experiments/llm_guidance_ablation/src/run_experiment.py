@@ -312,6 +312,12 @@ def run_experiment(
                         "expected_answer_elements": test_case.get("expected_answer_elements"),
                         "timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),
                     }
+                    if condition is PromptCondition.GRAPH_GROUNDED:
+                        graph = artifacts.get("procedural_reasoning_graph")
+                        row["procedural_reasoning_graph_path"] = artifacts.get("procedural_reasoning_graph_path")
+                        row["graph_provenance"] = (
+                            graph.get("provenance") if isinstance(graph, dict) else None
+                        )
                     output_handle.write(json.dumps(row, ensure_ascii=False) + "\n")
                     output_handle.flush()
 

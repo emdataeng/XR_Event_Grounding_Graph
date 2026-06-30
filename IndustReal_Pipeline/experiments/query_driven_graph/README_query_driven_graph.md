@@ -66,13 +66,48 @@ NEO4J_USER=neo4j
 NEO4J_PASSWORD=industreal123
 ```
 
-Build and import the procedural reasoning graph:
+Build and import the procedural reasoning graph. For a single already-built
+graph directory, use:
 
 ```powershell
-.venv\Scripts\python.exe scripts\17_build_procedural_reasoning_graph.py
 .venv\Scripts\python.exe scripts\18_import_procedural_reasoning_graph_neo4j.py `
   --graph results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1 `
   --env-file experiments\query_driven_graph\.env.local
+```
+
+To ensure Neo4j is synchronized with the current domain model and rule set,
+rebuild the reasoning artifacts and import the rebuilt graphs:
+
+```powershell
+.venv\Scripts\python.exe scripts\25_rebuild_all_reasoning_and_import_neo4j.py `
+  --rules config\thesis_rules.yaml `
+  --domain-config config\domain_config.yaml `
+  --validation-config config\thesis_rules.yaml `
+  --env-file experiments\query_driven_graph\.env.local
+```
+
+The rebuild script names each imported procedural graph as:
+
+```text
+procedural_reasoning_graph::<clip_result_id>
+```
+
+Each import also creates or updates a `GraphManifest` node for that graph. The
+manifest records the graph build timestamp, domain and rule versions, SHA-256
+hashes for `domain_config.yaml` and `thesis_rules.yaml`, and hashes for the
+input reasoning artifacts used to build the graph.
+
+Check imported graph provenance with:
+
+```cypher
+MATCH (m:GraphManifest)
+RETURN m.graph_name,
+       m.built_at,
+       m.domain_model_version,
+       m.rule_set_version,
+       m.domain_config_sha256,
+       m.thesis_rules_sha256
+ORDER BY m.graph_name;
 ```
 
 ## Query Guards and Preflight

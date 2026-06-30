@@ -15,6 +15,8 @@ from src.procedural_neo4j_import import (  # noqa: E402
     clear_graph_cypher,
     constraint_cyphers,
     edge_import_cypher,
+    graph_manifest_import_cypher,
+    graph_manifest_props,
     grouped_by_type,
     legacy_constraint_drop_cyphers,
     load_procedural_graph,
@@ -102,6 +104,16 @@ def main() -> None:
             _write_batches(session, node_import_cypher(node_type), rows, args.batch_size)
         for edge_type, rows in edge_groups.items():
             _write_batches(session, edge_import_cypher(edge_type), rows, args.batch_size)
+        manifest_props = graph_manifest_props(graph, graph_name=graph_name)
+        session.execute_write(
+            lambda tx, props: tx.run(
+                graph_manifest_import_cypher(),
+                graph_name=graph_name,
+                prg_id=props["prg_id"],
+                props=props,
+            ),
+            manifest_props,
+        )
     driver.close()
 
     print(f"Imported {graph_name} from {args.graph}")

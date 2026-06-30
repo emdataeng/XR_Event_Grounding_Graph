@@ -704,6 +704,8 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
         "clip_result_id": ctx.clip_result_id,
         "input_directories": {"graph_dir": str(ctx.graph_dir), "reasoning_dir": str(ctx.reasoning_dir)},
         "graph_name": graph.get("graph_name"),
+        "graph_schema_version": graph.get("schema_version"),
+        "graph_provenance": graph.get("provenance") if isinstance(graph.get("provenance"), dict) else None,
         "node_counts": node_counts,
         "edge_counts": edge_counts,
         "step_status_distribution": dict(sorted(step_status_counts.items())),
@@ -782,6 +784,10 @@ def write_report(ctx: EvaluationContext, result: dict[str, Any]) -> None:
         f"- Graph directory: `{ctx.graph_dir}`",
         f"- Reasoning directory: `{ctx.reasoning_dir}`",
         "",
+        "## Graph Provenance",
+        "",
+        *_graph_provenance_lines(result),
+        "",
         "## Node Type Distribution",
         "",
         "| Node type | Count |",
@@ -814,6 +820,42 @@ def write_report(ctx: EvaluationContext, result: dict[str, Any]) -> None:
         ]
     )
     (ctx.output_dir / "evaluation4_report.md").write_text("\n".join(lines), encoding="utf-8")
+
+
+def _graph_provenance_lines(result: dict[str, Any]) -> list[str]:
+    """Render graph provenance fields in the Evaluation 4 report."""
+    provenance = result.get("graph_provenance")
+    if not isinstance(provenance, dict):
+        return [
+            f"- Graph schema version: `{result.get('graph_schema_version') or 'unknown'}`",
+            "- Graph provenance: `unavailable; rebuild the graph with the current graph builder to create provenance metadata`",
+        ]
+
+    source_files = provenance.get("source_files") if isinstance(provenance.get("source_files"), dict) else {}
+    return [
+        f"- Graph schema version: `{result.get('graph_schema_version') or provenance.get('graph_schema_version') or 'unknown'}`",
+        f"- Graph built at: `{provenance.get('built_at') or 'unknown'}`",
+        f"- Graph builder: `{provenance.get('builder') or 'unknown'}`",
+        _provenance_source_line("Domain config", source_files.get("domain_config"), "domain_model_version"),
+        _provenance_source_line("Thesis rules", source_files.get("thesis_rules"), "rule_set_version"),
+        _provenance_source_line("Validation config", source_files.get("validation_config"), "rule_set_version"),
+    ]
+
+
+def _provenance_source_line(label: str, value: Any, version_key: str) -> str:
+    """Format one provenance source file line."""
+    if not isinstance(value, dict):
+        return f"- {label}: `provenance unavailable`"
+    version = value.get(version_key) or value.get("schema_version") or "unknown"
+    sha = _short_hash(value.get("sha256"))
+    path = value.get("path") or "unknown"
+    return f"- {label}: version `{version}`, sha256 `{sha}`, path `{path}`"
+
+
+def _short_hash(value: Any) -> str:
+    """Return a readable hash prefix while preserving explicit unknowns."""
+    text = str(value or "")
+    return text[:12] if text else "unknown"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

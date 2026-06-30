@@ -5,9 +5,10 @@ The script reads unique clip_result_id values from nodes_events.csv, rebuilds
 adapter outputs, Layer 3 constraints, Layer 4 validations, and procedural
 reasoning graphs for each clip/mode, then imports the rebuilt graphs to Neo4j.
 
-Neo4j import happens only after every local rebuild succeeds. The first graph
-import replaces the existing procedural_reasoning_graph in Neo4j; later imports
-append/merge into the same graph so all clips remain present.
+Neo4j import happens only after every local rebuild succeeds. Each graph is
+named with its clip_result_id and replaces only the existing Neo4j subgraph with
+the same graph_name, so all clips remain present while stale nodes for rebuilt
+clips are removed.
 """
 from __future__ import annotations
 
@@ -33,6 +34,7 @@ def main() -> None:
         default=Path("results/procedural_reasoning_graph"),
     )
     parser.add_argument("--rules", type=Path, default=Path("config/thesis_rules.yaml"))
+    parser.add_argument("--domain-config", type=Path, default=Path("config/domain_config.yaml"))
     parser.add_argument("--validation-config", type=Path, default=Path("config/thesis_rules.yaml"))
     parser.add_argument("--env-file", default=".env")
     parser.add_argument("--batch-size", type=int, default=500)
@@ -88,6 +90,8 @@ def main() -> None:
                 reasoning_dir,
                 "--clip-result-id",
                 clip_id,
+                "--domain-config",
+                args.domain_config,
             ],
             dry_run=args.dry_run,
         )
@@ -137,8 +141,16 @@ def main() -> None:
                 reasoning_dir / "predicates.jsonl",
                 "--constraints",
                 reasoning_dir / "inferred_constraints.csv",
+                "--domain-config",
+                args.domain_config,
+                "--rules",
+                args.rules,
+                "--validation-config",
+                args.validation_config,
                 "--output-dir",
                 graph_dir,
+                "--graph-name",
+                f"procedural_reasoning_graph::{clip_id}",
             ],
             dry_run=args.dry_run,
         )
@@ -161,8 +173,6 @@ def main() -> None:
             "--batch-size",
             args.batch_size,
         ]
-        if index > 1:
-            command.append("--no-replace-graph")
         if index == 1 and args.drop_legacy_prg_id_constraints:
             command.append("--drop-legacy-prg-id-constraints")
         print(f"\n[{index}/{len(rebuilt_graph_dirs)}] Importing {graph_dir}")

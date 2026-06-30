@@ -135,6 +135,9 @@
     }
   },
   "evaluation": "Evaluation 1: Pipeline artifact correctness",
+  "graph_name": "procedural_reasoning_graph",
+  "graph_provenance": null,
+  "graph_schema_version": "1.0",
   "paths": {
     "constraints": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\results\\reasoning_layers\\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\\inferred_constraints.csv",
     "events": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\results\\neo4j\\raw_cad_dataset__all_test_clips\\nodes_events.csv",
@@ -148,5 +151,5 @@
     "validations": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\results\\reasoning_layers\\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\\validation_records.jsonl"
   },
   "run_id": "raw_cad_dataset__all_test_clips",
-  "timestamp": "2026-06-26T18:59:45+02:00"
+  "timestamp": "2026-06-30T12:12:34+02:00"
 }

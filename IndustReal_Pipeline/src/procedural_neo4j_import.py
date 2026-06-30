@@ -42,9 +42,45 @@ def normalize_graph(graph: dict[str, Any], graph_name: str | None = None) -> dic
     }
 
 
+def graph_manifest_props(graph: dict[str, Any], graph_name: str | None = None) -> dict[str, Any]:
+    """Return flattened graph provenance properties for a GraphManifest node."""
+    name = graph_name or str(graph.get("graph_name") or GRAPH_NAME)
+    provenance = graph.get("provenance") if isinstance(graph.get("provenance"), dict) else {}
+    source_files = provenance.get("source_files") if isinstance(provenance.get("source_files"), dict) else {}
+    input_artifacts = provenance.get("input_artifacts") if isinstance(provenance.get("input_artifacts"), dict) else {}
+    domain_config = _mapping(source_files.get("domain_config"))
+    thesis_rules = _mapping(source_files.get("thesis_rules"))
+    validation_config = _mapping(source_files.get("validation_config"))
+    return neo4j_props(
+        {
+            "graph_name": name,
+            "prg_id": f"GraphManifest::{name}",
+            "node_type": "GraphManifest",
+            "schema_version": graph.get("schema_version"),
+            "graph_schema_version": provenance.get("graph_schema_version") or graph.get("schema_version"),
+            "built_at": provenance.get("built_at"),
+            "builder": provenance.get("builder"),
+            "domain_config_path": domain_config.get("path"),
+            "domain_config_sha256": domain_config.get("sha256"),
+            "domain_config_schema_version": domain_config.get("schema_version"),
+            "domain_model_version": domain_config.get("domain_model_version"),
+            "thesis_rules_path": thesis_rules.get("path"),
+            "thesis_rules_sha256": thesis_rules.get("sha256"),
+            "thesis_rules_schema_version": thesis_rules.get("schema_version"),
+            "rule_set_version": thesis_rules.get("rule_set_version"),
+            "validation_config_path": validation_config.get("path"),
+            "validation_config_sha256": validation_config.get("sha256"),
+            "validation_config_schema_version": validation_config.get("schema_version"),
+            "validation_rule_set_version": validation_config.get("rule_set_version"),
+            "input_artifacts": input_artifacts,
+            "provenance": provenance,
+        }
+    )
+
+
 def constraint_cyphers(node_types: list[str]) -> list[str]:
     cyphers = []
-    for node_type in sorted(set(node_types)):
+    for node_type in sorted(set([*node_types, "GraphManifest"])):
         label = neo4j_identifier(node_type)
         cyphers.append(
             f"CREATE CONSTRAINT prg_{label.lower()}_graph_prg_id IF NOT EXISTS "
@@ -98,6 +134,13 @@ def edge_import_cypher(edge_type: str) -> str:
     )
 
 
+def graph_manifest_import_cypher() -> str:
+    return (
+        "MERGE (m:GraphManifest {graph_name: $graph_name, prg_id: $prg_id}) "
+        "SET m += $props"
+    )
+
+
 def grouped_by_type(rows: list[dict[str, Any]], type_key: str = "type") -> dict[str, list[dict[str, Any]]]:
     grouped: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
@@ -114,6 +157,10 @@ def neo4j_identifier(value: str) -> str:
 
 def neo4j_props(properties: dict[str, Any]) -> dict[str, Any]:
     return {key: _neo4j_value(value) for key, value in properties.items() if value is not None}
+
+
+def _mapping(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 def _normalize_node(node: dict[str, Any], graph_name: str, schema_version: Any = None) -> dict[str, Any]:

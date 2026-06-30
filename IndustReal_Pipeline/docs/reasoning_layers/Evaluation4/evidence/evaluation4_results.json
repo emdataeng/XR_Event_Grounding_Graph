@@ -3521,6 +3521,8 @@
   "effect_history_rows": 40,
   "evaluation": "Evaluation 4: Procedural graph traceability",
   "graph_name": "procedural_reasoning_graph",
+  "graph_provenance": null,
+  "graph_schema_version": "1.0",
   "input_directories": {
     "graph_dir": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\results\\procedural_reasoning_graph\\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1",
     "reasoning_dir": "D:\\Code\\XR_Event_Grounding_Graph\\IndustReal_Pipeline\\results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1"
@@ -3538,5 +3540,5 @@
     "rejected": 6,
     "uncertain": 14
   },
-  "timestamp": "2026-06-26T19:04:28+02:00"
+  "timestamp": "2026-06-30T12:10:38+02:00"
 }

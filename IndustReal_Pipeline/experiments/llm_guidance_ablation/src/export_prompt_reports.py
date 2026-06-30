@@ -123,6 +123,8 @@ Generated at: {datetime.now().astimezone().isoformat(timespec="seconds")}
 
 All conditions include the same frozen step-list artifact. The `symbolic_domain` condition adds a deterministic predicate window and `thesis_rules.yaml`; `graph_grounded` adds a deterministic local graph neighborhood.
 
+{_render_graph_provenance(condition, artifacts)}
+
 ## Shared Prompt Content
 
 The following content is identical for every case in this report and is shown only once.
@@ -285,6 +287,61 @@ def _render_run_statistics(statistics: dict[str, Any] | None) -> str:
         f"- Average prompt time: `{statistics.get('avg_interaction_seconds'):.2f} s`\n"
         f"- Total experiment time: `{statistics.get('total_duration_hms')}`"
     )
+
+
+def _render_graph_provenance(condition: PromptCondition, artifacts: dict[str, Any]) -> str:
+    """Render graph build provenance so reports identify the exact graph source."""
+    if condition is not PromptCondition.GRAPH_GROUNDED:
+        return "## Graph Provenance\n\n- Graph provenance: `not applicable to this condition`"
+
+    graph = artifacts.get("procedural_reasoning_graph")
+    graph_path = artifacts.get("procedural_reasoning_graph_path") or "unknown"
+    if not isinstance(graph, dict):
+        return (
+            "## Graph Provenance\n\n"
+            f"- Graph path: `{graph_path}`\n"
+            "- Graph provenance: `unavailable; graph artifact was not loaded as a mapping`"
+        )
+
+    provenance = graph.get("provenance")
+    if not isinstance(provenance, dict):
+        return (
+            "## Graph Provenance\n\n"
+            f"- Graph path: `{graph_path}`\n"
+            f"- Graph name: `{graph.get('graph_name') or 'unknown'}`\n"
+            "- Graph provenance: `unavailable; rebuild the graph with the current graph builder to create provenance metadata`"
+        )
+
+    source_files = provenance.get("source_files") if isinstance(provenance.get("source_files"), dict) else {}
+    lines = [
+        "## Graph Provenance",
+        "",
+        f"- Graph path: `{graph_path}`",
+        f"- Graph name: `{graph.get('graph_name') or 'unknown'}`",
+        f"- Graph schema version: `{graph.get('schema_version') or provenance.get('graph_schema_version') or 'unknown'}`",
+        f"- Graph built at: `{provenance.get('built_at') or 'unknown'}`",
+        f"- Graph builder: `{provenance.get('builder') or 'unknown'}`",
+        _source_file_line("Domain config", source_files.get("domain_config"), "domain_model_version"),
+        _source_file_line("Thesis rules", source_files.get("thesis_rules"), "rule_set_version"),
+        _source_file_line("Validation config", source_files.get("validation_config"), "rule_set_version"),
+    ]
+    return "\n".join(lines)
+
+
+def _source_file_line(label: str, value: Any, version_key: str) -> str:
+    """Format one provenance source file line."""
+    if not isinstance(value, dict):
+        return f"- {label}: `provenance unavailable`"
+    version = value.get(version_key) or value.get("version") or "unknown"
+    sha = _short_hash(value.get("sha256"))
+    path = value.get("path") or "unknown"
+    return f"- {label}: version `{version}`, sha256 `{sha}`, path `{path}`"
+
+
+def _short_hash(value: Any) -> str:
+    """Return a readable hash prefix while preserving explicit unknowns."""
+    text = str(value or "")
+    return text[:12] if text else "unknown"
 
 
 def _report_group_field(test_cases: list[dict[str, Any]]) -> str:

@@ -2,9 +2,14 @@
 
 - Evaluated graph: `procedural_reasoning_graph`
 - Clip/result ID: `raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
-- Timestamp: `2026-06-26T19:04:28+02:00`
+- Timestamp: `2026-06-30T12:10:38+02:00`
 - Graph directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
 - Reasoning directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
+
+## Graph Provenance
+
+- Graph schema version: `1.0`
+- Graph provenance: `unavailable; rebuild the graph with the current graph builder to create provenance metadata`
 
 ## Node Type Distribution
 

@@ -22,6 +22,10 @@ def export_query_reports(rows: list[dict[str, Any]], output_dir: Path) -> None:
             "",
             "This report shows the deterministic query plan, Neo4j rows, and final answer for each case.",
             "",
+            "## Graph Manifest",
+            "",
+            *_graph_manifest_lines(_first_graph_manifest(group_rows)),
+            "",
         ]
         for row in group_rows:
             lines.extend(_case_section(row))
@@ -81,6 +85,64 @@ def _case_section(row: dict[str, Any]) -> list[str]:
         "```",
         "",
     ]
+
+
+def _first_graph_manifest(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the first manifest stored in response rows."""
+    for row in rows:
+        manifest = row.get("graph_manifest")
+        if isinstance(manifest, dict):
+            return manifest
+    return None
+
+
+def _graph_manifest_lines(manifest: dict[str, Any] | None) -> list[str]:
+    """Render the Neo4j GraphManifest summary for a report."""
+    if not manifest:
+        return [
+            "- Graph manifest: `not found in response rows`",
+            "- Action: rebuild and re-import the graph with manifest support, then rerun the experiment.",
+        ]
+
+    return [
+        f"- Graph name: `{manifest.get('graph_name') or 'unknown'}`",
+        f"- PRG id: `{manifest.get('prg_id') or 'unknown'}`",
+        f"- Graph schema version: `{manifest.get('graph_schema_version') or 'unknown'}`",
+        f"- Graph built at: `{manifest.get('built_at') or 'unknown'}`",
+        f"- Graph builder: `{manifest.get('builder') or 'unknown'}`",
+        _manifest_source_line(
+            "Domain config",
+            manifest,
+            "domain_config",
+            ["domain_model_version", "domain_config_schema_version"],
+        ),
+        _manifest_source_line(
+            "Thesis rules",
+            manifest,
+            "thesis_rules",
+            ["rule_set_version", "thesis_rules_schema_version"],
+        ),
+        _manifest_source_line(
+            "Validation config",
+            manifest,
+            "validation_config",
+            ["validation_rule_set_version", "validation_config_schema_version"],
+        ),
+    ]
+
+
+def _manifest_source_line(label: str, manifest: dict[str, Any], prefix: str, version_keys: list[str]) -> str:
+    """Format one manifest source line."""
+    version = next((manifest.get(key) for key in version_keys if manifest.get(key)), "unknown")
+    sha = _short_hash(manifest.get(f"{prefix}_sha256"))
+    path = manifest.get(f"{prefix}_path") or "unknown"
+    return f"- {label}: version `{version}`, sha256 `{sha}`, path `{path}`"
+
+
+def _short_hash(value: Any) -> str:
+    """Return a readable hash prefix while preserving explicit unknowns."""
+    text = str(value or "")
+    return text[:12] if text else "unknown"
 
 
 def _slug(value: str) -> str:

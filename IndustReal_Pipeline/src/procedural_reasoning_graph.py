@@ -5,6 +5,7 @@ import csv
 import hashlib
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -23,6 +24,9 @@ class ProceduralReasoningGraphInputs:
     step_records_path: Path | None = None
     predicates_path: Path | None = None
     constraints_path: Path | None = None
+    domain_config_path: Path | None = None
+    rules_path: Path | None = None
+    validation_config_path: Path | None = None
     exclude_rejected: bool = False
     graph_name: str = GRAPH_NAME
     short_labels: bool = False
@@ -251,6 +255,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
     graph = {
         "schema_version": SCHEMA_VERSION,
         "graph_name": inputs.graph_name or GRAPH_NAME,
+        "provenance": _graph_provenance(inputs),
         "nodes": sorted(builder.nodes.values(), key=lambda item: (item["type"], item["id"])),
         "edges": sorted(builder.edges.values(), key=lambda item: (item["type"], item["source"], item["target"], _stable_json(item["properties"]))),
     }
@@ -271,6 +276,7 @@ def build_procedural_reasoning_graph(inputs: ProceduralReasoningGraphInputs) -> 
         "graph_name": graph["graph_name"],
         "validations_path": str(inputs.validations_path),
         "step_records_path": str(inputs.step_records_path) if inputs.step_records_path else None,
+        "provenance": graph["provenance"],
         "output_path": str(graph_path),
         "nodes_csv_path": str(nodes_csv_path),
         "edges_csv_path": str(edges_csv_path),
@@ -301,6 +307,81 @@ class _GraphBuilder:
             "type": edge_type,
             "properties": _clean_properties(properties),
         }
+
+
+def _graph_provenance(inputs: ProceduralReasoningGraphInputs) -> dict[str, Any]:
+    """Build graph-level provenance for config freshness checks."""
+    source_files = {
+        "domain_config": _config_file_metadata(inputs.domain_config_path),
+        "thesis_rules": _config_file_metadata(inputs.rules_path),
+        "validation_config": _config_file_metadata(inputs.validation_config_path),
+    }
+    input_artifacts = {
+        "validations": _artifact_metadata(inputs.validations_path),
+        "step_records": _artifact_metadata(inputs.step_records_path),
+        "predicates": _artifact_metadata(inputs.predicates_path),
+        "constraints": _artifact_metadata(inputs.constraints_path),
+    }
+    return _clean_properties(
+        {
+            "built_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "builder": "src.procedural_reasoning_graph.build_procedural_reasoning_graph",
+            "graph_schema_version": SCHEMA_VERSION,
+            "source_files": source_files,
+            "input_artifacts": input_artifacts,
+        }
+    )
+
+
+def _config_file_metadata(path: Path | None) -> dict[str, Any] | None:
+    metadata = _artifact_metadata(path)
+    if metadata is None:
+        return None
+    parsed = _read_yaml_mapping(Path(path))
+    for key in (
+        "schema_version",
+        "domain_model_version",
+        "rule_set_version",
+        "contract_version",
+    ):
+        if parsed.get(key) is not None:
+            metadata[key] = parsed.get(key)
+    return metadata
+
+
+def _artifact_metadata(path: Path | None) -> dict[str, Any] | None:
+    if path is None:
+        return None
+    artifact_path = Path(path)
+    if not artifact_path.exists():
+        return {"path": str(artifact_path), "exists": False}
+    return {
+        "path": str(artifact_path),
+        "exists": True,
+        "sha256": _file_sha256(artifact_path),
+        "size_bytes": artifact_path.stat().st_size,
+        "modified_at": datetime.fromtimestamp(artifact_path.stat().st_mtime).astimezone().isoformat(timespec="seconds"),
+    }
+
+
+def _read_yaml_mapping(path: Path) -> dict[str, Any]:
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        return {}
+    try:
+        loaded = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def _file_sha256(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
 
 
 def _predicates_for_record(record: dict[str, Any]) -> list[dict[str, Any]]:

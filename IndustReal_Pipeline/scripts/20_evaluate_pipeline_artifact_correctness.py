@@ -861,12 +861,15 @@ def evaluate(ctx: EvaluationContext) -> dict[str, Any]:
         "run_id": ctx.run_id,
         "clip_result_id": ctx.clip_result_id,
         "paths": {key: str(path) for key, path in paths.items()},
+        "graph_name": graph.get("graph_name") if isinstance(graph, dict) else None,
+        "graph_schema_version": graph.get("schema_version") if isinstance(graph, dict) else None,
+        "graph_provenance": graph.get("provenance") if isinstance(graph, dict) and isinstance(graph.get("provenance"), dict) else None,
         "counts": counts,
         "checks": [row.__dict__ for row in check_results],
         "details": details,
     }
     write_json(evidence_dir / "evaluation1_results.json", result)
-    write_report(ctx, check_results, counts, inventory)
+    write_report(ctx, check_results, counts, inventory, result)
     write_readme(ctx)
     return result
 
@@ -948,6 +951,7 @@ def write_report(
     check_results: list[CheckResult],
     counts: dict[str, Any],
     inventory: list[InventoryRow],
+    result: dict[str, Any],
 ) -> None:
     status_counts = {status: sum(1 for row in check_results if row.status == status) for status in STATUSES}
     lines = [
@@ -960,6 +964,10 @@ def write_report(
         f"- Reasoning directory: `{ctx.reasoning_dir}`",
         f"- Graph directory: `{ctx.graph_dir}`",
         f"- Output directory: `{ctx.output_dir}`",
+        "",
+        "## Graph Provenance",
+        "",
+        *_graph_provenance_lines(result),
         "",
         "## Summary Table",
         "",
@@ -1009,6 +1017,44 @@ def write_report(
         ]
     )
     (ctx.output_dir / "evaluation1_report.md").write_text("\n".join(lines), encoding="utf-8")
+
+
+def _graph_provenance_lines(result: dict[str, Any]) -> list[str]:
+    """Render graph provenance fields for graph-related Evaluation 1 checks."""
+    provenance = result.get("graph_provenance")
+    if not isinstance(provenance, dict):
+        return [
+            f"- Graph name: `{result.get('graph_name') or 'unknown'}`",
+            f"- Graph schema version: `{result.get('graph_schema_version') or 'unknown'}`",
+            "- Graph provenance: `unavailable; rebuild the graph with the current graph builder to create provenance metadata`",
+        ]
+
+    source_files = provenance.get("source_files") if isinstance(provenance.get("source_files"), dict) else {}
+    return [
+        f"- Graph name: `{result.get('graph_name') or 'unknown'}`",
+        f"- Graph schema version: `{result.get('graph_schema_version') or provenance.get('graph_schema_version') or 'unknown'}`",
+        f"- Graph built at: `{provenance.get('built_at') or 'unknown'}`",
+        f"- Graph builder: `{provenance.get('builder') or 'unknown'}`",
+        _provenance_source_line("Domain config", source_files.get("domain_config"), "domain_model_version"),
+        _provenance_source_line("Thesis rules", source_files.get("thesis_rules"), "rule_set_version"),
+        _provenance_source_line("Validation config", source_files.get("validation_config"), "rule_set_version"),
+    ]
+
+
+def _provenance_source_line(label: str, value: Any, version_key: str) -> str:
+    """Format one provenance source file line."""
+    if not isinstance(value, dict):
+        return f"- {label}: `provenance unavailable`"
+    version = value.get(version_key) or value.get("schema_version") or "unknown"
+    sha = _short_hash(value.get("sha256"))
+    path = value.get("path") or "unknown"
+    return f"- {label}: version `{version}`, sha256 `{sha}`, path `{path}`"
+
+
+def _short_hash(value: Any) -> str:
+    """Return a readable hash prefix while preserving explicit unknowns."""
+    text = str(value or "")
+    return text[:12] if text else "unknown"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

@@ -171,6 +171,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
     try:
         client = client_from_config(config, REPO_ROOT)
         valid_step_ids = client.fetch_step_ids(graph_name)
+        graph_manifest = fetch_graph_manifest(client, graph_name)
         with paths["log"].open("w", encoding="utf-8") as log_handle, paths["responses"].open(
             "w", encoding="utf-8"
         ) as output_handle:
@@ -180,6 +181,8 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 condition=CONDITION,
                 dry_run=dry_run,
                 total_interactions=len(test_cases),
+                graph_name=graph_name,
+                graph_manifest_found=graph_manifest is not None,
                 graph_retrieval=retrieval_config,
             )
             for index, test_case in enumerate(test_cases, start=1):
@@ -294,6 +297,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     "cypher": plan.cypher,
                     "query_params": plan.params,
                     "graph_retrieval": retrieval_config,
+                    "graph_manifest": graph_manifest,
                     "query_status": query_status,
                     "query_error": query_error,
                     "query_rows": query_rows,
@@ -340,6 +344,22 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
         if client is not None:
             client.close()
     return paths
+
+
+def fetch_graph_manifest(client: Any, graph_name: str) -> dict[str, Any] | None:
+    """Return the imported graph manifest for this Neo4j graph, when present."""
+    rows = client.run_read_query(
+        (
+            "MATCH (m:GraphManifest {graph_name: $graph_name}) "
+            "RETURN properties(m) AS manifest "
+            "LIMIT 1"
+        ),
+        {"graph_name": graph_name},
+    )
+    if not rows:
+        return None
+    manifest = rows[0].get("manifest")
+    return manifest if isinstance(manifest, dict) else None
 
 
 def llm_skip_reason(query_status: str, query_error: str | None, query_rows: list[dict[str, Any]]) -> str | None:
