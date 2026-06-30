@@ -2,7 +2,7 @@
 
 - Evaluated run ID: `raw_cad_dataset__all_test_clips`
 - Evaluated clip/result ID: `raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1`
-- Timestamp: `2026-06-30T12:12:34+02:00`
+- Timestamp: `2026-06-30T13:49:10+02:00`
 - Neo4j input directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\neo4j\raw_cad_dataset__all_test_clips`
 - Reasoning directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1`
 - Graph directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1`

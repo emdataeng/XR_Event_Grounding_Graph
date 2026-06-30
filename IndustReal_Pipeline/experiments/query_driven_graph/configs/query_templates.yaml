@@ -1,46 +1,15 @@
-# risk_type is evaluation metadata. Query intent is retrieval behavior.
-# This mapping keeps the evaluation taxonomy separate from the Cypher template names.
+# Retrieval templates are fixed Cypher graph patterns.
+# Scenarios define evaluation coverage; this file defines how the baseline queries the graph.
 
-default_intent: current_step_context
+default_retrieval_template: current_step_context
 
-intent_by_case_id:
-  q01_sequence_control_current_and_next_action: sequence_context
-  q02_sequence_control_named_part_mismatch: component_check
-  q03_direct_installation_target: installation_check
-  q04_wrong_part_target_check: installation_check
-  q05_nested_prerequisite: installation_check
-  q06_front_rear_chassis_pin_readiness: installation_check
-  q07_component_alignment: installation_check
-  q08_front_bracket_screw_troubleshooting: installation_check
-  q09_root_component_alignment_exception: installation_check
-  q10_alignment_requirement_versus_satisfaction: evidence_confidence
-  q11_front_chassis_pin_safety_prerequisites: installation_check
-  q12_rear_chassis_pin_safety_prerequisites: installation_check
-  q13_securing_is_not_installation: installation_check
-  q14_required_tool_versus_observed_tool_use: tool_context
-  q15_unsupported_tool_proposal: tool_context
-  q16_combined_requirements: installation_check
-  q17_removal_precondition: removal_or_rework_check
-  q18_removal_invalidates_installed_state: removal_or_rework_check
-  q19_reinstallation_guidance_after_removal: removal_or_rework_check
-  q20_high_confidence_but_uncertain_validation: evidence_confidence
-  q21_why_accepted: evidence_confidence
-  q22_provenance_of_an_inferred_requirement: evidence_confidence
-  q23_relation_label_precision: current_step_context
-  q24_multiple_missing_requirements: installation_check
-  q25_video_confirmation: evidence_confidence
-  q26_unmodeled_torque: current_step_context
-  q27_unknown_step: current_step_context
-  q28_ambiguous_okay_question: current_step_context
-
-intent_by_risk_type:
-  sequence_error: sequence_context
-  component_confusion: component_check
-  incorrect_installation: installation_check
-  tool_usage_error: tool_context
-  missing_context: current_step_context
-  removal_or_rework_error: removal_or_rework_check
-  confidence_or_evidence_issue: evidence_confidence
+retrieval_template_by_scenario:
+  scenario_a_dependency_and_prerequisite_checks: installation_check
+  scenario_b_troubleshooting_implicit_conditions: evidence_confidence
+  scenario_c_safety_and_tool_constraints: installation_check
+  scenario_d_state_lifecycle_and_error_recovery: removal_or_rework_check
+  scenario_e_validation_status_provenance_and_relation_precision: evidence_confidence
+  scenario_f_missing_evidence_controls: current_step_context
 
 templates:
   current_step_context:
@@ -129,7 +98,7 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH path = (s)-[:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|SUPPORTED_BY*0..{evidence_hops}]-(n)
+      OPTIONAL MATCH path = (s)-[:HAS_PREDICATE|HAS_ENTITY|HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|SUPPORTED_BY*0..{evidence_hops}]-(n)
       WHERE length(path) > 0
         AND all(intermediate IN nodes(path)[1..-1]
                 WHERE intermediate:Predicate OR intermediate:Constraint)
@@ -158,14 +127,10 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH path = (s)-[:HAS_PREDICATE|HAS_CONSTRAINT|HAS_ENTITY*0..{evidence_hops}]-(n)
+      OPTIONAL MATCH path = (s)-[:HAS_PREDICATE|HAS_CONSTRAINT|HAS_ENTITY|REQUIRES|PRODUCES|SUPPORTED_BY*0..{evidence_hops}]-(n)
       WHERE length(path) > 0
         AND all(intermediate IN nodes(path)[1..-1]
                 WHERE intermediate:Predicate OR intermediate:Constraint)
-        AND (
-          toLower(coalesce(n.display_label, '') + ' ' + coalesce(n.name, '') + ' ' + coalesce(n.kind, '')) CONTAINS 'tool'
-          OR toLower(coalesce(s.action_description, '')) CONTAINS 'tool'
-        )
       WITH s, n, path, last(relationships(path)) AS r
       RETURN
         s.step_id AS step_id,
@@ -186,11 +151,13 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH path = (s)-[:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|INVALIDATED_BY*0..{evidence_hops}]-(n)
+      OPTIONAL MATCH path = (s)-[:HAS_CONSTRAINT|REQUIRES|PRODUCES|DEPENDS_ON|SUPPORTED_BY|INVALIDATED_BY*0..{evidence_hops}]-(n)
       WHERE length(path) > 0
         AND all(intermediate IN nodes(path)[1..-1]
                 WHERE intermediate:Predicate OR intermediate:Constraint)
       WITH s, n, path, last(relationships(path)) AS rel
+      OPTIONAL MATCH (producer:Step {graph_name: $graph_name})-[:PRODUCES]->(n)
+      WITH s, n, path, rel, collect(DISTINCT producer.step_id) AS producing_step_ids
       RETURN
         s.step_id AS step_id,
         s.action_description AS action_description,
@@ -206,6 +173,7 @@ templates:
         n.name AS evidence_name,
         n.args AS evidence_args,
         n.status AS evidence_status,
+        producing_step_ids AS producing_step_ids,
         length(path) AS evidence_distance
       ORDER BY evidence_distance, relation, evidence_label
       LIMIT $limit
@@ -215,7 +183,7 @@ templates:
     cypher: |-
       MATCH (s:Step {graph_name: $graph_name})
       WHERE s.step_id = $step_id
-      OPTIONAL MATCH path = (s)-[:HAS_PREDICATE|HAS_CONSTRAINT|DERIVED_FROM|SUPPORTED_BY*0..{evidence_hops}]-(n)
+      OPTIONAL MATCH path = (s)-[:HAS_PREDICATE|HAS_CONSTRAINT|REQUIRES|PRODUCES|DERIVED_FROM|SUPPORTED_BY*0..{evidence_hops}]-(n)
       WHERE length(path) > 0
         AND all(intermediate IN nodes(path)[1..-1]
                 WHERE intermediate:Predicate OR intermediate:Constraint)

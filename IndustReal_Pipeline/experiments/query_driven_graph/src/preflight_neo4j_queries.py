@@ -62,6 +62,8 @@ def flatten_grouped_cases(groups: dict[str, Any], group_field: str) -> list[dict
     """Flatten grouped cases while preserving the group as evaluation metadata."""
     cases = []
     for group_name, grouped_cases in groups.items():
+        if isinstance(grouped_cases, dict) and "cases" in grouped_cases:
+            grouped_cases = grouped_cases["cases"]
         if not isinstance(grouped_cases, list):
             raise ValueError(f"Expected {group_field} group '{group_name}' to contain a list.")
         for case in grouped_cases or []:
@@ -141,15 +143,21 @@ def main() -> None:
             case_id = str(test_case.get("case_id") or "unknown")
             if plan.params["step_id"] not in valid_step_ids:
                 print(
-                    f"[{index:02d}] {case_id} | intent={plan.intent} | rows=diagnostic | "
+                    f"[{index:02d}] {case_id} | retrieval_template={plan.retrieval_template} | rows=diagnostic | "
                     f"missing_step_id={plan.params['step_id']}"
                 )
                 continue
 
             rows = client.run_read_query(plan.cypher, plan.params)
-            print(f"[{index:02d}] {case_id} | intent={plan.intent} | rows={len(rows)} | step_id={plan.params['step_id']}")
+            print(
+                f"[{index:02d}] {case_id} | retrieval_template={plan.retrieval_template} | "
+                f"rows={len(rows)} | step_id={plan.params['step_id']}"
+            )
             if not rows:
-                failures.append(f"{case_id}: empty rows for intent={plan.intent}, step_id={plan.params['step_id']}")
+                failures.append(
+                    f"{case_id}: empty rows for retrieval_template={plan.retrieval_template}, "
+                    f"step_id={plan.params['step_id']}"
+                )
     finally:
         client.close()
 

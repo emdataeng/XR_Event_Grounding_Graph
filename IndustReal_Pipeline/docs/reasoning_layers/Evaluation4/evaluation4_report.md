@@ -1,15 +1,19 @@
 # Evaluation 4 Report: Procedural Graph Traceability
 
-- Evaluated graph: `procedural_reasoning_graph`
+- Evaluated graph: `procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1`
 - Clip/result ID: `raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
-- Timestamp: `2026-06-30T12:10:38+02:00`
+- Timestamp: `2026-06-30T13:49:31+02:00`
 - Graph directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
 - Reasoning directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
 
 ## Graph Provenance
 
 - Graph schema version: `1.0`
-- Graph provenance: `unavailable; rebuild the graph with the current graph builder to create provenance metadata`
+- Graph built at: `2026-06-30T12:30:08+02:00`
+- Graph builder: `src.procedural_reasoning_graph.build_procedural_reasoning_graph`
+- Domain config: version `1.3.0`, sha256 `1f92ec4657d8`, path `config\domain_config.yaml`
+- Thesis rules: version `1.3.0`, sha256 `bfff375aa487`, path `config\thesis_rules.yaml`
+- Validation config: version `1.3.0`, sha256 `bfff375aa487`, path `config\thesis_rules.yaml`
 
 ## Node Type Distribution
 

@@ -1,6 +1,6 @@
 # Evaluation 2 Report: Constraint Inference Coverage
 
-- Timestamp: `2026-06-26T19:01:00+02:00`
+- Timestamp: `2026-06-30T13:49:17+02:00`
 - Results root: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers`
 - Output directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\docs\reasoning_layers\Evaluation2`
 - Evaluated clips: 39

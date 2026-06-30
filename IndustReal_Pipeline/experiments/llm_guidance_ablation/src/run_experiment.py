@@ -21,6 +21,7 @@ from graph_loader import graph_artifact_path, load_procedural_reasoning_graph
 from lm_client import ask_llm, set_config_path
 from shared.graph_retrieval_config import load_graph_retrieval_config
 from shared.id_compaction import step_provenance
+from shared.question_set_manifest import build_question_set_manifest
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
@@ -80,6 +81,8 @@ def flatten_grouped_cases(groups: dict[str, Any], group_field: str) -> list[dict
     """Flatten grouped test cases while preserving the group as metadata."""
     test_cases = []
     for group_name, grouped_cases in groups.items():
+        if isinstance(grouped_cases, dict) and "cases" in grouped_cases:
+            grouped_cases = grouped_cases["cases"]
         if not isinstance(grouped_cases, list):
             raise ValueError(f"Expected {group_field} group '{group_name}' to contain a list of cases.")
 
@@ -224,7 +227,10 @@ def run_experiment(
 ) -> tuple[Path, Path, Path]:
     """Run one prompting condition across all novice question test cases."""
     test_cases = load_test_cases(config)
+    question_set_path = resolve_configured_path(config["input_paths"]["test_cases"])
+    question_set_manifest = build_question_set_manifest(question_set_path, len(test_cases))
     artifacts = load_artifacts(config, dataset_id=dataset_id, condition=condition)
+    artifacts["question_set"] = question_set_manifest
     timestamp = local_timestamp_for_filename()
     output_path = output_path_for_run(config, condition, timestamp)
     prompt_report_dir = prompt_report_dir_for_run(config, condition, timestamp)
@@ -246,6 +252,7 @@ def run_experiment(
                 "step_hops": artifacts["step_hops"],
                 "evidence_hops": artifacts["evidence_hops"],
             },
+            question_set=question_set_manifest,
         )
         try:
             with output_path.open("w", encoding="utf-8") as output_handle:
@@ -305,6 +312,7 @@ def run_experiment(
                             "evidence_hops": artifacts["evidence_hops"],
                         },
                         "question": test_case.get("question"),
+                        "question_set": question_set_manifest,
                         "response": response,
                         "scenario": test_case.get("scenario"),
                         "risk_type": test_case.get("risk_type"),

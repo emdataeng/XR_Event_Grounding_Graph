@@ -1,7 +1,7 @@
 # Evaluation 5 Report: Symbolic Input Degradation
 
 - Evaluated clip/result ID: `raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
-- Timestamp: `2026-06-26T19:05:33+02:00`
+- Timestamp: `2026-06-30T13:49:37+02:00`
 - Reasoning directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\results\reasoning_layers\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1`
 - Output directory: `D:\Code\XR_Event_Grounding_Graph\IndustReal_Pipeline\docs\reasoning_layers\Evaluation5`
 

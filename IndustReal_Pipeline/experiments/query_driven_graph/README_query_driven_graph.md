@@ -2,8 +2,8 @@
 
 This experiment evaluates an active retrieval architecture for novice operator
 support. Unlike `llm_guidance_ablation`, which compares fixed prompt-grounding
-conditions, this workflow selects a Cypher query template from the operator
-question, executes that query against Neo4j, and asks the LLM to answer using
+conditions, this workflow selects a Cypher query template from the question
+scenario, executes that query against Neo4j, and asks the LLM to answer using
 only the returned graph evidence.
 
 ## First Milestone
@@ -12,13 +12,13 @@ The first milestone uses deterministic template-based Cypher retrieval:
 
 ```text
 ┌───────────────────┐     ┌───────────────────┐
-│ Novice question   │     │ Risk type         │
+│ Novice question   │     │ Scenario          │
 └─────────┬─────────┘     └─────────┬─────────┘
           └──────────────┬───────────┘
                          ▼
               ┌─────────────────────┐
-              │ Rule-based intent   │
-              │ selection           │
+              │ Rule-based retrieval│
+              │ template selection  │
               └──────────┬──────────┘
                          ▼
               ┌─────────────────────┐
@@ -175,7 +175,7 @@ Each run writes:
 - `outputs/logs/communication_query_driven_graph_<timestamp>.log`
 - `outputs/query_reports/query_driven_graph_<timestamp>/`
 
-Each JSONL response row includes the selected intent, Cypher query, query
+Each JSONL response row includes the selected retrieval template, Cypher query, query
 parameters, query rows, and final answer. Evaluation metadata is saved for later
 analysis but is not sent to the LLM.
 

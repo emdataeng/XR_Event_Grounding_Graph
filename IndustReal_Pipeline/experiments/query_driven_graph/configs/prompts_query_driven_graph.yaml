@@ -19,8 +19,8 @@ answer_generation:
     Operator question:
     {question}
 
-    Selected query intent:
-    {intent}
+    Selected retrieval template:
+    {retrieval_template}
 
     Cypher query executed:
     {cypher}
@@ -38,4 +38,3 @@ lm_studio_fallback:
 
     User question:
     {user_prompt}
-

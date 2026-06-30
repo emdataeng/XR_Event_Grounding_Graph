@@ -1,4 +1,4 @@
-"""Deterministic intent selection and Cypher template rendering."""
+"""Deterministic retrieval-template selection and Cypher rendering."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from query_validator import validate_read_only_cypher
 class QueryPlan:
     """A selected read-only graph query for one novice question."""
 
-    intent: str
+    retrieval_template: str
     description: str
     cypher: str
     params: dict[str, Any]
@@ -41,14 +41,14 @@ def build_query_plan(
     retrieval_config: dict[str, int],
 ) -> QueryPlan:
     """Select a deterministic query template and bind safe parameters."""
-    intent = select_intent(test_case, template_config)
+    retrieval_template = select_retrieval_template(test_case, template_config)
     templates = template_config.get("templates")
-    if not isinstance(templates, dict) or intent not in templates:
-        raise ValueError(f"Query template is missing for intent: {intent}")
+    if not isinstance(templates, dict) or retrieval_template not in templates:
+        raise ValueError(f"Query template is missing for retrieval template: {retrieval_template}")
 
-    template = templates[intent]
+    template = templates[retrieval_template]
     if not isinstance(template, dict):
-        raise ValueError(f"Expected query template to be a mapping for intent: {intent}")
+        raise ValueError(f"Expected query template to be a mapping for retrieval template: {retrieval_template}")
     cypher_template = str(template.get("cypher") or "").strip()
     cypher = (
         cypher_template.replace("{step_hops}", str(int(retrieval_config["step_hops"])))
@@ -61,7 +61,7 @@ def build_query_plan(
         raise ValueError("Test case is missing required field: step_id")
 
     return QueryPlan(
-        intent=intent,
+        retrieval_template=retrieval_template,
         description=str(template.get("description") or ""),
         cypher=cypher,
         params={
@@ -72,38 +72,13 @@ def build_query_plan(
     )
 
 
-def select_intent(test_case: dict[str, Any], template_config: dict[str, Any]) -> str:
-    """Select an intent from risk type with a few question-keyword overrides."""
-    case_id = str(test_case.get("case_id") or "")
-    intent_by_case_id = template_config.get("intent_by_case_id") or {}
-    if isinstance(intent_by_case_id, dict) and case_id in intent_by_case_id:
-        return str(intent_by_case_id[case_id])
-
+def select_retrieval_template(test_case: dict[str, Any], template_config: dict[str, Any]) -> str:
+    """Select a retrieval template from the test-case scenario."""
     scenario = str(test_case.get("scenario") or "")
-    intent_by_scenario = template_config.get("intent_by_scenario") or {}
-    if isinstance(intent_by_scenario, dict) and scenario in intent_by_scenario:
-        return str(intent_by_scenario[scenario])
-
-    question = str(test_case.get("question") or "").lower()
-    if any(term in question for term in ("tool", "screwdriver", "force")):
-        return "tool_context"
-    if any(term in question for term in ("confidence", "certain", "video", "evidence")):
-        return "evidence_confidence"
-    if any(term in question for term in ("remove", "removed", "rework", "take it off")):
-        return "removal_or_rework_check"
-    if any(term in question for term in ("next", "previous", "before continuing", "move on")):
-        return "sequence_context"
-
-    risk_type = str(test_case.get("risk_type") or "")
-    intent_by_risk_type = template_config.get("intent_by_risk_type") or {}
-    if isinstance(intent_by_risk_type, dict) and risk_type in intent_by_risk_type:
-        return str(intent_by_risk_type[risk_type])
-
-    if any(term in question for term in ("component", "part", "label", "assembly", "chassis")):
-        return "component_check"
-    if any(term in question for term in ("install", "seated", "target", "oriented", "alignment")):
-        return "installation_check"
-    return str(template_config.get("default_intent") or "current_step_context")
+    template_by_scenario = template_config.get("retrieval_template_by_scenario") or {}
+    if isinstance(template_by_scenario, dict) and scenario in template_by_scenario:
+        return str(template_by_scenario[scenario])
+    return str(template_config.get("default_retrieval_template") or "current_step_context")
 
 
 def canonical_step_id(value: Any) -> str:

@@ -62,6 +62,7 @@ def main() -> None:
     )
     parser.add_argument("--env-file", type=str, default=".env")
     parser.add_argument("--batch-size", type=int, default=500)
+    parser.add_argument("--graph-name", type=str, default=None)
     parser.add_argument("--no-replace-graph", action="store_true")
     parser.add_argument(
         "--drop-legacy-prg-id-constraints",
@@ -71,7 +72,7 @@ def main() -> None:
     args = parser.parse_args()
 
     graph = load_procedural_graph(args.graph)
-    graph_name = str(graph.get("graph_name") or "procedural_reasoning_graph")
+    graph_name = str(args.graph_name or graph.get("graph_name") or "procedural_reasoning_graph")
     normalized = normalize_graph(graph, graph_name=graph_name)
     node_groups = grouped_by_type(normalized["nodes"])
     edge_groups = grouped_by_type(normalized["edges"])

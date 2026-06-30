@@ -28,6 +28,7 @@ from neo4j_client import client_from_config  # noqa: E402
 from query_planner import build_query_plan, canonical_step_id, load_query_template_config  # noqa: E402
 from shared.graph_retrieval_config import load_graph_retrieval_config  # noqa: E402
 from shared.id_compaction import step_provenance  # noqa: E402
+from shared.question_set_manifest import build_question_set_manifest  # noqa: E402
 
 
 CONDITION = "query_driven_graph"
@@ -81,6 +82,8 @@ def flatten_grouped_cases(groups: dict[str, Any], group_field: str) -> list[dict
     """Flatten grouped cases while preserving the group as evaluation metadata."""
     cases: list[dict[str, Any]] = []
     for group_name, grouped_cases in groups.items():
+        if isinstance(grouped_cases, dict) and "cases" in grouped_cases:
+            grouped_cases = grouped_cases["cases"]
         if not isinstance(grouped_cases, list):
             raise ValueError(f"Expected {group_field} group '{group_name}' to contain a list.")
         for case in grouped_cases:
@@ -149,6 +152,8 @@ def write_log_event(handle: Any, event: str, **fields: Any) -> None:
 def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, Path]:
     """Run the query-driven graph experiment."""
     test_cases = load_test_cases(config)
+    question_set_path = resolve_configured_path(config["input_paths"]["test_cases"])
+    question_set_manifest = build_question_set_manifest(question_set_path, len(test_cases))
     step_context = load_step_context(config)
     prompt_path = resolve_configured_path(config["prompt_paths"]["prompts"])
     template_path = resolve_configured_path(config["prompt_paths"]["query_templates"])
@@ -181,6 +186,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 condition=CONDITION,
                 dry_run=dry_run,
                 total_interactions=len(test_cases),
+                question_set=question_set_manifest,
                 graph_name=graph_name,
                 graph_manifest_found=graph_manifest is not None,
                 graph_retrieval=retrieval_config,
@@ -204,7 +210,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     interaction=index,
                     case_id=case_id,
                     risk_type=risk_type,
-                    intent=plan.intent,
+                    retrieval_template=plan.retrieval_template,
                 )
                 try:
                     if plan.params["step_id"] not in valid_step_ids:
@@ -235,7 +241,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                         interaction=index,
                         case_id=case_id,
                         risk_type=risk_type,
-                        intent=plan.intent,
+                        retrieval_template=plan.retrieval_template,
                         error_type=type(exc).__name__,
                     )
 
@@ -251,7 +257,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                         interaction=index,
                         case_id=case_id,
                         risk_type=risk_type,
-                        intent=plan.intent,
+                        retrieval_template=plan.retrieval_template,
                         reason=skip_reason,
                     )
                 elif dry_run:
@@ -275,7 +281,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                             interaction=index,
                             case_id=case_id,
                             risk_type=risk_type,
-                            intent=plan.intent,
+                            retrieval_template=plan.retrieval_template,
                             error_type=type(exc).__name__,
                             error_message=str(exc),
                         )
@@ -292,8 +298,9 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     "step_id": test_case.get("step_id"),
                     "step_provenance": step_provenance(test_case.get("step_id")),
                     "question": test_case.get("question"),
-                    "intent": plan.intent,
-                    "intent_description": plan.description,
+                    "question_set": question_set_manifest,
+                    "retrieval_template": plan.retrieval_template,
+                    "retrieval_template_description": plan.description,
                     "cypher": plan.cypher,
                     "query_params": plan.params,
                     "graph_retrieval": retrieval_config,
@@ -321,7 +328,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     interaction=index,
                     case_id=case_id,
                     risk_type=risk_type,
-                    intent=plan.intent,
+                    retrieval_template=plan.retrieval_template,
                     query_status=query_status,
                     llm_status=llm_status,
                     duration_seconds=round(duration, 6),

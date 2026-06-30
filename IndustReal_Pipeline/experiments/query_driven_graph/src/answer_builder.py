@@ -48,7 +48,7 @@ def build_answer_prompt(
         {
             "step_id": compact_step_id(source_step_id),
             "question": str(test_case.get("question") or ""),
-            "intent": query_plan.intent,
+            "retrieval_template": query_plan.retrieval_template,
             "cypher": query_plan.cypher,
             "query_result": json.dumps(compact_query_rows, indent=2, ensure_ascii=False, sort_keys=True),
             "step_context": compact_prompt_text(step_context, source_step_id),

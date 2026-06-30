@@ -6,11 +6,11 @@ dataset:
 
 neo4j:
   env_file: "experiments\\query_driven_graph\\.env.local"
-  graph_name: "procedural_reasoning_graph::raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1"
+  graph_name: "procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1"
   row_limit: 25
 
 input_paths:
-  test_cases: "experiments\\shared\\configs\\novice_questions.yaml"
+  test_cases: "experiments\\shared\\configs\\novice_questions_v2.yaml"
   step_list: "experiments\\shared\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
   procedural_reasoning_graph: "results\\procedural_reasoning_graph\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1"
 

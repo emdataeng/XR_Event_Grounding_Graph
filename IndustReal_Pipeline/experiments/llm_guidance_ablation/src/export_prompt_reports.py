@@ -111,6 +111,10 @@ Generated at: {datetime.now().astimezone().isoformat(timespec="seconds")}
 
 {_render_run_statistics(run_statistics)}
 
+## Question Set
+
+{_render_question_set(artifacts.get("question_set"))}
+
 ## Prompt-Safe Context Sources
 
 - Step-list artifact configured path: `{config.get("input_paths", {}).get("step_list")}`
@@ -342,6 +346,19 @@ def _short_hash(value: Any) -> str:
     """Return a readable hash prefix while preserving explicit unknowns."""
     text = str(value or "")
     return text[:12] if text else "unknown"
+
+
+def _render_question_set(question_set: Any) -> str:
+    """Render the novice-question set manifest used for a run."""
+    if not isinstance(question_set, dict):
+        return "- Question set: `not available`"
+    return "\n".join([
+        f"- Path: `{question_set.get('path') or 'unknown'}`",
+        f"- ID: `{question_set.get('question_set_id') or 'unknown'}`",
+        f"- Version: `{question_set.get('question_set_version') or 'unknown'}`",
+        f"- Case count: `{question_set.get('case_count') or 'unknown'}`",
+        f"- SHA-256: `{_short_hash(question_set.get('sha256'))}`",
+    ])
 
 
 def _report_group_field(test_cases: list[dict[str, Any]]) -> str:

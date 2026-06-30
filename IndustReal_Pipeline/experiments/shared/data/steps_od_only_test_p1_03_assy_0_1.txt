@@ -1,10 +1,12 @@
 Available assembly steps:
+Frame/time conversion: 10 fps; mm:ss values keep one decimal second.
 - Step 0: Install base
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0
   - acted_on_object: base
   - previous_step_id: none
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1
   - time_window: start_frame=709, end_frame=1187
+  - time_window_mmss: start=01:10.9, end=01:58.7
   - confidence: 1.0
 - Step 1: Install rear chassis
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1
@@ -12,6 +14,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
   - time_window: start_frame=709, end_frame=1187
+  - time_window_mmss: start=01:10.9, end=01:58.7
   - confidence: 1.0
 - Step 2: Install front rear chassis pin
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
@@ -19,6 +22,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3
   - time_window: start_frame=709, end_frame=1187
+  - time_window_mmss: start=01:10.9, end=01:58.7
   - confidence: 1.0
 - Step 3: Install front chassis
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3
@@ -26,6 +30,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_2
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4
   - time_window: start_frame=1187, end_frame=1788
+  - time_window_mmss: start=01:58.7, end=02:58.8
   - confidence: 1.0
 - Step 4: Install front chassis pin
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4
@@ -33,6 +38,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_3
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5
   - time_window: start_frame=1187, end_frame=1788
+  - time_window_mmss: start=01:58.7, end=02:58.8
   - confidence: 1.0
 - Step 5: Install rear rear chassis pin
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5
@@ -40,6 +46,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6
   - time_window: start_frame=1788, end_frame=2735
+  - time_window_mmss: start=02:58.8, end=04:33.5
   - confidence: 1.0
 - Step 6: Install front bracket
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6
@@ -47,6 +54,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7
   - time_window: start_frame=1788, end_frame=2735
+  - time_window_mmss: start=02:58.8, end=04:33.5
   - confidence: 1.0
 - Step 7: Install front bracket screw
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7
@@ -54,6 +62,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8
   - time_window: start_frame=1788, end_frame=2735
+  - time_window_mmss: start=02:58.8, end=04:33.5
   - confidence: 1.0
 - Step 8: Install front wheel assy
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8
@@ -61,6 +70,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_7
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
   - time_window: start_frame=1788, end_frame=2735
+  - time_window_mmss: start=02:58.8, end=04:33.5
   - confidence: 1.0
 - Step 9: Remove front wheel assy
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
@@ -68,6 +78,7 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_8
   - next_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10
   - time_window: start_frame=2735, end_frame=None
+  - time_window_mmss: start=04:33.5, end=None
   - confidence: 1.0
 - Step 10: Install rear wheel assy
   - step_id: step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_10
@@ -75,4 +86,5 @@ Available assembly steps:
   - previous_step_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9
   - next_step_id: none
   - time_window: start_frame=2735, end_frame=None
+  - time_window_mmss: start=04:33.5, end=None
   - confidence: 1.0

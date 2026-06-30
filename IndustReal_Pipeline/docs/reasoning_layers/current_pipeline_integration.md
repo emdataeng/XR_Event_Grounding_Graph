@@ -47,7 +47,7 @@ scripts/25_rebuild_all_reasoning_and_import_neo4j.py
 
 `scripts/19_build_graph_data_js.py` is a downstream UI export helper. It reads the regular per-clip result JSON files under `results/` together with the Neo4j CSV export under `results/neo4j/<run_id>/`, then writes `platform/data/graph-data.js` as `window.INDUSTREAL_DATA = {...}` for the browser UI. It does not feed the Layer 3 or Layer 4 reasoning artifacts.
 
-`scripts/25_rebuild_all_reasoning_and_import_neo4j.py` is the batch rebuild and import wrapper. It discovers every `clip_result_id` in `results/neo4j/<run_id>/nodes_events.csv`, rebuilds the reasoning-layer outputs and procedural graph for each clip/mode, and then imports the rebuilt procedural graphs into Neo4j.
+`scripts/25_rebuild_all_reasoning_and_import_neo4j.py` is the batch rebuild and import wrapper. It discovers every `clip_result_id` in `results/neo4j/<run_id>/nodes_events.csv`, rebuilds the reasoning-layer outputs and procedural graph for each clip/mode, and then imports the rebuilt procedural graphs into Neo4j. Each imported procedural graph uses a per-clip graph name such as `procedural_reasoning_graph::<clip_result_id>`, so rebuilding one clip replaces only that clip's imported procedural graph.
 
 Current implementation modules:
 
@@ -405,16 +405,56 @@ validation_records.jsonl
 
 Optional inputs such as `step_records.jsonl`, `predicates.jsonl`, and `inferred_constraints.csv` are accepted by the script. The current builder uses `step_records.jsonl` for Step metadata enrichment and relies on `validation_records.jsonl` for validation status, predicate evidence, constraint evidence, produced effects, produced-effect lifecycle, dependency support, missing requirements, incompatibilities, and trace information. When `--step-records` is provided, Step nodes are enriched with source metadata from the adapter step records, including `clip_result_id`, `run_id`, `mode`, `archive_name`, and `clip`.
 
+The builder also accepts config provenance inputs:
+
+```text
+--domain-config config/domain_config.yaml
+--rules config/thesis_rules.yaml
+--validation-config config/thesis_rules.yaml
+```
+
+These files are not prompt context and are not copied into every node. They are summarized in graph-level provenance so later evaluations and experiment reports can verify which domain and rule versions produced a graph.
+
 The graph JSON has this shape:
 
 ```json
 {
   "schema_version": "1.0",
   "graph_name": "procedural_reasoning_graph",
+  "provenance": {
+    "built_at": "2026-06-30T12:00:00+02:00",
+    "builder": "src.procedural_reasoning_graph.build_procedural_reasoning_graph",
+    "graph_schema_version": "1.0",
+    "source_files": {
+      "domain_config": {
+        "path": "config/domain_config.yaml",
+        "sha256": "...",
+        "domain_model_version": "..."
+      },
+      "thesis_rules": {
+        "path": "config/thesis_rules.yaml",
+        "sha256": "...",
+        "rule_set_version": "..."
+      },
+      "validation_config": {
+        "path": "config/thesis_rules.yaml",
+        "sha256": "...",
+        "rule_set_version": "..."
+      }
+    },
+    "input_artifacts": {
+      "validations": {"path": "...", "sha256": "..."},
+      "step_records": {"path": "...", "sha256": "..."},
+      "predicates": {"path": "...", "sha256": "..."},
+      "constraints": {"path": "...", "sha256": "..."}
+    }
+  },
   "nodes": [],
   "edges": []
 }
 ```
+
+`provenance.built_at` uses local time with an explicit UTC offset. Hashes are SHA-256 hashes of the files used at graph-build time. If an existing graph predates this metadata, evaluation and experiment reports state that graph provenance is unavailable and recommend rebuilding the graph.
 
 The graph builder also writes:
 
@@ -506,7 +546,7 @@ DERIVED_FROM    Constraint -> Rule and Predicate -> Source
 HAS_ENTITY      Predicate or Constraint -> Entity
 ```
 
-Neo4j import uses only the semantic node type as the Neo4j label:
+Neo4j import uses only the semantic node type as the Neo4j label for procedural graph nodes:
 
 ```text
 Step
@@ -517,7 +557,27 @@ Entity
 Source
 ```
 
-The importer does not add a generic `ProceduralReasoningGraph` or `ProceduralReasoningGraphNode` label. Graph-level identity is kept as node and relationship properties, especially `graph_name="procedural_reasoning_graph"` and `schema_version`, so all imported nodes can still be queried by graph name without cluttering the Aura visualization labels.
+The importer does not add a generic `ProceduralReasoningGraph` or `ProceduralReasoningGraphNode` label to every graph node. Graph-level identity is kept as node and relationship properties, especially `graph_name` and `schema_version`, so imported nodes can still be queried by graph name without cluttering the Aura visualization labels.
+
+For the all-clips rebuild/import wrapper, `graph_name` is per clip:
+
+```text
+procedural_reasoning_graph::<clip_result_id>
+```
+
+For example:
+
+```text
+procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1
+```
+
+The Neo4j importer also creates or updates one `GraphManifest` node per imported graph:
+
+```text
+(:GraphManifest {graph_name, prg_id, built_at, builder, graph_schema_version, ...})
+```
+
+`GraphManifest` stores flattened graph provenance fields such as `domain_model_version`, `rule_set_version`, `domain_config_sha256`, `thesis_rules_sha256`, and `validation_config_sha256`, plus the full provenance payload as a JSON property. This node is intended for freshness checks and experiment/evaluation reporting; it is not part of the procedural step sequence itself.
 
 Accepted, uncertain, and rejected steps are included by default. `--exclude-rejected` omits rejected steps. Rejected steps are not allowed to support later `DEPENDS_ON` edges. Uncertain steps may support later dependencies, but those dependency edges are marked `provisional=true`.
 
@@ -547,7 +607,7 @@ notes
 
 `source` records which CSV file and fields produced the predicate.
 
-The reasoning-record contract is stable: the adapter writes `step_records.jsonl` and `predicates.jsonl`, Layer 3 writes `inferred_constraints.csv` plus `rule_coverage_diagnostics.csv`, and Layer 4 writes `validation_records.jsonl` plus human/debug views in `step_validations.csv`, `explanation_traces.json`, and `effect_history_diagnostics.csv`. Validation records include requirement support, missing requirements, dependency support, `invalidated_effects`, and `produced_effect_lifecycle`. The procedural graph export writes JSON plus node/edge CSV files, and node properties include presentation helpers such as `display_name`, `display_label`, and `short_id`.
+The reasoning-record contract is stable: the adapter writes `step_records.jsonl` and `predicates.jsonl`, Layer 3 writes `inferred_constraints.csv` plus `rule_coverage_diagnostics.csv`, and Layer 4 writes `validation_records.jsonl` plus human/debug views in `step_validations.csv`, `explanation_traces.json`, and `effect_history_diagnostics.csv`. Validation records include requirement support, missing requirements, dependency support, `invalidated_effects`, and `produced_effect_lifecycle`. The procedural graph export writes JSON plus node/edge CSV files, and node properties include presentation helpers such as `display_name`, `display_label`, and `short_id`. The graph JSON also includes graph-level provenance, and Neo4j imports expose the same provenance through `GraphManifest`.
 
 Configured domain components use the domain individual `name` in predicate arguments, such as `base`, while generic classes stay class-like, such as `Base` or `Chassis`. Labels remain separate through `hasLabel(base, "base")`.
 
@@ -675,7 +735,13 @@ is written under:
 raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1
 ```
 
-Neo4j import is intentionally delayed until all local rebuilds succeed. If any adapter, Layer 3, Layer 4, or graph-builder command fails, the script stops and does not update Aura. After a successful local rebuild, it imports the first procedural graph with the default replacement behavior from `scripts/18_import_procedural_reasoning_graph_neo4j.py`, which clears existing nodes with `graph_name="procedural_reasoning_graph"`. It imports all remaining clips with `--no-replace-graph`, so the final Aura graph contains all rebuilt clip/mode graphs rather than only the final imported clip.
+Neo4j import is intentionally delayed until all local rebuilds succeed. If any adapter, Layer 3, Layer 4, or graph-builder command fails, the script stops and does not update Aura. After a successful local rebuild, each procedural graph is imported with a graph name derived from its clip/result id:
+
+```text
+procedural_reasoning_graph::<clip_result_id>
+```
+
+Before importing a graph, the importer clears only existing nodes and relationships with the same `graph_name`. This replaces stale data for rebuilt clips without deleting other imported clip/mode graphs.
 
 The Neo4j import step requires `NEO4J_URI` and `NEO4J_PASSWORD` in `.env` unless a different env file is passed:
 
@@ -747,6 +813,12 @@ Build the procedural reasoning graph:
 .venv\Scripts\python.exe scripts\17_build_procedural_reasoning_graph.py `
   --validations results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\validation_records.jsonl `
   --step-records results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\step_records.jsonl `
+  --predicates results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\predicates.jsonl `
+  --constraints results\reasoning_layers\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1\inferred_constraints.csv `
+  --domain-config config\domain_config.yaml `
+  --rules config\thesis_rules.yaml `
+  --validation-config config\thesis_rules.yaml `
+  --graph-name procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1 `
   --output-dir results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
 ```
 
@@ -754,7 +826,8 @@ Import the procedural reasoning graph into Neo4j:
 
 ```powershell
 .venv\Scripts\python.exe scripts\18_import_procedural_reasoning_graph_neo4j.py `
-  --graph results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1
+  --graph results\procedural_reasoning_graph\raw_cad_dataset__all_test_clips__sample_test_p1_03_assy_0_1 `
+  --graph-name procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1
 ```
 
 Build the browser UI graph data from the IndustReal result JSON files and Neo4j CSV export:
@@ -778,20 +851,36 @@ ORDER BY count DESC;
 
 ```cypher
 MATCH (n)
-WHERE n.graph_name = "procedural_reasoning_graph"
+WHERE n.graph_name = "procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1"
 RETURN labels(n) AS labels, count(*) AS count
 ORDER BY count DESC;
 ```
 
-Expected label combinations are single semantic labels such as `["Step"]`, `["Constraint"]`, `["Predicate"]`, `["Rule"]`, `["Entity"]`, and `["Source"]`.
+Expected label combinations are single semantic labels such as `["Step"]`, `["Constraint"]`, `["Predicate"]`, `["Rule"]`, `["Entity"]`, and `["Source"]`. A `["GraphManifest"]` node is also expected for each imported graph.
 
 Verify display properties after import:
 
 ```cypher
 MATCH (s:Step)
-WHERE s.graph_name = "procedural_reasoning_graph"
+WHERE s.graph_name = "procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1"
 RETURN s.display_name, s.display_label, s.status, s.confidence
 ORDER BY s.index;
+```
+
+Verify graph provenance after import:
+
+```cypher
+MATCH (m:GraphManifest)
+RETURN
+  m.graph_name,
+  m.built_at,
+  m.graph_schema_version,
+  m.domain_model_version,
+  m.rule_set_version,
+  m.domain_config_sha256,
+  m.thesis_rules_sha256,
+  m.validation_config_sha256
+ORDER BY m.graph_name;
 ```
 
 Use a different predicate/rule config:

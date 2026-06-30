@@ -26,6 +26,10 @@ def export_query_reports(rows: list[dict[str, Any]], output_dir: Path) -> None:
             "",
             *_graph_manifest_lines(_first_graph_manifest(group_rows)),
             "",
+            "## Question Set",
+            "",
+            *_question_set_lines(_first_question_set(group_rows)),
+            "",
         ]
         for row in group_rows:
             lines.extend(_case_section(row))
@@ -37,7 +41,7 @@ def _case_section(row: dict[str, Any]) -> list[str]:
         f"## {row.get('case_id')}",
         "",
         f"- Step id: `{row.get('step_id')}`",
-        f"- Intent: `{row.get('intent')}`",
+        f"- Retrieval template: `{row.get('retrieval_template')}`",
         f"- Query status: `{row.get('query_status')}`",
         "",
         "### Operator Question",
@@ -94,6 +98,28 @@ def _first_graph_manifest(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
         if isinstance(manifest, dict):
             return manifest
     return None
+
+
+def _first_question_set(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the first question-set manifest stored in response rows."""
+    for row in rows:
+        question_set = row.get("question_set")
+        if isinstance(question_set, dict):
+            return question_set
+    return None
+
+
+def _question_set_lines(question_set: dict[str, Any] | None) -> list[str]:
+    """Render the novice-question set used for a run."""
+    if not question_set:
+        return ["- Question set: `not found in response rows`"]
+    return [
+        f"- Path: `{question_set.get('path') or 'unknown'}`",
+        f"- ID: `{question_set.get('question_set_id') or 'unknown'}`",
+        f"- Version: `{question_set.get('question_set_version') or 'unknown'}`",
+        f"- Case count: `{question_set.get('case_count') or 'unknown'}`",
+        f"- SHA-256: `{_short_hash(question_set.get('sha256'))}`",
+    ]
 
 
 def _graph_manifest_lines(manifest: dict[str, Any] | None) -> list[str]:

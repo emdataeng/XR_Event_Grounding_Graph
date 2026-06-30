@@ -4056,7 +4056,7 @@
       "type": "USES"
     }
   ],
-  "graph_name": "procedural_reasoning_graph",
+  "graph_name": "procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1",
   "nodes": [
     {
       "id": "Constraint::step::raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0::c::effect_install_component_on_target::0_0::produces::step__raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1__event_0_in",
@@ -9997,5 +9997,69 @@
       "type": "Step"
     }
   ],
+  "provenance": {
+    "builder": "src.procedural_reasoning_graph.build_procedural_reasoning_graph",
+    "built_at": "2026-06-30T12:29:55+02:00",
+    "graph_schema_version": "1.0",
+    "input_artifacts": {
+      "constraints": {
+        "exists": true,
+        "modified_at": "2026-06-30T12:29:55+02:00",
+        "path": "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\inferred_constraints.csv",
+        "sha256": "c6926bf7713a8af19638d820aa860bb885dbc55d1e2e743b530591982d5f6614",
+        "size_bytes": 41951
+      },
+      "predicates": {
+        "exists": true,
+        "modified_at": "2026-06-30T12:29:55+02:00",
+        "path": "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\predicates.jsonl",
+        "sha256": "8a31daee5649ca5170499c0ee3e73a8a8c9b4378df517c1967c5a1fb7e68fe45",
+        "size_bytes": 89551
+      },
+      "step_records": {
+        "exists": true,
+        "modified_at": "2026-06-30T12:29:55+02:00",
+        "path": "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\step_records.jsonl",
+        "sha256": "71ca7535ed6ed623389f2bf23afd2cda716c9f710a9432ebc848ca6e0a37b7a8",
+        "size_bytes": 22647
+      },
+      "validations": {
+        "exists": true,
+        "modified_at": "2026-06-30T12:29:55+02:00",
+        "path": "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\validation_records.jsonl",
+        "sha256": "c924bfa7fe8f4b03807026a16e797c753339a43c0b81a24badd17198cc5e86a2",
+        "size_bytes": 304446
+      }
+    },
+    "source_files": {
+      "domain_config": {
+        "domain_model_version": "1.3.0",
+        "exists": true,
+        "modified_at": "2026-06-26T18:30:42+02:00",
+        "path": "config\\domain_config.yaml",
+        "schema_version": "industreal_domain_config.v1",
+        "sha256": "1f92ec4657d8f1803964b99fa81f4b61d178ce17a0b7606b6e3321709988342f",
+        "size_bytes": 4947
+      },
+      "thesis_rules": {
+        "exists": true,
+        "modified_at": "2026-06-25T23:20:58+02:00",
+        "path": "config\\thesis_rules.yaml",
+        "rule_set_version": "1.3.0",
+        "schema_version": "industreal_thesis_rules.v1",
+        "sha256": "bfff375aa487139b7bd295de96124b5aa47e985041a39ef3e062266e01ec9d67",
+        "size_bytes": 13800
+      },
+      "validation_config": {
+        "exists": true,
+        "modified_at": "2026-06-25T23:20:58+02:00",
+        "path": "config\\thesis_rules.yaml",
+        "rule_set_version": "1.3.0",
+        "schema_version": "industreal_thesis_rules.v1",
+        "sha256": "bfff375aa487139b7bd295de96124b5aa47e985041a39ef3e062266e01ec9d67",
+        "size_bytes": 13800
+      }
+    }
+  },
   "schema_version": "1.0"
 }
