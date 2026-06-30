@@ -283,12 +283,17 @@ def _render_run_statistics(statistics: dict[str, Any] | None) -> str:
     """Render run-wide timing statistics or a standalone-export notice."""
     if not statistics:
         return "Timing statistics are unavailable because this report was exported outside an experiment run."
+
+    def _seconds(value: Any) -> str:
+        return "n/a" if value is None else f"{value:.2f} s"
+
     return (
         "These statistics cover all successful prompt interactions in this experiment run.\n\n"
         f"- Completed interactions: `{statistics.get('completed_interactions')}`\n"
-        f"- Minimum prompt time: `{statistics.get('min_interaction_seconds'):.2f} s`\n"
-        f"- Maximum prompt time: `{statistics.get('max_interaction_seconds'):.2f} s`\n"
-        f"- Average prompt time: `{statistics.get('avg_interaction_seconds'):.2f} s`\n"
+        f"- Failed interactions: `{statistics.get('failed_interactions', 0)}`\n"
+        f"- Minimum prompt time: `{_seconds(statistics.get('min_interaction_seconds'))}`\n"
+        f"- Maximum prompt time: `{_seconds(statistics.get('max_interaction_seconds'))}`\n"
+        f"- Average prompt time: `{_seconds(statistics.get('avg_interaction_seconds'))}`\n"
         f"- Total experiment time: `{statistics.get('total_duration_hms')}`"
     )
 

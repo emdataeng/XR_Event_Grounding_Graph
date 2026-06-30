@@ -315,6 +315,18 @@ From the repository root, run with windowed symbolic predicates and full rules:
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition symbolic_domain --config experiments\llm_guidance_ablation\configs\config.yaml
 ```
 
+To resume one condition after a partial run, pass the 1-based question index to start from. For example, if `symbolic_domain` completed questions 1-3, resume at question 4:
+
+```powershell
+.venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition symbolic_domain --start-index 4 --config experiments\llm_guidance_ablation\configs\config.yaml
+```
+
+To resume `symbolic_domain` and then automatically run the later condition without waiting to start it manually:
+
+```powershell
+.venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition symbolic_domain --start-index 4 --continue-with-next-conditions --config experiments\llm_guidance_ablation\configs\config.yaml
+```
+
 ## Run Artifacts
 
 The runner writes a timestamped JSONL response file under `outputs/`. Output filenames use local time with a timezone offset, for example:
@@ -340,7 +352,7 @@ Each run also writes a structured communication-flow log under `outputs/logs/`, 
 outputs/logs/communication_steps_only_20260618T184039+0200.log
 ```
 
-The log contains timestamped `run_started`, `request_sent`, `response_received`, and `run_completed` events. Failed calls produce `interaction_failed` and `run_failed` events. The final event records the minimum, maximum, and average successful prompt time; total duration in seconds and `HHh MMm SS.ss` form; and the number of completed interactions. Prompt and response bodies are deliberately excluded from this log.
+The log contains timestamped `run_started`, `request_sent`, `response_received`, and `run_completed` events. If `runtime.continue_on_llm_error` is enabled, failed calls produce `interaction_failed` events, write a failed response row, and continue to the next question. If that setting is disabled, a failed call also produces `run_failed` and stops the run. The final event records the minimum, maximum, and average successful prompt time; total duration in seconds and `HHh MMm SS.ss` form; and the number of completed and failed interactions. Prompt and response bodies are deliberately excluded from this log.
 
 Every successful experiment run automatically writes a matching prompt-report snapshot under `outputs/prompt_reports/` using the same condition and timestamp:
 

@@ -18,6 +18,8 @@ class LMConfig:
     model_name: str
     temperature: float
     max_tokens: int
+    request_timeout_seconds: float
+    max_retries: int
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +58,8 @@ def load_lm_config(config_path: str | Path = DEFAULT_CONFIG_PATH) -> LMConfig:
             model_name=str(config["model_name"]),
             temperature=float(config["temperature"]),
             max_tokens=int(config["max_tokens"]),
+            request_timeout_seconds=float(config["request_timeout_seconds"]),
+            max_retries=int(config["max_retries"]),
         )
     except KeyError as exc:
         raise ValueError(f"Missing required LLM config field in {path}: {exc.args[0]}") from exc
@@ -77,7 +81,12 @@ def ask_llm(system_prompt: str, user_prompt: str) -> str:
         ) from exc
 
     config = load_lm_config(_ACTIVE_CONFIG_PATH)
-    client = OpenAI(api_key=config.api_key, base_url=config.api_base_url)
+    client = OpenAI(
+        api_key=config.api_key,
+        base_url=config.api_base_url,
+        timeout=config.request_timeout_seconds,
+        max_retries=config.max_retries,
+    )
 
     try:
         completion = _create_chat_completion(client, config, system_prompt, user_prompt)

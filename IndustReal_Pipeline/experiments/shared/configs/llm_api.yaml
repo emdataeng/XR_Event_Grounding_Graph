@@ -1,8 +1,11 @@
 # OpenAI-compatible API settings shared by experiments.
 # LM Studio defaults to http://localhost:1234/v1.
+#prompt tokens + max_tokens(generated answer) <= model context window
+#other models:  "mistralai/mistral-7b-instruct-v0.3"
 api_base_url: "http://localhost:1234/v1"
 api_key: "lm-studio"
-model_name: "mistralai/mistral-7b-instruct-v0.3"
+model_name: "google/gemma-4-31b"
 temperature: 0.0
 max_tokens: 512
-
+request_timeout_seconds: 2000
+max_retries: 0

@@ -35,6 +35,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default=str(EXPERIMENT_ROOT / "configs" / "config.yaml"))
     condition_choices = [condition.value for condition in PromptCondition] + [ALL_CONDITIONS]
     parser.add_argument("--condition", choices=condition_choices, required=True)
+    parser.add_argument(
+        "--start-index",
+        type=int,
+        default=1,
+        help="1-based question index to start from when resuming a condition.",
+    )
+    parser.add_argument(
+        "--continue-with-next-conditions",
+        action="store_true",
+        help="After the selected condition finishes, run the later ablation conditions from question 1.",
+    )
     dataset_group = parser.add_mutually_exclusive_group()
     dataset_group.add_argument("--industreal", metavar="CLIP_ID", help="Run against an IndustReal clip id.")
     dataset_group.add_argument("--dataset", help="Run against a non-IndustReal dataset identifier.")
@@ -224,9 +235,15 @@ def run_experiment(
     condition: PromptCondition,
     config: dict[str, Any],
     dataset_id: str | None = None,
+    start_index: int = 1,
 ) -> tuple[Path, Path, Path]:
     """Run one prompting condition across all novice question test cases."""
     test_cases = load_test_cases(config)
+    if start_index < 1 or start_index > len(test_cases):
+        raise ValueError(
+            f"--start-index must be between 1 and {len(test_cases)} for this question set; got {start_index}"
+        )
+    selected_test_cases = test_cases[start_index - 1 :]
     question_set_path = resolve_configured_path(config["input_paths"]["test_cases"])
     question_set_manifest = build_question_set_manifest(question_set_path, len(test_cases))
     artifacts = load_artifacts(config, dataset_id=dataset_id, condition=condition)
@@ -236,11 +253,15 @@ def run_experiment(
     prompt_report_dir = prompt_report_dir_for_run(config, condition, timestamp)
     log_path = log_path_for_run(config, condition, timestamp)
     total_cases = len(test_cases)
+    planned_cases = len(selected_test_cases)
     completed_cases = 0
+    failed_cases = 0
     interaction_durations: list[float] = []
+    runtime_config = config["runtime"]
+    continue_on_llm_error = bool(runtime_config["continue_on_llm_error"])
     run_started = time.perf_counter()
 
-    print(f"Starting {condition.value}: {total_cases} LLM interactions")
+    print(f"Starting {condition.value}: {planned_cases} LLM interactions from question {start_index}")
     print(f"Communication log: {log_path}")
     with log_path.open("w", encoding="utf-8") as log_handle:
         _write_log_event(
@@ -248,15 +269,18 @@ def run_experiment(
             "run_started",
             condition=condition.value,
             total_interactions=total_cases,
+            planned_interactions=planned_cases,
+            start_index=start_index,
             graph_retrieval={
                 "step_hops": artifacts["step_hops"],
                 "evidence_hops": artifacts["evidence_hops"],
             },
             question_set=question_set_manifest,
+            continue_on_llm_error=continue_on_llm_error,
         )
         try:
             with output_path.open("w", encoding="utf-8") as output_handle:
-                for index, test_case in enumerate(test_cases, start=1):
+                for index, test_case in enumerate(selected_test_cases, start=start_index):
                     case_id = str(test_case.get("case_id") or "unknown")
                     risk_type = str(test_case.get("risk_type") or "unclassified")
                     progress = f"[{index}/{total_cases}]"
@@ -285,8 +309,45 @@ def run_experiment(
                             case_id=case_id,
                             duration_seconds=round(interaction_duration, 6),
                             error_type=type(exc).__name__,
+                            error_message=str(exc),
                         )
-                        raise
+                        if not continue_on_llm_error:
+                            raise
+
+                        failed_cases += 1
+                        row = {
+                            "case_id": test_case.get("case_id"),
+                            "condition": condition.value,
+                            "step_id": test_case.get("step_id"),
+                            "step_provenance": step_provenance(test_case.get("step_id")),
+                            "graph_retrieval": {
+                                "step_hops": artifacts["step_hops"],
+                                "evidence_hops": artifacts["evidence_hops"],
+                            },
+                            "question": test_case.get("question"),
+                            "question_set": question_set_manifest,
+                            "response": None,
+                            "response_status": "failed",
+                            "error_type": type(exc).__name__,
+                            "error_message": str(exc),
+                            "scenario": test_case.get("scenario"),
+                            "risk_type": test_case.get("risk_type"),
+                            "status": test_case.get("status"),
+                            "expected_answer_elements": test_case.get("expected_answer_elements"),
+                            "timestamp": datetime.now().astimezone().isoformat(timespec="seconds"),
+                        }
+                        if condition is PromptCondition.GRAPH_GROUNDED:
+                            graph = artifacts.get("procedural_reasoning_graph")
+                            row["procedural_reasoning_graph_path"] = artifacts.get(
+                                "procedural_reasoning_graph_path"
+                            )
+                            row["graph_provenance"] = (
+                                graph.get("provenance") if isinstance(graph, dict) else None
+                            )
+                        output_handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+                        output_handle.flush()
+                        print(f"{progress} failed after {interaction_duration:.2f}s; continuing")
+                        continue
 
                     interaction_duration = time.perf_counter() - interaction_started
                     completed_cases += 1
@@ -314,6 +375,7 @@ def run_experiment(
                         "question": test_case.get("question"),
                         "question_set": question_set_manifest,
                         "response": response,
+                        "response_status": "ok",
                         "scenario": test_case.get("scenario"),
                         "risk_type": test_case.get("risk_type"),
                         "status": test_case.get("status"),
@@ -331,11 +393,12 @@ def run_experiment(
 
             total_duration = time.perf_counter() - run_started
             run_statistics = build_run_statistics(interaction_durations, total_duration)
+            run_statistics["failed_interactions"] = failed_cases
             export_prompt_reports(
                 config,
                 condition,
                 prompt_report_dir,
-                test_cases,
+                selected_test_cases,
                 artifacts,
                 run_statistics=run_statistics,
             )
@@ -346,10 +409,13 @@ def run_experiment(
                 "run_failed",
                 condition=condition.value,
                 completed_interactions=completed_cases,
+                failed_interactions=failed_cases,
                 total_interactions=total_cases,
+                planned_interactions=planned_cases,
                 total_duration_seconds=round(total_duration, 6),
                 total_duration_hms=format_duration_hms(total_duration),
                 error_type=type(exc).__name__,
+                error_message=str(exc),
             )
             raise
 
@@ -359,16 +425,24 @@ def run_experiment(
             condition=condition.value,
             **run_statistics,
             total_interactions=total_cases,
+            planned_interactions=planned_cases,
+            start_index=start_index,
             responses_path=str(output_path),
             prompt_reports_path=str(prompt_report_dir),
         )
 
-    print(f"Completed {condition.value}: {completed_cases}/{total_cases} interactions")
+    print(f"Completed {condition.value}: {completed_cases}/{planned_cases} planned interactions")
+    min_seconds = run_statistics["min_interaction_seconds"]
+    max_seconds = run_statistics["max_interaction_seconds"]
+    avg_seconds = run_statistics["avg_interaction_seconds"]
+    min_label = f"{min_seconds:.2f}s" if min_seconds is not None else "n/a"
+    max_label = f"{max_seconds:.2f}s" if max_seconds is not None else "n/a"
+    avg_label = f"{avg_seconds:.2f}s" if avg_seconds is not None else "n/a"
     print(
         "Prompt timing: "
-        f"min={run_statistics['min_interaction_seconds']:.2f}s | "
-        f"max={run_statistics['max_interaction_seconds']:.2f}s | "
-        f"avg={run_statistics['avg_interaction_seconds']:.2f}s"
+        f"min={min_label} | "
+        f"max={max_label} | "
+        f"avg={avg_label}"
     )
     print(f"Total time: {run_statistics['total_duration_hms']}")
     return output_path, prompt_report_dir, log_path
@@ -379,23 +453,37 @@ def local_timestamp_for_filename() -> str:
     return datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z")
 
 
-def selected_conditions(value: str) -> list[PromptCondition]:
+def selected_conditions(value: str, continue_with_next_conditions: bool = False) -> list[PromptCondition]:
     """Expand the CLI condition value into the sequential runs to execute."""
     if value == ALL_CONDITIONS:
+        if continue_with_next_conditions:
+            raise ValueError("--continue-with-next-conditions is only valid with a single starting condition")
         return list(PromptCondition)
-    return [PromptCondition(value)]
+    condition = PromptCondition(value)
+    conditions = list(PromptCondition)
+    start_position = conditions.index(condition)
+    if continue_with_next_conditions:
+        return conditions[start_position:]
+    return [condition]
 
 
 def main() -> None:
     """CLI entry point."""
     try:
         args = parse_args()
+        if args.condition == ALL_CONDITIONS and args.start_index != 1:
+            raise ValueError("--start-index can only be used with one starting condition, not --condition all")
         set_config_path(args.config)
         config = load_config(args.config)
         dataset_id = args.industreal or args.dataset or config.get("dataset", {}).get("default_clip_id")
         run_outputs = []
-        for condition in selected_conditions(args.condition):
-            run_outputs.append((condition, *run_experiment(condition, config, dataset_id=dataset_id)))
+        for index, condition in enumerate(
+            selected_conditions(args.condition, args.continue_with_next_conditions)
+        ):
+            start_index = args.start_index if index == 0 else 1
+            run_outputs.append(
+                (condition, *run_experiment(condition, config, dataset_id=dataset_id, start_index=start_index))
+            )
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
