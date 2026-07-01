@@ -12,6 +12,7 @@ from typing import Any
 
 from context_builders import PromptCondition, build_context, graph_evidence_for_step, predicate_context_for_step
 from graph_loader import extract_step_subgraph
+from lm_client import load_lm_metadata
 
 SHARED_EXPERIMENTS_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
@@ -45,6 +46,11 @@ def export_prompt_reports(
 
         test_cases = load_test_cases(config)
         artifacts = load_artifacts(config, condition=condition)
+
+    if "llm" not in artifacts:
+        artifacts["llm"] = load_lm_metadata(
+            config.get("_experiment_config_path", EXPERIMENT_ROOT / "configs" / "config.yaml")
+        )
 
     report_dir = output_dir or (EXPERIMENT_ROOT / "outputs" / "prompt_reports")
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -102,10 +108,7 @@ Generated at: {datetime.now().astimezone().isoformat(timespec="seconds")}
 
 ## API Request Settings
 
-- API base URL: `{config.get("api_base_url")}`
-- Model name: `{config.get("model_name")}`
-- Temperature: `{config.get("temperature")}`
-- Max tokens: `{config.get("max_tokens")}`
+{_render_llm_metadata(artifacts.get("llm"))}
 
 ## Run Timing Statistics
 
@@ -133,7 +136,7 @@ All conditions include the same frozen step-list artifact. The `symbolic_domain`
 
 The following content is identical for every case in this report and is shown only once.
 
-### System Message
+### Actual System Message Sent
 
 - Role: `system`
 
@@ -366,6 +369,26 @@ def _render_question_set(question_set: Any) -> str:
     ])
 
 
+def _render_llm_metadata(llm: Any) -> str:
+    """Render report-safe LLM request metadata."""
+    if not isinstance(llm, dict):
+        return "- LLM metadata: `not available`"
+    return "\n".join([
+        f"- LLM config path: `{llm.get('config_path') or 'unknown'}`",
+        f"- API base URL: `{llm.get('api_base_url') or 'unknown'}`",
+        f"- Model name: `{llm.get('model_name') or 'unknown'}`",
+        f"- Temperature: `{_metadata_value(llm.get('temperature'))}`",
+        f"- Max tokens: `{_metadata_value(llm.get('max_tokens'))}`",
+        f"- Request timeout seconds: `{_metadata_value(llm.get('request_timeout_seconds'))}`",
+        f"- Max retries: `{_metadata_value(llm.get('max_retries'))}`",
+    ])
+
+
+def _metadata_value(value: Any) -> str:
+    """Render a scalar metadata value."""
+    return str(value) if value is not None else "unknown"
+
+
 def _report_group_field(test_cases: list[dict[str, Any]]) -> str:
     """Choose the report grouping metadata field."""
     if any(test_case.get("scenario") for test_case in test_cases):
@@ -396,7 +419,9 @@ def main() -> None:
         from run_experiment import load_config
 
         output_dir = Path(args.output_dir) if args.output_dir else None
-        paths = export_prompt_reports(load_config(args.config), PromptCondition(args.condition), output_dir)
+        config = load_config(args.config)
+        config["_experiment_config_path"] = str(Path(args.config))
+        paths = export_prompt_reports(config, PromptCondition(args.condition), output_dir)
     except Exception as exc:
         print(f"Error: failed to export prompt reports: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc

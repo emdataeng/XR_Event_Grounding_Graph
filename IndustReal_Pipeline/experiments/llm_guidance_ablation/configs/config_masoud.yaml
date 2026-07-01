@@ -1,4 +1,4 @@
-llm_config: "experiments\\shared\\configs\\llm_api.yaml"
+llm_config: "experiments\\shared\\configs\\llm_api_masoud.yaml"
 graph_retrieval_config: "experiments\\shared\\configs\\graph_retrieval.yaml"
 
 runtime:

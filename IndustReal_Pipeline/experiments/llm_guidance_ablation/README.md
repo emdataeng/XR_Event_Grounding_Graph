@@ -281,9 +281,9 @@ This folder contains working runners for `steps_only`, `symbolic_domain`, and `g
 
 The `symbolic_domain` condition uses deterministic sequence-window retrieval rather than summarization: it selects predicates for the current step and configured neighboring steps, projects only rule-matching fields, and includes `thesis_rules.yaml` verbatim. This avoids introducing a separate summarization model into the ablation.
 
-Run settings live in `configs/config.yaml`. Shared OpenAI-compatible API settings live in `experiments/shared/configs/llm_api.yaml`. Prompt templates live in `configs/prompts.yaml`, including the normal chat prompts and the LM Studio fallback message used when a model template rejects the `system` role.
+Run settings live in `configs/config.yaml`. Shared OpenAI-compatible API settings live in `experiments/shared/configs/llm_api.yaml`. A separate `configs/config_masoud.yaml` points at `experiments/shared/configs/llm_api_masoud.yaml` for runs against Masoud's hosted LM Studio server without changing the local-run config. Prompt templates live in `configs/prompts.yaml`, including the normal chat prompts and the LM Studio fallback message used when a model template rejects the `system` role. The system prompt is composed from one shared base instruction plus a condition-specific evidence rule, so common answer behavior stays aligned while each condition keeps its own evidence boundary.
 
-Operator prompts for the novice test cases live in `experiments/shared/configs/novice_questions.yaml`. The current battery is grouped by `scenario` from `experiments/docs_experiments/battery_of_questions_v1.md` so scenario-level reports can be inspected directly. The `question` field is sent to the LLM as the operator question; `scenario`, `risk_type`, `status`, and `expected_answer_elements` are evaluation-only fields and must not be sent to the LLM.
+Operator prompts for the novice test cases live in `experiments/shared/configs/novice_questions_v3.yaml`. The current battery is grouped by `scenario` from `experiments/docs_experiments/battery_of_questions_v1.md` so scenario-level reports can be inspected directly. The `question` field is sent to the LLM as the operator question; `scenario`, `risk_type`, `status`, and `expected_answer_elements` are evaluation-only fields and must not be sent to the LLM.
 
 ## Run Commands
 
@@ -315,10 +315,22 @@ From the repository root, run with windowed symbolic predicates and full rules:
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition symbolic_domain --config experiments\llm_guidance_ablation\configs\config.yaml
 ```
 
+To run the same condition through Masoud's hosted LM Studio server, use the Masoud experiment config:
+
+```powershell
+.venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition symbolic_domain --config experiments\llm_guidance_ablation\configs\config_masoud.yaml
+```
+
 To resume one condition after a partial run, pass the 1-based question index to start from. For example, if `symbolic_domain` completed questions 1-3, resume at question 4:
 
 ```powershell
 .venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition symbolic_domain --start-index 4 --config experiments\llm_guidance_ablation\configs\config.yaml
+```
+
+To rerun only a small inclusive range, pass both `--start-index` and `--end-index`:
+
+```powershell
+.venv\Scripts\python.exe experiments\llm_guidance_ablation\src\run_experiment.py --condition steps_only --start-index 23 --end-index 24 --config experiments\llm_guidance_ablation\configs\config.yaml
 ```
 
 To resume `symbolic_domain` and then automatically run the later condition without waiting to start it manually:
@@ -337,7 +349,7 @@ outputs/responses_steps_only_20260618T184039+0200.jsonl
 
 Each condition gets a separate file because its name is part of the filename, for example `responses_symbolic_domain_20260618T184039+0200.jsonl`.
 
-Each JSONL row includes `scenario`, `risk_type`, `status`, and `expected_answer_elements` for evaluation, but those fields are not included in prompts sent to the LLM.
+Each JSONL row includes `scenario`, `risk_type`, `status`, and `expected_answer_elements` for evaluation, but those fields are not included in prompts sent to the LLM. Each row also includes `duration_seconds` for the individual LLM interaction and an `llm` metadata block with the resolved LLM config path, API base URL, model name, temperature, max tokens, timeout, and retry count. The API key is deliberately excluded.
 
 Upstream identifiers are preserved in response artifacts for traceability, while
 LLM-facing step lists, predicates, and graph evidence use compact aliases such
@@ -352,7 +364,7 @@ Each run also writes a structured communication-flow log under `outputs/logs/`, 
 outputs/logs/communication_steps_only_20260618T184039+0200.log
 ```
 
-The log contains timestamped `run_started`, `request_sent`, `response_received`, and `run_completed` events. If `runtime.continue_on_llm_error` is enabled, failed calls produce `interaction_failed` events, write a failed response row, and continue to the next question. If that setting is disabled, a failed call also produces `run_failed` and stops the run. The final event records the minimum, maximum, and average successful prompt time; total duration in seconds and `HHh MMm SS.ss` form; and the number of completed and failed interactions. Prompt and response bodies are deliberately excluded from this log.
+The log contains timestamped `run_started`, `request_sent`, `response_received`, and `run_completed` events. The `run_started` event records the question-set manifest and the same report-safe `llm` metadata block used in response rows. If `runtime.continue_on_llm_error` is enabled, failed calls produce `interaction_failed` events, write a failed response row, and continue to the next question. If that setting is disabled, a failed call also produces `run_failed` and stops the run. The final event records the minimum, maximum, and average successful prompt time; total duration in seconds and `HHh MMm SS.ss` form; and the number of completed and failed interactions. Prompt and response bodies are deliberately excluded from this log.
 
 Every successful experiment run automatically writes a matching prompt-report snapshot under `outputs/prompt_reports/` using the same condition and timestamp:
 
@@ -360,7 +372,7 @@ Every successful experiment run automatically writes a matching prompt-report sn
 outputs/prompt_reports/steps_only_20260618T184039+0200/
 ```
 
-Those Markdown reports document the prompt content associated with the response file from that run. Reports are grouped by `scenario` when scenario metadata is present, otherwise by `risk_type` for older test-case files. To avoid repeating large invariant blocks, each file shows shared context once, followed by the step id, question, and selected predicates or graph evidence that vary by case.
+Those Markdown reports document the prompt content associated with the response file from that run. Reports are grouped by `scenario` when scenario metadata is present, otherwise by `risk_type` for older test-case files. To avoid repeating large invariant blocks, each file shows shared context once, followed by the step id, question, and selected predicates or graph evidence that vary by case. The API request section records the resolved LLM config path, API base URL, model name, temperature, max tokens, timeout, and retry count.
 
 Reports generated as part of a run also include the run-wide minimum, maximum, and average prompt interaction times and total experiment time. Standalone report exports state that runtime timing statistics are unavailable.
 

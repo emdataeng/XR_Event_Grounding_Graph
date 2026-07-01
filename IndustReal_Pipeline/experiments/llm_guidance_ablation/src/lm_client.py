@@ -20,6 +20,7 @@ class LMConfig:
     max_tokens: int
     request_timeout_seconds: float
     max_retries: int
+    source_config_path: str
 
 
 EXPERIMENT_ROOT = Path(__file__).resolve().parents[1]
@@ -44,12 +45,14 @@ def load_lm_config(config_path: str | Path = DEFAULT_CONFIG_PATH) -> LMConfig:
         config: dict[str, Any] = yaml.safe_load(handle) or {}
 
     llm_config_path = config.get("llm_config")
+    source_path = path
     if llm_config_path:
         shared_path = _resolve_configured_path(str(llm_config_path))
         if not shared_path.exists():
             raise FileNotFoundError(f"Shared LLM config is missing: {shared_path}")
         with shared_path.open("r", encoding="utf-8") as handle:
             config = yaml.safe_load(handle) or {}
+        source_path = shared_path
 
     try:
         return LMConfig(
@@ -60,9 +63,24 @@ def load_lm_config(config_path: str | Path = DEFAULT_CONFIG_PATH) -> LMConfig:
             max_tokens=int(config["max_tokens"]),
             request_timeout_seconds=float(config["request_timeout_seconds"]),
             max_retries=int(config["max_retries"]),
+            source_config_path=str(source_path),
         )
     except KeyError as exc:
         raise ValueError(f"Missing required LLM config field in {path}: {exc.args[0]}") from exc
+
+
+def load_lm_metadata(config_path: str | Path = DEFAULT_CONFIG_PATH) -> dict[str, Any]:
+    """Return report-safe LLM configuration metadata."""
+    config = load_lm_config(config_path)
+    return {
+        "config_path": config.source_config_path,
+        "api_base_url": config.api_base_url,
+        "model_name": config.model_name,
+        "temperature": config.temperature,
+        "max_tokens": config.max_tokens,
+        "request_timeout_seconds": config.request_timeout_seconds,
+        "max_retries": config.max_retries,
+    }
 
 
 def ask_llm(system_prompt: str, user_prompt: str) -> str:
@@ -116,8 +134,19 @@ def ask_llm(system_prompt: str, user_prompt: str) -> str:
     except Exception as exc:
         raise RuntimeError(f"The API call failed unexpectedly: {exc}") from exc
 
-    message = completion.choices[0].message.content
-    return (message or "").strip()
+    choice = completion.choices[0]
+    message = choice.message
+    content = (message.content or "").strip()
+    if content:
+        return content
+
+    reasoning_content = getattr(message, "reasoning_content", None)
+    raise RuntimeError(
+        "The API returned an empty assistant message content "
+        f"(finish_reason={getattr(choice, 'finish_reason', None)!r}, "
+        f"reasoning_content_present={bool(reasoning_content)}). "
+        "LM Studio may have produced reasoning text without a final assistant answer."
+    )
 
 
 def _create_chat_completion(client: Any, config: LMConfig, system_prompt: str, user_prompt: str) -> Any:

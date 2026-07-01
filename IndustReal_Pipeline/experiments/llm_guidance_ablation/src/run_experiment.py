@@ -18,7 +18,7 @@ sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
 from context_builders import PromptCondition, build_context
 from export_prompt_reports import export_prompt_reports
 from graph_loader import graph_artifact_path, load_procedural_reasoning_graph
-from lm_client import ask_llm, set_config_path
+from lm_client import ask_llm, load_lm_metadata, set_config_path
 from shared.graph_retrieval_config import load_graph_retrieval_config
 from shared.id_compaction import step_provenance
 from shared.question_set_manifest import build_question_set_manifest
@@ -40,6 +40,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=1,
         help="1-based question index to start from when resuming a condition.",
+    )
+    parser.add_argument(
+        "--end-index",
+        type=int,
+        default=None,
+        help="Inclusive 1-based question index to stop at when rerunning a subset.",
     )
     parser.add_argument(
         "--continue-with-next-conditions",
@@ -236,18 +242,28 @@ def run_experiment(
     config: dict[str, Any],
     dataset_id: str | None = None,
     start_index: int = 1,
+    end_index: int | None = None,
 ) -> tuple[Path, Path, Path]:
     """Run one prompting condition across all novice question test cases."""
     test_cases = load_test_cases(config)
+    end_index = end_index or len(test_cases)
     if start_index < 1 or start_index > len(test_cases):
         raise ValueError(
             f"--start-index must be between 1 and {len(test_cases)} for this question set; got {start_index}"
         )
-    selected_test_cases = test_cases[start_index - 1 :]
+    if end_index < start_index or end_index > len(test_cases):
+        raise ValueError(
+            f"--end-index must be between {start_index} and {len(test_cases)} for this question set; got {end_index}"
+        )
+    selected_test_cases = test_cases[start_index - 1 : end_index]
     question_set_path = resolve_configured_path(config["input_paths"]["test_cases"])
     question_set_manifest = build_question_set_manifest(question_set_path, len(test_cases))
     artifacts = load_artifacts(config, dataset_id=dataset_id, condition=condition)
     artifacts["question_set"] = question_set_manifest
+    llm_metadata = load_lm_metadata(
+        config.get("_experiment_config_path", EXPERIMENT_ROOT / "configs" / "config.yaml")
+    )
+    artifacts["llm"] = llm_metadata
     timestamp = local_timestamp_for_filename()
     output_path = output_path_for_run(config, condition, timestamp)
     prompt_report_dir = prompt_report_dir_for_run(config, condition, timestamp)
@@ -261,7 +277,7 @@ def run_experiment(
     continue_on_llm_error = bool(runtime_config["continue_on_llm_error"])
     run_started = time.perf_counter()
 
-    print(f"Starting {condition.value}: {planned_cases} LLM interactions from question {start_index}")
+    print(f"Starting {condition.value}: {planned_cases} LLM interactions from question {start_index} to {end_index}")
     print(f"Communication log: {log_path}")
     with log_path.open("w", encoding="utf-8") as log_handle:
         _write_log_event(
@@ -276,6 +292,7 @@ def run_experiment(
                 "evidence_hops": artifacts["evidence_hops"],
             },
             question_set=question_set_manifest,
+            llm=llm_metadata,
             continue_on_llm_error=continue_on_llm_error,
         )
         try:
@@ -326,10 +343,12 @@ def run_experiment(
                             },
                             "question": test_case.get("question"),
                             "question_set": question_set_manifest,
+                            "llm": llm_metadata,
                             "response": None,
                             "response_status": "failed",
                             "error_type": type(exc).__name__,
                             "error_message": str(exc),
+                            "duration_seconds": round(interaction_duration, 6),
                             "scenario": test_case.get("scenario"),
                             "risk_type": test_case.get("risk_type"),
                             "status": test_case.get("status"),
@@ -374,8 +393,10 @@ def run_experiment(
                         },
                         "question": test_case.get("question"),
                         "question_set": question_set_manifest,
+                        "llm": llm_metadata,
                         "response": response,
                         "response_status": "ok",
+                        "duration_seconds": round(interaction_duration, 6),
                         "scenario": test_case.get("scenario"),
                         "risk_type": test_case.get("risk_type"),
                         "status": test_case.get("status"),
@@ -473,16 +494,31 @@ def main() -> None:
         args = parse_args()
         if args.condition == ALL_CONDITIONS and args.start_index != 1:
             raise ValueError("--start-index can only be used with one starting condition, not --condition all")
+        if args.condition == ALL_CONDITIONS and args.end_index is not None:
+            raise ValueError("--end-index can only be used with one starting condition, not --condition all")
+        if args.continue_with_next_conditions and args.end_index is not None:
+            raise ValueError("--end-index cannot be combined with --continue-with-next-conditions")
         set_config_path(args.config)
         config = load_config(args.config)
+        config["_experiment_config_path"] = str(Path(args.config))
         dataset_id = args.industreal or args.dataset or config.get("dataset", {}).get("default_clip_id")
         run_outputs = []
         for index, condition in enumerate(
             selected_conditions(args.condition, args.continue_with_next_conditions)
         ):
             start_index = args.start_index if index == 0 else 1
+            end_index = args.end_index if index == 0 else None
             run_outputs.append(
-                (condition, *run_experiment(condition, config, dataset_id=dataset_id, start_index=start_index))
+                (
+                    condition,
+                    *run_experiment(
+                        condition,
+                        config,
+                        dataset_id=dataset_id,
+                        start_index=start_index,
+                        end_index=end_index,
+                    ),
+                )
             )
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)

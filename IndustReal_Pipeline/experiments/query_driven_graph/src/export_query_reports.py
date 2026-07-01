@@ -30,6 +30,10 @@ def export_query_reports(rows: list[dict[str, Any]], output_dir: Path) -> None:
             "",
             *_question_set_lines(_first_question_set(group_rows)),
             "",
+            "## LLM API",
+            "",
+            *_llm_lines(_first_llm(group_rows)),
+            "",
         ]
         for row in group_rows:
             lines.extend(_case_section(row))
@@ -66,6 +70,8 @@ def _case_section(row: dict[str, Any]) -> list[str]:
         json.dumps(row.get("query_rows") or [], indent=2, ensure_ascii=False, sort_keys=True),
         "```",
         "",
+        *_prompt_section(row.get("prompt")),
+        "",
         "### Answer",
         "",
         str(row.get("response") or ""),
@@ -91,6 +97,24 @@ def _case_section(row: dict[str, Any]) -> list[str]:
     ]
 
 
+def _prompt_section(prompt: Any) -> list[str]:
+    """Render the actual LLM system prompt stored for this case."""
+    if not isinstance(prompt, dict):
+        return [
+            "### Actual System Message Sent",
+            "",
+            "`No LLM prompt was sent for this case.`",
+        ]
+
+    return [
+        "### Actual System Message Sent",
+        "",
+        "```text",
+        str(prompt.get("system_prompt") or ""),
+        "```",
+    ]
+
+
 def _first_graph_manifest(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Return the first manifest stored in response rows."""
     for row in rows:
@@ -109,6 +133,15 @@ def _first_question_set(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
     return None
 
 
+def _first_llm(rows: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the first LLM metadata block stored in response rows."""
+    for row in rows:
+        llm = row.get("llm")
+        if isinstance(llm, dict):
+            return llm
+    return None
+
+
 def _question_set_lines(question_set: dict[str, Any] | None) -> list[str]:
     """Render the novice-question set used for a run."""
     if not question_set:
@@ -119,6 +152,21 @@ def _question_set_lines(question_set: dict[str, Any] | None) -> list[str]:
         f"- Version: `{question_set.get('question_set_version') or 'unknown'}`",
         f"- Case count: `{question_set.get('case_count') or 'unknown'}`",
         f"- SHA-256: `{_short_hash(question_set.get('sha256'))}`",
+    ]
+
+
+def _llm_lines(llm: dict[str, Any] | None) -> list[str]:
+    """Render report-safe LLM API settings for provenance."""
+    if not llm:
+        return ["- LLM API settings: `not found in response rows`"]
+    return [
+        f"- Config path: `{llm.get('config_path') or 'unknown'}`",
+        f"- API base URL: `{llm.get('api_base_url') or 'unknown'}`",
+        f"- Model: `{llm.get('model_name') or 'unknown'}`",
+        f"- Temperature: `{llm.get('temperature')}`",
+        f"- Max tokens: `{llm.get('max_tokens')}`",
+        f"- Request timeout seconds: `{llm.get('request_timeout_seconds')}`",
+        f"- Max retries: `{llm.get('max_retries')}`",
     ]
 
 

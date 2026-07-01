@@ -23,7 +23,7 @@ sys.path.insert(0, str(SHARED_EXPERIMENTS_DIR))
 
 from answer_builder import build_answer_prompt, load_prompt_templates  # noqa: E402
 from export_query_reports import export_query_reports  # noqa: E402
-from lm_client import ask_llm, set_config_path  # noqa: E402
+from lm_client import ask_llm, load_lm_metadata, set_config_path  # noqa: E402
 from neo4j_client import client_from_config  # noqa: E402
 from query_planner import build_query_plan, canonical_step_id, load_query_template_config  # noqa: E402
 from shared.graph_retrieval_config import load_graph_retrieval_config  # noqa: E402
@@ -149,6 +149,13 @@ def write_log_event(handle: Any, event: str, **fields: Any) -> None:
     handle.flush()
 
 
+def format_duration_hms(seconds: float) -> str:
+    """Format elapsed seconds as hours, minutes, and seconds."""
+    hours, remainder = divmod(max(0.0, seconds), 3600)
+    minutes, remaining_seconds = divmod(remainder, 60)
+    return f"{int(hours):02d}h {int(minutes):02d}m {remaining_seconds:05.2f}s"
+
+
 def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, Path]:
     """Run the query-driven graph experiment."""
     test_cases = load_test_cases(config)
@@ -162,21 +169,26 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
     retrieval_config = load_graph_retrieval_config(
         resolve_configured_path(config["graph_retrieval_config"])
     )
+    active_config_path = resolve_configured_path(config_path_from_active_run(config))
+    llm_metadata = load_lm_metadata(active_config_path)
     graph_name = str(config.get("neo4j", {}).get("graph_name") or "procedural_reasoning_graph")
     row_limit = int(config.get("neo4j", {}).get("row_limit", 25))
     timestamp = local_timestamp_for_filename()
     paths = output_paths(config, timestamp)
     rows: list[dict[str, Any]] = []
     started = time.perf_counter()
+    interaction_durations: list[float] = []
     client = None
 
     if not dry_run:
-        set_config_path(resolve_configured_path(config_path_from_active_run(config)))
+        set_config_path(active_config_path)
 
     try:
         client = client_from_config(config, REPO_ROOT)
         valid_step_ids = client.fetch_step_ids(graph_name)
         graph_manifest = fetch_graph_manifest(client, graph_name)
+        print(f"Starting {CONDITION}: {len(test_cases)} graph queries and answer-generation checks")
+        print(f"Communication log: {paths['log']}")
         with paths["log"].open("w", encoding="utf-8") as log_handle, paths["responses"].open(
             "w", encoding="utf-8"
         ) as output_handle:
@@ -187,6 +199,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 dry_run=dry_run,
                 total_interactions=len(test_cases),
                 question_set=question_set_manifest,
+                llm=llm_metadata,
                 graph_name=graph_name,
                 graph_manifest_found=graph_manifest is not None,
                 graph_retrieval=retrieval_config,
@@ -203,6 +216,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     row_limit,
                     retrieval_config,
                 )
+                prompt = None
                 write_log_event(
                     log_handle,
                     "query_selected",
@@ -292,6 +306,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                         )
 
                 duration = time.perf_counter() - case_started
+                interaction_durations.append(duration)
                 row = {
                     "case_id": test_case.get("case_id"),
                     "condition": CONDITION,
@@ -299,6 +314,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     "step_provenance": step_provenance(test_case.get("step_id")),
                     "question": test_case.get("question"),
                     "question_set": question_set_manifest,
+                    "llm": llm_metadata,
                     "retrieval_template": plan.retrieval_template,
                     "retrieval_template_description": plan.description,
                     "cypher": plan.cypher,
@@ -308,6 +324,7 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                     "query_status": query_status,
                     "query_error": query_error,
                     "query_rows": query_rows,
+                    "prompt": prompt,
                     "response": response,
                     "llm_status": llm_status,
                     "llm_error": llm_error,
@@ -321,6 +338,13 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 rows.append(row)
                 output_handle.write(json.dumps(row, ensure_ascii=False) + "\n")
                 output_handle.flush()
+                status_bits = f"query={query_status}, llm={llm_status}"
+                if llm_status == "failed":
+                    print(f"[{index}/{len(test_cases)}] failed in {duration:.2f}s ({status_bits})")
+                elif llm_status in {"skipped", "dry_run"}:
+                    print(f"[{index}/{len(test_cases)}] completed in {duration:.2f}s ({status_bits})")
+                else:
+                    print(f"[{index}/{len(test_cases)}] completed in {duration:.2f}s ({status_bits})")
                 write_log_event(
                     log_handle,
                     "interaction_completed",
@@ -335,6 +359,13 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 )
 
             total_duration = time.perf_counter() - started
+            min_seconds = min(interaction_durations) if interaction_durations else None
+            max_seconds = max(interaction_durations) if interaction_durations else None
+            avg_seconds = (
+                sum(interaction_durations) / len(interaction_durations)
+                if interaction_durations
+                else None
+            )
             export_query_reports(rows, paths["reports"])
             write_log_event(
                 log_handle,
@@ -343,10 +374,20 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 completed_interactions=len(rows),
                 failed_llm_interactions=sum(row["llm_status"] == "failed" for row in rows),
                 total_interactions=len(test_cases),
+                min_interaction_seconds=round(min_seconds, 6) if min_seconds is not None else None,
+                max_interaction_seconds=round(max_seconds, 6) if max_seconds is not None else None,
+                avg_interaction_seconds=round(avg_seconds, 6) if avg_seconds is not None else None,
                 total_duration_seconds=round(total_duration, 6),
+                total_duration_hms=format_duration_hms(total_duration),
                 responses_path=str(paths["responses"]),
                 query_reports_path=str(paths["reports"]),
             )
+            min_label = f"{min_seconds:.2f}s" if min_seconds is not None else "n/a"
+            max_label = f"{max_seconds:.2f}s" if max_seconds is not None else "n/a"
+            avg_label = f"{avg_seconds:.2f}s" if avg_seconds is not None else "n/a"
+            print(f"Completed {CONDITION}: {len(rows)}/{len(test_cases)} interactions")
+            print(f"Timing: min={min_label} | max={max_label} | avg={avg_label}")
+            print(f"Total time: {format_duration_hms(total_duration)}")
     finally:
         if client is not None:
             client.close()

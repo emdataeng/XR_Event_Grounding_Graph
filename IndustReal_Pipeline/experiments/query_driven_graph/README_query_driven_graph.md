@@ -52,9 +52,15 @@ Shared novice questions and frozen step-list artifacts live under
 test cases and procedural baseline.
 Shared OpenAI-compatible API settings live in
 `experiments/shared/configs/llm_api.yaml`.
+Use `experiments/shared/configs/llm_api_masoud.yaml` through the Masoud-specific
+experiment config when you want to send answer-generation calls to the hosted
+LM Studio endpoint instead of your local one.
 Shared sequence and semantic graph-traversal budgets live in
 `experiments/shared/configs/graph_retrieval.yaml`; this experiment renders those
 values into its validated read-only Cypher templates.
+The answer-generation system prompt is composed from a shared base instruction
+plus a query-driven evidence rule, so common answer behavior matches the LLM
+guidance ablation while the Neo4j-only evidence boundary remains explicit.
 
 ## Run Prerequisites
 
@@ -158,6 +164,14 @@ From the repository root:
   --config experiments\query_driven_graph\configs\config_query_driven_graph.yaml
 ```
 
+To run the same query-driven graph experiment against Masoud's LM Studio server,
+use the alternate experiment config. This leaves your local config untouched:
+
+```powershell
+.venv\Scripts\python.exe experiments\query_driven_graph\src\run_experiment_query_driven_graph.py `
+  --config experiments\query_driven_graph\configs\config_query_driven_graph_masoud.yaml
+```
+
 Use `--dry-run` to validate template selection and output artifacts without
 calling the LLM:
 
@@ -176,8 +190,11 @@ Each run writes:
 - `outputs/query_reports/query_driven_graph_<timestamp>/`
 
 Each JSONL response row includes the selected retrieval template, Cypher query, query
-parameters, query rows, and final answer. Evaluation metadata is saved for later
-analysis but is not sent to the LLM.
+parameters, query rows, final answer, question-set manifest, graph manifest, and
+report-safe LLM API metadata. The LLM metadata records the config path, API base
+URL, model name, temperature, max tokens, timeout, and retry count, but never the
+API key. Evaluation metadata is saved for later analysis but is not sent to the
+LLM.
 
 ## Prompt Identifier Compaction
 
