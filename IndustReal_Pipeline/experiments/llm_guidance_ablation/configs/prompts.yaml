@@ -1,20 +1,16 @@
+# The only system message sent to the LLM. Keep this instruction invariant so
+# experiment conditions differ by provided context/evidence, not by general
+# assistant behavior.
 shared_system_prompt: >-
-  You are an assistant helping a novice assembly operator. Be concise,
-  practical, and safety-aware. Do not invent facts absent from the provided
-  evidence. If evidence is missing, ambiguous, or conflicting, say what is
-  uncertain or missing. End with one complete final recommendation sentence.
+  You are an assistant helping a novice assembly operator perform a
+  manufacturing task. Answer the operator's question based only on the
+  information provided below. Be concise, practical, and safety-aware. Do not
+  use any knowledge beyond what is explicitly provided. If information is
+  missing, uncertain, or conflicting, say so clearly rather than guessing.
 
+# Condition sections define only user-message templates and inserted context
+# blocks. They are not appended to the system message.
 steps_only:
-  system_with_context: >-
-    Use only the procedural step context provided. Do not infer missing assembly
-    steps from general knowledge.
-
-  system_missing_context: >-
-    No generated procedural step context has been provided. Do not answer the
-    operator's procedural question. Reply only that the step list or generated
-    procedural context is missing and ask the user to provide it before
-    continuing.
-
   user_template: |-
     Current step id:
     {step_id}
@@ -26,17 +22,6 @@ steps_only:
     {question}
 
 symbolic_domain:
-  system_with_context: >-
-    Use only the generated procedural steps, symbolic predicates, and thesis
-    rules provided. Do not infer missing assembly information from general
-    knowledge.
-
-  system_missing_context: >-
-    Use only the provided symbolic predicates and thesis rules. No generated
-    procedural step context has been provided, so do not invent the current or
-    next step. State what step information is missing when it prevents a
-    grounded answer.
-
   user_template: |-
     Current step id:
     {step_id}
@@ -54,19 +39,6 @@ symbolic_domain:
     {question}
 
 graph_grounded:
-  system_with_context: >-
-    Use only the generated procedural steps and procedural reasoning graph
-    evidence provided. If any required condition is missing, do not recommend
-    continuing. Mention relevant missing requirements, supported requirements,
-    dependencies, incompatibilities, safety constraints, or trace evidence only
-    when the provided graph evidence contains that information.
-
-  system_missing_context: >-
-    No generated procedural step context has been provided, so do not recommend
-    continuing or invent the current or next step. Use only the provided graph
-    evidence, and state what information is missing when it prevents a grounded
-    answer.
-
   user_template: |-
     Current step id:
     {step_id}

@@ -39,11 +39,9 @@ def build_answer_prompt(
     if not isinstance(answer_prompts, dict):
         raise ValueError("Prompt config missing answer_generation section.")
 
-    system_key = "system_with_evidence" if query_rows else "system_missing_evidence"
-    system_prompt = _compose_system_prompt(
-        str(prompts.get("shared_system_prompt") or ""),
-        str(answer_prompts[system_key]),
-    )
+    system_prompt = str(prompts.get("shared_system_prompt") or "").strip()
+    if not system_prompt:
+        raise ValueError("Prompt config missing shared_system_prompt.")
     user_template = str(answer_prompts["user_template"])
     source_step_id = str(test_case.get("step_id") or "")
     compact_query_rows = compact_prompt_value(query_rows, source_step_id)
@@ -58,8 +56,3 @@ def build_answer_prompt(
         }
     )
     return {"system_prompt": system_prompt, "user_prompt": user_prompt}
-
-
-def _compose_system_prompt(shared_prompt: str, specific_prompt: str) -> str:
-    """Compose shared answer behavior with the experiment-specific evidence rule."""
-    return "\n\n".join(part.strip() for part in (shared_prompt, specific_prompt) if part.strip())

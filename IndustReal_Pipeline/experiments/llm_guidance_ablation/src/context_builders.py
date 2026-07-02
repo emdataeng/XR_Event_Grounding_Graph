@@ -35,7 +35,6 @@ def build_steps_only_context(test_case: dict[str, Any], artifacts: dict[str, Any
     step_id = compact_step_id(source_step_id)
     question = str(test_case.get("question", "")).strip()
     step_context = compact_prompt_text(_step_list_artifact(artifacts), source_step_id)
-    has_step_context = bool(step_context)
     prompts = _condition_prompts(artifacts, "steps_only")
 
     if not source_step_id:
@@ -43,8 +42,7 @@ def build_steps_only_context(test_case: dict[str, Any], artifacts: dict[str, Any
     if not question:
         raise ValueError("Test case is missing required field: question")
 
-    system_key = "system_with_context" if has_step_context else "system_missing_context"
-    system_prompt = _condition_system_prompt(artifacts, "steps_only", system_key)
+    system_prompt = _shared_system_prompt(artifacts)
     user_prompt = _render_template(
         prompts["user_template"],
         step_id=step_id,
@@ -68,10 +66,8 @@ def build_symbolic_domain_context(test_case: dict[str, Any], artifacts: dict[str
     predicates = compact_prompt_text(predicate_context_for_step(source_step_id, artifacts), source_step_id)
     thesis_rules = _required_text_artifact(artifacts, "thesis_rules")
     step_context = compact_prompt_text(_step_list_artifact(artifacts), source_step_id)
-    has_step_context = bool(step_context)
     prompts = _condition_prompts(artifacts, "symbolic_domain")
-    system_key = "system_with_context" if has_step_context else "system_missing_context"
-    system_prompt = _condition_system_prompt(artifacts, "symbolic_domain", system_key)
+    system_prompt = _shared_system_prompt(artifacts)
     user_prompt = _render_template(
         prompts["user_template"],
         step_id=step_id,
@@ -100,8 +96,7 @@ def build_graph_grounded_context(test_case: dict[str, Any], artifacts: dict[str,
     )
     step_context = compact_prompt_text(_step_list_artifact(artifacts), source_step_id)
     prompts = _condition_prompts(artifacts, "graph_grounded")
-    system_key = "system_with_context" if step_context else "system_missing_context"
-    system_prompt = _condition_system_prompt(artifacts, "graph_grounded", system_key)
+    system_prompt = _shared_system_prompt(artifacts)
     user_prompt = _render_template(
         prompts["user_template"],
         step_id=step_id,
@@ -276,16 +271,16 @@ def _condition_prompts(artifacts: dict[str, Any], condition_name: str) -> dict[s
     return condition_prompts
 
 
-def _condition_system_prompt(artifacts: dict[str, Any], condition_name: str, prompt_key: str) -> str:
-    """Compose the shared base system prompt with the condition-specific rule."""
+def _shared_system_prompt(artifacts: dict[str, Any]) -> str:
+    """Return the invariant system prompt used by every condition."""
     all_prompts = artifacts.get("prompt_templates")
     if not isinstance(all_prompts, dict):
         raise ValueError("Prompt templates were not loaded. Check prompt_paths.prompts in config.")
 
     shared_prompt = str(all_prompts.get("shared_system_prompt") or "").strip()
-    condition_prompts = _condition_prompts(artifacts, condition_name)
-    specific_prompt = str(condition_prompts[prompt_key]).strip()
-    return "\n\n".join(part for part in (shared_prompt, specific_prompt) if part)
+    if not shared_prompt:
+        raise ValueError("Prompt templates missing shared_system_prompt.")
+    return shared_prompt
 
 
 def _render_template(template: str, **values: Any) -> str:
