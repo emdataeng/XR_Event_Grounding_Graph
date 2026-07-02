@@ -1,0 +1,23 @@
+#llm_config: "experiments\\shared\\configs\\llm_api.yaml"
+llm_config: "experiments\\shared\\configs\\llm_api_masoud.yaml"
+graph_retrieval_config: "experiments\\shared\\configs\\graph_retrieval.yaml"
+
+dataset:
+  default_clip_id: "raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1"
+
+neo4j:
+  env_file: "experiments\\query_driven_graph\\.env.local"
+  graph_name: "procedural_reasoning_graph::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::08_assy_0_1"
+  row_limit: 25
+
+input_paths:
+  test_cases: "experiments\\shared\\configs\\novice_questions_v4_od_plus_psr_error_hints_test_p1_08_assy_0_1.yaml"
+  step_list: "experiments\\shared\\data\\steps_od_plus_psr_error_hints_test_p1_08_assy_0_1.txt"
+  procedural_reasoning_graph: "results\\procedural_reasoning_graph\\raw_cad_dataset__all_test_clips__od_plus_psr_error_hints__test_p1__08_assy_0_1"
+
+prompt_paths:
+  prompts: "experiments\\query_driven_graph\\configs\\prompts_query_driven_graph.yaml"
+  query_templates: "experiments\\query_driven_graph\\configs\\query_templates.yaml"
+
+output_paths:
+  root: "experiments\\query_driven_graph\\outputs"

@@ -186,25 +186,57 @@ def resolve_configured_path(path_value: str) -> Path:
     return REPO_ROOT / path
 
 
-def output_path_for_run(config: dict[str, Any], condition: PromptCondition, timestamp: str) -> Path:
+def clip_output_label(dataset_id: str | None) -> str:
+    """Return a compact clip label for filenames and report directories."""
+    if not dataset_id:
+        return "unknown_clip"
+    parts = str(dataset_id).split("::")
+    mode = parts[-3] if len(parts) >= 3 else "dataset"
+    clip = parts[-1] if parts else str(dataset_id)
+    mode_labels = {
+        "od_plus_psr_error_hints": "od_plus_error_hints",
+    }
+    clip_labels = {
+        "03_assy_0_1": "03_assy_01",
+    }
+    label = f"{mode_labels.get(mode, mode)}_{clip_labels.get(clip, clip)}"
+    return "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in label).strip("_")
+
+
+def output_path_for_run(
+    config: dict[str, Any],
+    condition: PromptCondition,
+    timestamp: str,
+    clip_label: str,
+) -> Path:
     """Create the output JSONL path for a run."""
     output_root = resolve_configured_path(config.get("output_paths", {}).get("root", "outputs"))
     output_root.mkdir(parents=True, exist_ok=True)
-    return output_root / f"responses_{condition.value}_{timestamp}.jsonl"
+    return output_root / f"responses_{condition.value}_{clip_label}_{timestamp}.jsonl"
 
 
-def prompt_report_dir_for_run(config: dict[str, Any], condition: PromptCondition, timestamp: str) -> Path:
+def prompt_report_dir_for_run(
+    config: dict[str, Any],
+    condition: PromptCondition,
+    timestamp: str,
+    clip_label: str,
+) -> Path:
     """Create the prompt report directory for a run."""
     output_root = resolve_configured_path(config.get("output_paths", {}).get("root", "outputs"))
-    return output_root / "prompt_reports" / f"{condition.value}_{timestamp}"
+    return output_root / "prompt_reports" / f"{condition.value}_{clip_label}_{timestamp}"
 
 
-def log_path_for_run(config: dict[str, Any], condition: PromptCondition, timestamp: str) -> Path:
+def log_path_for_run(
+    config: dict[str, Any],
+    condition: PromptCondition,
+    timestamp: str,
+    clip_label: str,
+) -> Path:
     """Create the communication-flow log path for a run."""
     output_root = resolve_configured_path(config.get("output_paths", {}).get("root", "outputs"))
     log_root = output_root / "logs"
     log_root.mkdir(parents=True, exist_ok=True)
-    return log_root / f"communication_{condition.value}_{timestamp}.log"
+    return log_root / f"communication_{condition.value}_{clip_label}_{timestamp}.log"
 
 
 def _write_log_event(handle: Any, event: str, **fields: Any) -> None:
@@ -265,9 +297,10 @@ def run_experiment(
     )
     artifacts["llm"] = llm_metadata
     timestamp = local_timestamp_for_filename()
-    output_path = output_path_for_run(config, condition, timestamp)
-    prompt_report_dir = prompt_report_dir_for_run(config, condition, timestamp)
-    log_path = log_path_for_run(config, condition, timestamp)
+    clip_label = clip_output_label(dataset_id or config.get("dataset", {}).get("default_clip_id"))
+    output_path = output_path_for_run(config, condition, timestamp, clip_label)
+    prompt_report_dir = prompt_report_dir_for_run(config, condition, timestamp, clip_label)
+    log_path = log_path_for_run(config, condition, timestamp, clip_label)
     total_cases = len(test_cases)
     planned_cases = len(selected_test_cases)
     completed_cases = 0

@@ -123,16 +123,34 @@ def local_timestamp_for_filename() -> str:
     return datetime.now().astimezone().strftime("%Y%m%dT%H%M%S%z")
 
 
+def clip_output_label(dataset_id: str | None) -> str:
+    """Return a compact clip label for filenames and report directories."""
+    if not dataset_id:
+        return "unknown_clip"
+    parts = str(dataset_id).split("::")
+    mode = parts[-3] if len(parts) >= 3 else "dataset"
+    clip = parts[-1] if parts else str(dataset_id)
+    mode_labels = {
+        "od_plus_psr_error_hints": "od_plus_error_hints",
+    }
+    clip_labels = {
+        "03_assy_0_1": "03_assy_01",
+    }
+    label = f"{mode_labels.get(mode, mode)}_{clip_labels.get(clip, clip)}"
+    return "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in label).strip("_")
+
+
 def output_paths(config: dict[str, Any], timestamp: str) -> dict[str, Path]:
     """Create run output paths."""
     root = resolve_configured_path(config.get("output_paths", {}).get("root", "outputs"))
     log_root = root / "logs"
-    report_root = root / "query_reports" / f"{CONDITION}_{timestamp}"
+    clip_label = clip_output_label(config.get("dataset", {}).get("default_clip_id"))
+    report_root = root / "query_reports" / f"{CONDITION}_{clip_label}_{timestamp}"
     root.mkdir(parents=True, exist_ok=True)
     log_root.mkdir(parents=True, exist_ok=True)
     return {
-        "responses": root / f"responses_{CONDITION}_{timestamp}.jsonl",
-        "log": log_root / f"communication_{CONDITION}_{timestamp}.log",
+        "responses": root / f"responses_{CONDITION}_{clip_label}_{timestamp}.jsonl",
+        "log": log_root / f"communication_{CONDITION}_{clip_label}_{timestamp}.log",
         "reports": report_root,
     }
 

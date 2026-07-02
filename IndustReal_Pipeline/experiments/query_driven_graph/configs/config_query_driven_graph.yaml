@@ -10,7 +10,7 @@ neo4j:
   row_limit: 25
 
 input_paths:
-  test_cases: "experiments\\shared\\configs\\novice_questions_v3.yaml"
+  test_cases: "experiments\\shared\\configs\\novice_questions_v4_od_only_test_p1_03_assy_0_1.yaml"
   step_list: "experiments\\shared\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
   procedural_reasoning_graph: "results\\procedural_reasoning_graph\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1"
 

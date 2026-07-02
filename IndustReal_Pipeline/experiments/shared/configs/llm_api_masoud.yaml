@@ -1,6 +1,6 @@
 # OpenAI-compatible API settings for Masoud's hosted LM Studio server.
 # This is intentionally separate from llm_api.yaml so local runs stay unchanged.
-api_base_url: "https://producer-arrangements-piano-seeker.trycloudflare.com/v1"
+api_base_url: "https://lowest-independent-powell-includes.trycloudflare.com/v1"
 api_key: "anything"
 model_name: "local-model"
 temperature: 0.0

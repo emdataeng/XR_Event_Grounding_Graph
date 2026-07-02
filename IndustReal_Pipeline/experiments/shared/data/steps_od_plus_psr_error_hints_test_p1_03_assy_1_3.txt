@@ -1,0 +1,113 @@
+Available assembly steps:
+- Step 0: Install base
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_0
+  - acted_on_object: base
+  - previous_step_id: none
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_1
+  - time_window: start_frame=519, end_frame=830
+  - confidence: 1.0
+- Step 1: Install rear chassis
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_1
+  - acted_on_object: rear chassis
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_0
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_2
+  - time_window: start_frame=519, end_frame=830
+  - confidence: 1.0
+- Step 2: Install front rear chassis pin
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_2
+  - acted_on_object: front rear chassis pin
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_1
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_3
+  - time_window: start_frame=519, end_frame=830
+  - confidence: 1.0
+- Step 3: Incorrectly installed front chassis
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_3
+  - acted_on_object: front chassis
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_2
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_4
+  - time_window: start_frame=830, end_frame=902
+  - confidence: 1.0
+- Step 4: Install front chassis pin
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_4
+  - acted_on_object: front chassis pin
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_3
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_5
+  - time_window: start_frame=830, end_frame=902
+  - confidence: 1.0
+- Step 5: Install front chassis
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_5
+  - acted_on_object: front chassis
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_4
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_6
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 6: Install front chassis pin
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_6
+  - acted_on_object: front chassis pin
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_5
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_7
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 7: Remove rear chassis
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_7
+  - acted_on_object: rear chassis
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_6
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_8
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 8: Install short rear chassis
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_8
+  - acted_on_object: short rear chassis
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_7
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_9
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 9: Install rear rear chassis pin
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_9
+  - acted_on_object: rear rear chassis pin
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_8
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_10
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 10: Install front bracket
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_10
+  - acted_on_object: front bracket
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_9
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_11
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 11: Install front bracket screw
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_11
+  - acted_on_object: front bracket screw
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_10
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_12
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 12: Install front wheel assy
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_12
+  - acted_on_object: front wheel assy
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_11
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_13
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 13: Install rear wheel assy
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_13
+  - acted_on_object: rear wheel assy
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_12
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_14
+  - time_window: start_frame=902, end_frame=1566
+  - confidence: 1.0
+- Step 14: Incorrectly installed rear wheel assy
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_14
+  - acted_on_object: rear wheel assy
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_13
+  - next_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_15
+  - time_window: start_frame=1566, end_frame=2173
+  - confidence: 1.0
+- Step 15: Remove front chassis pin
+  - step_id: step::raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_15
+  - acted_on_object: front chassis pin
+  - previous_step_id: raw_cad_dataset__all_test_clips::od_plus_psr_error_hints::test_p1::03_assy_1_3::event_14
+  - next_step_id: none
+  - time_window: start_frame=2173, end_frame=None
+  - confidence: 1.0

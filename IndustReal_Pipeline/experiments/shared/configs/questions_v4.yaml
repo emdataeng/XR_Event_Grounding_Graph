@@ -31,12 +31,12 @@ scenario_groups:
         - "avoid inventing a physical mounting location not represented in the model"
 
     - case_id: "q04_wrong_part_target_check"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4"
       status: "Runnable now as target lookup"
-      question: "Can I use the rear chassis pin for the front bracket?"
+      question: "Can I use the front chassis pin for the front bracket?"
       expected_answer_elements:
         - "answer no"
-        - "identify rear_chassis as the rear chassis pin's modeled installation target"
+        - "identify front_chassis as the front chassis pin's modeled installation target"
         - "explain that the front bracket is not the modeled target for that pin"
         - "avoid claiming a hard graph rejection unless the proposed wrong target is explicitly represented"
 
@@ -109,13 +109,13 @@ scenario_groups:
         - "distinguish supported from missing safety requirements"
         - "avoid recommending continuation while a required safety condition is missing"
 
-    - case_id: "q12_rear_chassis_pin_safety_prerequisites"
-      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_5"
+    - case_id: "q12_front_chassis_pin_safety_prerequisites"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4"
       status: "Runnable now"
-      question: "I am about to install the rear rear chassis pin. Which safety checks must I verify first, and are those checks already confirmed or do I still need to do them?"
+      question: "I am about to install the front chassis pin. Which safety checks must I verify first, and are those checks already confirmed or do I still need to do them?"
       expected_answer_elements:
         - "identify secured(base, workspace)"
-        - "identify secured(rear_chassis, base)"
+        - "identify secured(front_chassis, base)"
         - "distinguish supported from missing safety requirements"
         - "avoid recommending continuation while a required safety condition is missing"
 
