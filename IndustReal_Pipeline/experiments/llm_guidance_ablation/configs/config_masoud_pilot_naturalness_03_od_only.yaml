@@ -1,0 +1,41 @@
+llm_config: "experiments\\shared\\configs\\llm_api_masoud.yaml"
+graph_retrieval_config: "experiments\\shared\\configs\\graph_retrieval.yaml"
+
+runtime:
+  continue_on_llm_error: true
+
+dataset:
+  default_kind: "industreal"
+  default_clip_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1"
+  available_kinds:
+    - "industreal"
+    - "custom"
+
+input_paths:
+  industreal_root: "results\\neo4j\\raw_cad_dataset__all_test_clips"
+  step_list: "experiments\\shared\\data\\steps_od_only_test_p1_03_assy_0_1.txt"
+  predicate_contexts: "experiments\\shared\\data\\predicate_contexts_od_only_test_p1_03_assy_0_1_h1.json"
+  thesis_rules: "config\\thesis_rules.yaml"
+  # Leave empty to derive the path from the selected dataset/clip id.
+  procedural_reasoning_graph: ""
+  test_cases: "experiments\\shared\\configs\\novice_questions_v4_pilot_naturalness_od_only_test_p1_03_assy_0_1.yaml"
+
+artifact_sources:
+  step_records: "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\step_records.jsonl"
+  predicates: "results\\reasoning_layers\\raw_cad_dataset__all_test_clips__od_only__test_p1__03_assy_0_1\\predicates.jsonl"
+
+prompt_paths:
+  prompts: "experiments\\llm_guidance_ablation\\configs\\prompts.yaml"
+
+output_paths:
+  root: "experiments\\llm_guidance_ablation\\outputs"
+  responses: "experiments\\llm_guidance_ablation\\outputs\\responses.jsonl"
+  evaluations: "experiments\\llm_guidance_ablation\\outputs\\evaluations.jsonl"
+
+pipeline_scripts:
+  - "scripts\\14_build_layer3_reasoning_adapter.py"
+  - "scripts\\15_run_layer3_inference.py"
+  - "scripts\\16_run_layer4_validation.py"
+  - "scripts\\17_build_procedural_reasoning_graph.py"
+  - "scripts\\18_import_procedural_reasoning_graph_neo4j.py"
+  - "scripts\\19_build_graph_data_js.py"

@@ -1,0 +1,83 @@
+# Six-case pilot for checking whether the natural-language shared prompt hides
+# condition identity while preserving precision. Cases were selected from the
+# earlier query-driven run because their answers exposed technical notation,
+# predicate names, relation labels, or internal graph wording.
+
+question_set_id: novice_questions_pilot_naturalness_od_only_test_p1_03_assy_0_1
+question_set_version: v4-naturalness-pilot
+clip_result_id: raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1
+
+pilot_selection:
+  source_question_set: novice_questions_v4_od_only_test_p1_03_assy_0_1.yaml
+  source_response_file: experiments/query_driven_graph/outputs/responses_query_driven_graph_20260702T135724+0200.jsonl
+  selection_goal:
+    - "one case per scenario"
+    - "prefer prior answers that exposed predicate notation, relation labels, graph terminology, or overly technical phrasing"
+  checks:
+    - "condition identity is less obvious"
+    - "precision is preserved"
+    - "missing evidence is still stated clearly"
+    - "the model does not invent extra operator coaching"
+    - "the response ends with (EOR)"
+
+scenario_groups:
+  scenario_a_dependency_and_prerequisite_checks:
+    - case_id: "q03_direct_installation_target"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_6"
+      status: "Runnable now"
+      question: "Which component is the front bracket supposed to be installed onto?"
+      expected_answer_elements:
+        - "answer front_chassis"
+        - "distinguish the installation target from the base or rear chassis"
+        - "avoid inventing a physical mounting location not represented in the model"
+
+  scenario_b_troubleshooting_implicit_conditions:
+    - case_id: "q09_root_component_alignment_exception"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0"
+      status: "Runnable now"
+      question: "Do I need to align the base with the workspace before installing it, or can I just place it down?"
+      expected_answer_elements:
+        - "answer no"
+        - "explain that the base explicitly overrides inherited required conditions"
+        - "avoid applying the general component alignment requirement to the base"
+
+  scenario_c_safety_and_tool_constraints:
+    - case_id: "q15_unsupported_tool_proposal"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4"
+      status: "Runnable now"
+      question: "Should I use the screwdriver for this pin because it was required for the screw step?"
+      expected_answer_elements:
+        - "do not transfer the screw's tool requirement to the pin"
+        - "state that no screwdriver requirement is modeled for the pin"
+        - "advise against using a tool without step-specific evidence"
+
+  scenario_d_state_lifecycle_and_error_recovery:
+    - case_id: "q19_reinstallation_guidance_after_removal"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_9"
+      status: "Runnable now"
+      question: "After removing the front wheel assembly, if I need to use it again later, what would need to happen first before I can do that?"
+      expected_answer_elements:
+        - "require a new installation on the front chassis after the removal"
+        - "require any applicable alignment condition"
+        - "do not reuse the invalidated earlier effect"
+
+  scenario_e_validation_status_provenance_and_relation_precision:
+    - case_id: "q21_why_accepted"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_1"
+      status: "Runnable now with selection"
+      question: "Why is it okay to proceed with this step? What earlier completed action makes it possible to do this now?"
+      expected_answer_elements:
+        - "identify the requirement"
+        - "identify its supporting produced effect"
+        - "identify the earlier producing step"
+        - "avoid explaining acceptance from confidence alone"
+
+  scenario_f_missing_evidence_controls:
+    - case_id: "q27_unknown_step"
+      step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_999"
+      status: "Runnable now"
+      question: "I cannot find this step. What should I do next?"
+      expected_answer_elements:
+        - "state that the step is absent"
+        - "request the correct step or procedure context"
+        - "avoid fabricating a sequence"

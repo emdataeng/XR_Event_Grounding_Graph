@@ -1,4 +1,4 @@
-"""Generate blind human-judgement packets for three experiment conditions."""
+"""Generate blind human-judgement packets for experiment conditions."""
 
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from typing import Any
 CONDITION_LABELS = {
     "steps_only": "steps_only",
     "symbolic_domain": "symbolic_domain",
+    "graph_grounded": "graph_grounded",
     "query_driven_graph": "query_driven_graph",
 }
 
@@ -53,6 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--steps-only", required=True, help="responses_steps_only*.jsonl")
     parser.add_argument("--symbolic-domain", required=True, help="responses_symbolic_domain*.jsonl")
+    parser.add_argument("--graph-grounded", help="responses_graph_grounded*.jsonl")
     parser.add_argument("--query-driven-graph", required=True, help="responses_query_driven_graph*.jsonl")
     parser.add_argument(
         "--output-dir",
@@ -146,6 +148,13 @@ def build_items(args: argparse.Namespace) -> tuple[list[dict[str, Any]], dict[st
         "symbolic_domain": args.symbolic_domain,
         "query_driven_graph": args.query_driven_graph,
     }
+    if args.graph_grounded:
+        source_paths = {
+            "steps_only": args.steps_only,
+            "symbolic_domain": args.symbolic_domain,
+            "graph_grounded": args.graph_grounded,
+            "query_driven_graph": args.query_driven_graph,
+        }
     grouped_rows = {
         condition: normalize_condition_rows(condition, load_jsonl(path))
         for condition, path in source_paths.items()
@@ -166,10 +175,11 @@ def render_blind_packet(
     generated_at: str,
     seed: int,
     clip_name: str,
+    condition_count: int,
 ) -> str:
     """Render the blind judgement packet."""
     lines = [
-        "# Human Judgement Packet - 3 Conditions, Blind Items",
+        f"# Human Judgement Packet - {condition_count} Conditions, Blind Items",
         "",
         f"Generated at: `{generated_at}`",
         f"Random seed: `{seed}`",
@@ -177,7 +187,7 @@ def render_blind_packet(
         "",
         "This packet contains one question-answer pair per item.",
         "The order of all items is randomized globally across questions and hidden conditions.",
-        "Each original question appears three times, once for each hidden condition.",
+        f"Each original question appears {condition_count} times, once for each hidden condition.",
         "Condition names are not shown in this blind packet.",
         "",
         SCORING_SECTION,
@@ -212,10 +222,11 @@ def render_answer_key(
     generated_at: str,
     seed: int,
     clip_name: str,
+    condition_count: int,
 ) -> str:
     """Render the non-blind answer key."""
     lines = [
-        "# Human Judgement Answer Key - 3 Conditions",
+        f"# Human Judgement Answer Key - {condition_count} Conditions",
         "",
         f"Generated at: `{generated_at}`",
         f"Random seed: `{seed}`",
@@ -278,19 +289,33 @@ def main() -> None:
     seed = args.seed if args.seed is not None else int(datetime.now().astimezone().strftime("%Y%m%d%H%M%S"))
     args.seed = seed
     items, source_paths = build_items(args)
+    condition_count = len(source_paths)
     clip_name = args.clip_name or infer_clip_name(items)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     clip_slug = safe_filename_part(clip_name)
-    blind_path = output_dir / f"human_judgement_3conditions_{clip_slug}_blind_items_{timestamp}.md"
-    answer_key_path = output_dir / f"human_judgement_3conditions_{clip_slug}_answer_key_{timestamp}.md"
+    blind_path = output_dir / f"human_judgement_{condition_count}conditions_{clip_slug}_blind_items_{timestamp}.md"
+    answer_key_path = output_dir / f"human_judgement_{condition_count}conditions_{clip_slug}_answer_key_{timestamp}.md"
     blind_path.write_text(
-        render_blind_packet(items, generated_at=generated_at, seed=seed, clip_name=clip_name),
+        render_blind_packet(
+            items,
+            generated_at=generated_at,
+            seed=seed,
+            clip_name=clip_name,
+            condition_count=condition_count,
+        ),
         encoding="utf-8",
     )
     answer_key_path.write_text(
-        render_answer_key(items, source_paths, generated_at=generated_at, seed=seed, clip_name=clip_name),
+        render_answer_key(
+            items,
+            source_paths,
+            generated_at=generated_at,
+            seed=seed,
+            clip_name=clip_name,
+            condition_count=condition_count,
+        ),
         encoding="utf-8",
     )
     print(f"Wrote blind packet: {blind_path}")
