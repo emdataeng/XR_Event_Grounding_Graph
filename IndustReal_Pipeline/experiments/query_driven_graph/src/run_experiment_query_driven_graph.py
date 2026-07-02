@@ -366,19 +366,27 @@ def run_experiment(config: dict[str, Any], dry_run: bool = False) -> dict[str, P
                 if interaction_durations
                 else None
             )
-            export_query_reports(rows, paths["reports"])
+            run_statistics = {
+                "completed_interactions": len(rows),
+                "failed_interactions": sum(row["llm_status"] == "failed" for row in rows),
+                "min_interaction_seconds": round(min_seconds, 6) if min_seconds is not None else None,
+                "max_interaction_seconds": round(max_seconds, 6) if max_seconds is not None else None,
+                "avg_interaction_seconds": round(avg_seconds, 6) if avg_seconds is not None else None,
+                "total_duration_hms": format_duration_hms(total_duration),
+            }
+            export_query_reports(rows, paths["reports"], run_statistics=run_statistics)
             write_log_event(
                 log_handle,
                 "run_completed",
                 condition=CONDITION,
                 completed_interactions=len(rows),
-                failed_llm_interactions=sum(row["llm_status"] == "failed" for row in rows),
+                failed_llm_interactions=run_statistics["failed_interactions"],
                 total_interactions=len(test_cases),
-                min_interaction_seconds=round(min_seconds, 6) if min_seconds is not None else None,
-                max_interaction_seconds=round(max_seconds, 6) if max_seconds is not None else None,
-                avg_interaction_seconds=round(avg_seconds, 6) if avg_seconds is not None else None,
+                min_interaction_seconds=run_statistics["min_interaction_seconds"],
+                max_interaction_seconds=run_statistics["max_interaction_seconds"],
+                avg_interaction_seconds=run_statistics["avg_interaction_seconds"],
                 total_duration_seconds=round(total_duration, 6),
-                total_duration_hms=format_duration_hms(total_duration),
+                total_duration_hms=run_statistics["total_duration_hms"],
                 responses_path=str(paths["responses"]),
                 query_reports_path=str(paths["reports"]),
             )
