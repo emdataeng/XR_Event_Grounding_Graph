@@ -1,0 +1,177 @@
+schema_version: pilot_domain_config.v1
+domain_model_version: "0.1.0"
+domain_name: rod_assembly
+
+type_hierarchy:
+  Component:
+    parents: []
+  Rod:
+    parents: [Component]
+  Sleeve:
+    parents: [Component]
+  Fastener:
+    parents: [Component]
+  Sealing:
+    parents: [Component]
+  Assembly:
+    parents: [Component]
+  Location:
+    parents: []
+  RodFeature:
+    parents: [Location]
+  RodHole:
+    parents: [RodFeature]
+  Workspace:
+    parents: [Location]
+  Tool:
+    parents: []
+  Material:
+    parents: []
+
+type_defaults: {}
+
+condition_vocabulary:
+  on:
+    arity: 2
+    description: "An object is on a support or workspace."
+  sleeves_on:
+    arity: 2
+    description: "Sleeves are positioned on the rod."
+  oriented:
+    arity: 2
+    description: "A component has the required orientation."
+  count_verified:
+    arity: 2
+    description: "A component count has been checked against the procedure."
+  inserted_in:
+    arity: 2
+    description: "A component is inserted into a location."
+  adjusted_over:
+    arity: 2
+    description: "A component is adjusted over another component."
+  partially_inserted_in:
+    arity: 2
+    description: "A fastener is partially inserted into a location."
+  applied_to:
+    arity: 2
+    description: "A material is applied to a component."
+  secured_to:
+    arity: 2
+    description: "A component is secured to a target."
+  flush_with:
+    arity: 2
+    description: "A fastener is seated flush with a surrounding component."
+  cleaned_with:
+    arity: 2
+    description: "A component or assembly is cleaned with a material."
+  lubricated_with:
+    arity: 2
+    description: "A component is lubricated with a material."
+  avoided_contact_with:
+    arity: 2
+    description: "A component avoids contact with a material."
+
+predicate_aliases:
+  stepHasAction: hasAction
+  actsOn: usesObject
+  typeOf: isA
+  has_action: hasAction
+  acts_on: usesObject
+  target_object: usesObject
+  uses_tool: usesTool
+  uses_material: usesMaterial
+
+entities:
+  workbench:
+    name: workbench
+    display_name: "workbench"
+    generic_type: Workspace
+  rod_holes:
+    name: rod_holes
+    display_name: "holes on the rod"
+    generic_type: RodHole
+    parent_component: metal_rod
+    located_in: metal_rod
+  right_side:
+    name: right_side
+    display_name: "right side"
+    generic_type: Location
+  required_quantity_six:
+    name: required_quantity_six
+    display_name: "six"
+    generic_type: Material
+  required_quantity_five:
+    name: required_quantity_five
+    display_name: "five"
+    generic_type: Material
+  power_screwdriver:
+    name: power_screwdriver
+    display_name: "power screwdriver"
+    generic_type: Tool
+  sponge:
+    name: sponge
+    display_name: "sponge"
+    generic_type: Tool
+  threadlocker_loctite:
+    name: threadlocker_loctite
+    display_name: "threadlocker (Loctite)"
+    generic_type: Material
+  ethanol:
+    name: ethanol
+    display_name: "ethanol"
+    generic_type: Material
+  paper:
+    name: paper
+    display_name: "paper"
+    generic_type: Material
+  grease:
+    name: grease
+    display_name: "grease"
+    generic_type: Material
+
+components:
+  metal_rod:
+    name: metal_rod
+    display_name: "metal rod"
+    generic_type: Rod
+    installation_target: workbench
+  long_sleeve:
+    name: long_sleeve
+    display_name: "long sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  short_sleeve:
+    name: short_sleeve
+    display_name: "short sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  copper_sleeve:
+    name: copper_sleeve
+    display_name: "copper sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  silver_sleeve:
+    name: silver_sleeve
+    display_name: "silver-colored sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  sleeve:
+    name: sleeve
+    display_name: "sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  o_ring:
+    name: o_ring
+    display_name: "O-ring"
+    generic_type: Sealing
+    installation_target: rod_holes
+  screw:
+    name: screw
+    display_name: "screw"
+    generic_type: Fastener
+    installation_target: rod_holes
+  rod_assembly:
+    name: rod_assembly
+    display_name: "rod and sleeve assembly"
+    generic_type: Assembly
+    installation_target: workbench

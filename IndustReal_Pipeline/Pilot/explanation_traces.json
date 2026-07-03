@@ -1,0 +1,2774 @@
+[
+  {
+    "confidence": 1.0,
+    "constraint_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          "on",
+          "metal_rod",
+          "workbench"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      }
+    ],
+    "dependency_evidence": [],
+    "diagnostics": {
+      "rule_coverage": {
+        "action_name": "place",
+        "evidence_predicates": [
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_01",
+              "place"
+            ],
+            "id": "pred::pilot::s01::action",
+            "name": "hasAction"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_01",
+              "metal_rod"
+            ],
+            "id": "pred::pilot::s01::object::metal_rod",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_01",
+              "workbench"
+            ],
+            "id": "pred::pilot::s01::object::workbench",
+            "name": "usesObject"
+          }
+        ],
+        "has_expected_effect": true,
+        "has_incompatibility": false,
+        "has_meaningful_evidence": true,
+        "has_requirement": false,
+        "has_rule_coverage": true,
+        "matched_rule_count": 1,
+        "object_args": [
+          "metal_rod",
+          "workbench"
+        ],
+        "predicate_count": 5,
+        "produced_constraint_count": 1,
+        "step_id": "step::pilot_rod_assembly::step_01",
+        "step_index": 1,
+        "suggested_fix": "",
+        "warning_code": "",
+        "warning_message": ""
+      },
+      "warnings": []
+    },
+    "incompatibility_evidence": [],
+    "invalidated_effects": [],
+    "missing_requirements": [],
+    "predicate_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          "place"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasAction",
+        "notes": null,
+        "predicate_id": "pred::pilot::s01::action",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          0,
+          15
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasTimeWindow",
+        "notes": null,
+        "predicate_id": "pred::pilot::s01::time",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s01::object::metal_rod",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          "workbench"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s01::object::workbench",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          "on",
+          "metal_rod",
+          "workbench"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s01::effect::on",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          "on",
+          "metal_rod",
+          "workbench"
+        ],
+        "condition": {
+          "args": [
+            "metal_rod",
+            "workbench"
+          ],
+          "name": "on"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_01",
+        "type": "previous_produced_effect"
+      }
+    ],
+    "status": "accepted",
+    "step_id": "step::pilot_rod_assembly::step_01",
+    "warnings": []
+  },
+  {
+    "confidence": 1.0,
+    "constraint_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "sleeves_on",
+          "sleeve",
+          "metal_rod"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "oriented",
+          "copper_sleeve",
+          "right_side"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_02_oriented_copper_sleeve_right_side",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "count_verified",
+          "copper_sleeve",
+          "required_quantity_six"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_02_count_verified_copper_sleeve_required_quantity",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "count_verified",
+          "long_sleeve",
+          "required_quantity_five"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_02_count_verified_long_sleeve_required_quantity_f",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "on",
+          "metal_rod",
+          "workbench"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      }
+    ],
+    "dependency_evidence": [
+      {
+        "required_condition": {
+          "args": [
+            "metal_rod",
+            "workbench"
+          ],
+          "name": "on"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_01",
+            "on",
+            "metal_rod",
+            "workbench"
+          ],
+          "condition": {
+            "args": [
+              "metal_rod",
+              "workbench"
+            ],
+            "name": "on"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_01",
+          "type": "previous_produced_effect"
+        }
+      }
+    ],
+    "diagnostics": {
+      "rule_coverage": {
+        "action_name": "slide",
+        "evidence_predicates": [
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_02",
+              "slide"
+            ],
+            "id": "pred::pilot::s02::action",
+            "name": "hasAction"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_02",
+              "sleeve"
+            ],
+            "id": "pred::pilot::s02::object::sleeve",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_02",
+              "long_sleeve"
+            ],
+            "id": "pred::pilot::s02::object::long_sleeve",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_02",
+              "short_sleeve"
+            ],
+            "id": "pred::pilot::s02::object::short_sleeve",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_02",
+              "copper_sleeve"
+            ],
+            "id": "pred::pilot::s02::object::copper_sleeve",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_02",
+              "metal_rod"
+            ],
+            "id": "pred::pilot::s02::object::metal_rod",
+            "name": "usesObject"
+          }
+        ],
+        "has_expected_effect": true,
+        "has_incompatibility": false,
+        "has_meaningful_evidence": true,
+        "has_requirement": true,
+        "has_rule_coverage": true,
+        "matched_rule_count": 2,
+        "object_args": [
+          "sleeve",
+          "long_sleeve",
+          "short_sleeve",
+          "copper_sleeve",
+          "metal_rod"
+        ],
+        "predicate_count": 12,
+        "produced_constraint_count": 5,
+        "step_id": "step::pilot_rod_assembly::step_02",
+        "step_index": 2,
+        "suggested_fix": "",
+        "warning_code": "",
+        "warning_message": ""
+      },
+      "warnings": []
+    },
+    "incompatibility_evidence": [],
+    "invalidated_effects": [],
+    "missing_requirements": [],
+    "predicate_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "slide"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasAction",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::action",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          15,
+          89
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasTimeWindow",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::time",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "sleeve"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::object::sleeve",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "long_sleeve"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::object::long_sleeve",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "short_sleeve"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::object::short_sleeve",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "copper_sleeve"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::object::copper_sleeve",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::object::metal_rod",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "on",
+          "metal_rod",
+          "workbench"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::requires::on_rod_workbench",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "sleeves_on",
+          "sleeve",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::effect::sleeves_on",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "oriented",
+          "copper_sleeve",
+          "right_side"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::effect::copper_oriented",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "count_verified",
+          "copper_sleeve",
+          "required_quantity_six"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::effect::copper_count",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "count_verified",
+          "long_sleeve",
+          "required_quantity_five"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s02::effect::long_count",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "sleeves_on",
+          "sleeve",
+          "metal_rod"
+        ],
+        "condition": {
+          "args": [
+            "sleeve",
+            "metal_rod"
+          ],
+          "name": "sleeves_on"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_02",
+        "type": "previous_produced_effect"
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "oriented",
+          "copper_sleeve",
+          "right_side"
+        ],
+        "condition": {
+          "args": [
+            "copper_sleeve",
+            "right_side"
+          ],
+          "name": "oriented"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_02_oriented_copper_sleeve_right_side",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_02",
+        "type": "previous_produced_effect"
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "count_verified",
+          "copper_sleeve",
+          "required_quantity_six"
+        ],
+        "condition": {
+          "args": [
+            "copper_sleeve",
+            "required_quantity_six"
+          ],
+          "name": "count_verified"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_02_count_verified_copper_sleeve_required_quantity",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_02",
+        "type": "previous_produced_effect"
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_02",
+          "count_verified",
+          "long_sleeve",
+          "required_quantity_five"
+        ],
+        "condition": {
+          "args": [
+            "long_sleeve",
+            "required_quantity_five"
+          ],
+          "name": "count_verified"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_02_count_verified_long_sleeve_required_quantity_f",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_02",
+        "type": "previous_produced_effect"
+      }
+    ],
+    "status": "accepted",
+    "step_id": "step::pilot_rod_assembly::step_02",
+    "warnings": []
+  },
+  {
+    "confidence": 1.0,
+    "constraint_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "inserted_in",
+          "o_ring",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "adjusted_over",
+          "sleeve",
+          "o_ring"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "sleeves_on",
+          "sleeve",
+          "metal_rod"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_03::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_03_sleeves_on_sleeve_metal_rod",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      }
+    ],
+    "dependency_evidence": [
+      {
+        "required_condition": {
+          "args": [
+            "sleeve",
+            "metal_rod"
+          ],
+          "name": "sleeves_on"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_02",
+            "sleeves_on",
+            "sleeve",
+            "metal_rod"
+          ],
+          "condition": {
+            "args": [
+              "sleeve",
+              "metal_rod"
+            ],
+            "name": "sleeves_on"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_02",
+          "type": "previous_produced_effect"
+        }
+      }
+    ],
+    "diagnostics": {
+      "rule_coverage": {
+        "action_name": "place",
+        "evidence_predicates": [
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_03",
+              "place"
+            ],
+            "id": "pred::pilot::s03::action",
+            "name": "hasAction"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_03",
+              "o_ring"
+            ],
+            "id": "pred::pilot::s03::object::o_ring",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_03",
+              "sleeve"
+            ],
+            "id": "pred::pilot::s03::object::sleeve",
+            "name": "usesObject"
+          }
+        ],
+        "has_expected_effect": true,
+        "has_incompatibility": false,
+        "has_meaningful_evidence": true,
+        "has_requirement": true,
+        "has_rule_coverage": true,
+        "matched_rule_count": 2,
+        "object_args": [
+          "o_ring",
+          "sleeve"
+        ],
+        "predicate_count": 9,
+        "produced_constraint_count": 3,
+        "step_id": "step::pilot_rod_assembly::step_03",
+        "step_index": 3,
+        "suggested_fix": "",
+        "warning_code": "",
+        "warning_message": ""
+      },
+      "warnings": []
+    },
+    "incompatibility_evidence": [],
+    "invalidated_effects": [],
+    "missing_requirements": [],
+    "predicate_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "place"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasAction",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::action",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          89,
+          196
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasTimeWindow",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::time",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "o_ring"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::object::o_ring",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "sleeve"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::object::sleeve",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "rod_holes",
+          "RodHole"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "isA",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::type::rod_holes",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_config"
+        }
+      },
+      {
+        "args": [
+          "rod_holes",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasParentComponent",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::parent::rod_holes",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_config"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "sleeves_on",
+          "sleeve",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::requires::sleeves_on",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "inserted_in",
+          "o_ring",
+          "rod_holes"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::effect::oring_inserted",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "adjusted_over",
+          "sleeve",
+          "o_ring"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s03::effect::sleeves_adjusted",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "inserted_in",
+          "o_ring",
+          "rod_holes"
+        ],
+        "condition": {
+          "args": [
+            "o_ring",
+            "rod_holes"
+          ],
+          "name": "inserted_in"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_03",
+        "type": "previous_produced_effect"
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "adjusted_over",
+          "sleeve",
+          "o_ring"
+        ],
+        "condition": {
+          "args": [
+            "sleeve",
+            "o_ring"
+          ],
+          "name": "adjusted_over"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_03",
+        "type": "previous_produced_effect"
+      }
+    ],
+    "status": "accepted",
+    "step_id": "step::pilot_rod_assembly::step_03",
+    "warnings": []
+  },
+  {
+    "confidence": 1.0,
+    "constraint_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "partially_inserted_in",
+          "screw",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "inserted_in",
+          "o_ring",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_04_inserted_in_o_ring_rod_holes",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "adjusted_over",
+          "sleeve",
+          "o_ring"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "power_screwdriver"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_04::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_04_power_screwdriver",
+        "kind": "required_tool",
+        "name": "requiresTool",
+        "rule_id": "tool_required_by_pilot_step",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      }
+    ],
+    "dependency_evidence": [
+      {
+        "required_condition": {
+          "args": [
+            "o_ring",
+            "rod_holes"
+          ],
+          "name": "inserted_in"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_03",
+            "inserted_in",
+            "o_ring",
+            "rod_holes"
+          ],
+          "condition": {
+            "args": [
+              "o_ring",
+              "rod_holes"
+            ],
+            "name": "inserted_in"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_03",
+          "type": "previous_produced_effect"
+        }
+      },
+      {
+        "required_condition": {
+          "args": [
+            "sleeve",
+            "o_ring"
+          ],
+          "name": "adjusted_over"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_03",
+            "adjusted_over",
+            "sleeve",
+            "o_ring"
+          ],
+          "condition": {
+            "args": [
+              "sleeve",
+              "o_ring"
+            ],
+            "name": "adjusted_over"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_03",
+          "type": "previous_produced_effect"
+        }
+      }
+    ],
+    "diagnostics": {
+      "rule_coverage": {
+        "action_name": "drive",
+        "evidence_predicates": [
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_04",
+              "drive"
+            ],
+            "id": "pred::pilot::s04::action",
+            "name": "hasAction"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_04",
+              "screw"
+            ],
+            "id": "pred::pilot::s04::object::screw",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_04",
+              "power_screwdriver"
+            ],
+            "id": "pred::pilot::s04::tool::power_screwdriver",
+            "name": "usesTool"
+          }
+        ],
+        "has_expected_effect": true,
+        "has_incompatibility": false,
+        "has_meaningful_evidence": true,
+        "has_requirement": true,
+        "has_rule_coverage": true,
+        "matched_rule_count": 3,
+        "object_args": [
+          "screw",
+          "power_screwdriver"
+        ],
+        "predicate_count": 10,
+        "produced_constraint_count": 4,
+        "step_id": "step::pilot_rod_assembly::step_04",
+        "step_index": 4,
+        "suggested_fix": "",
+        "warning_code": "",
+        "warning_message": ""
+      },
+      "warnings": []
+    },
+    "incompatibility_evidence": [],
+    "invalidated_effects": [],
+    "missing_requirements": [],
+    "predicate_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "drive"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasAction",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::action",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          196,
+          376
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasTimeWindow",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::time",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "screw"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::object::screw",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "power_screwdriver"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesTool",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::tool::power_screwdriver",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "rod_holes",
+          "RodHole"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "isA",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::type::rod_holes",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_config"
+        }
+      },
+      {
+        "args": [
+          "rod_holes",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasParentComponent",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::parent::rod_holes",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_config"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "inserted_in",
+          "o_ring",
+          "rod_holes"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::requires::oring_inserted",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "adjusted_over",
+          "sleeve",
+          "o_ring"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::requires::sleeves_adjusted",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "power_screwdriver"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredTool",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::required_tool",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "partially_inserted_in",
+          "screw",
+          "rod_holes"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s04::effect::partially_inserted",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "partially_inserted_in",
+          "screw",
+          "rod_holes"
+        ],
+        "condition": {
+          "args": [
+            "screw",
+            "rod_holes"
+          ],
+          "name": "partially_inserted_in"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_04",
+        "type": "previous_produced_effect"
+      }
+    ],
+    "status": "accepted",
+    "step_id": "step::pilot_rod_assembly::step_04",
+    "warnings": []
+  },
+  {
+    "confidence": 1.0,
+    "constraint_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          "applied_to",
+          "threadlocker_loctite",
+          "screw"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          "partially_inserted_in",
+          "screw",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_05::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_05_partially_inserted_in_screw_rod_holes",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      }
+    ],
+    "dependency_evidence": [
+      {
+        "required_condition": {
+          "args": [
+            "screw",
+            "rod_holes"
+          ],
+          "name": "partially_inserted_in"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_04",
+            "partially_inserted_in",
+            "screw",
+            "rod_holes"
+          ],
+          "condition": {
+            "args": [
+              "screw",
+              "rod_holes"
+            ],
+            "name": "partially_inserted_in"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_04",
+          "type": "previous_produced_effect"
+        }
+      }
+    ],
+    "diagnostics": {
+      "rule_coverage": {
+        "action_name": "apply",
+        "evidence_predicates": [
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_05",
+              "apply"
+            ],
+            "id": "pred::pilot::s05::action",
+            "name": "hasAction"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_05",
+              "screw"
+            ],
+            "id": "pred::pilot::s05::object::screw",
+            "name": "usesObject"
+          }
+        ],
+        "has_expected_effect": true,
+        "has_incompatibility": false,
+        "has_meaningful_evidence": true,
+        "has_requirement": true,
+        "has_rule_coverage": true,
+        "matched_rule_count": 2,
+        "object_args": [
+          "screw"
+        ],
+        "predicate_count": 6,
+        "produced_constraint_count": 2,
+        "step_id": "step::pilot_rod_assembly::step_05",
+        "step_index": 5,
+        "suggested_fix": "",
+        "warning_code": "",
+        "warning_message": ""
+      },
+      "warnings": []
+    },
+    "incompatibility_evidence": [],
+    "invalidated_effects": [],
+    "missing_requirements": [],
+    "predicate_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          "apply"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasAction",
+        "notes": null,
+        "predicate_id": "pred::pilot::s05::action",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          376,
+          429
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasTimeWindow",
+        "notes": null,
+        "predicate_id": "pred::pilot::s05::time",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          "screw"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s05::object::screw",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          "threadlocker_loctite"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesMaterial",
+        "notes": null,
+        "predicate_id": "pred::pilot::s05::material::threadlocker",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          "partially_inserted_in",
+          "screw",
+          "rod_holes"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s05::requires::partially_inserted",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          "applied_to",
+          "threadlocker_loctite",
+          "screw"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s05::effect::threadlocker_applied",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_05",
+          "applied_to",
+          "threadlocker_loctite",
+          "screw"
+        ],
+        "condition": {
+          "args": [
+            "threadlocker_loctite",
+            "screw"
+          ],
+          "name": "applied_to"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_05",
+        "type": "previous_produced_effect"
+      }
+    ],
+    "status": "accepted",
+    "step_id": "step::pilot_rod_assembly::step_05",
+    "warnings": []
+  },
+  {
+    "confidence": 1.0,
+    "constraint_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "secured_to",
+          "sleeve",
+          "metal_rod"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "flush_with",
+          "screw",
+          "sleeve"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_06_flush_with_screw_sleeve",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "applied_to",
+          "threadlocker_loctite",
+          "screw"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_06_applied_to_threadlocker_loctite_screw",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "partially_inserted_in",
+          "screw",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_06_partially_inserted_in_screw_rod_holes",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "power_screwdriver"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver",
+        "kind": "required_tool",
+        "name": "requiresTool",
+        "rule_id": "tool_required_by_pilot_step",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      }
+    ],
+    "dependency_evidence": [
+      {
+        "required_condition": {
+          "args": [
+            "threadlocker_loctite",
+            "screw"
+          ],
+          "name": "applied_to"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_05",
+            "applied_to",
+            "threadlocker_loctite",
+            "screw"
+          ],
+          "condition": {
+            "args": [
+              "threadlocker_loctite",
+              "screw"
+            ],
+            "name": "applied_to"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_05",
+          "type": "previous_produced_effect"
+        }
+      },
+      {
+        "required_condition": {
+          "args": [
+            "screw",
+            "rod_holes"
+          ],
+          "name": "partially_inserted_in"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_04",
+            "partially_inserted_in",
+            "screw",
+            "rod_holes"
+          ],
+          "condition": {
+            "args": [
+              "screw",
+              "rod_holes"
+            ],
+            "name": "partially_inserted_in"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_04",
+          "type": "previous_produced_effect"
+        }
+      }
+    ],
+    "diagnostics": {
+      "rule_coverage": {
+        "action_name": "tighten",
+        "evidence_predicates": [
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_06",
+              "tighten"
+            ],
+            "id": "pred::pilot::s06::action",
+            "name": "hasAction"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_06",
+              "screw"
+            ],
+            "id": "pred::pilot::s06::object::screw",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_06",
+              "power_screwdriver"
+            ],
+            "id": "pred::pilot::s06::tool::power_screwdriver",
+            "name": "usesTool"
+          }
+        ],
+        "has_expected_effect": true,
+        "has_incompatibility": false,
+        "has_meaningful_evidence": true,
+        "has_requirement": true,
+        "has_rule_coverage": true,
+        "matched_rule_count": 3,
+        "object_args": [
+          "screw",
+          "power_screwdriver"
+        ],
+        "predicate_count": 9,
+        "produced_constraint_count": 5,
+        "step_id": "step::pilot_rod_assembly::step_06",
+        "step_index": 6,
+        "suggested_fix": "",
+        "warning_code": "",
+        "warning_message": ""
+      },
+      "warnings": []
+    },
+    "incompatibility_evidence": [],
+    "invalidated_effects": [],
+    "missing_requirements": [],
+    "predicate_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "tighten"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasAction",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::action",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          429,
+          531
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasTimeWindow",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::time",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "screw"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::object::screw",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "power_screwdriver"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesTool",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::tool::power_screwdriver",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "applied_to",
+          "threadlocker_loctite",
+          "screw"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::requires::threadlocker",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "partially_inserted_in",
+          "screw",
+          "rod_holes"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::requires::partially_inserted",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "power_screwdriver"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredTool",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::required_tool",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "secured_to",
+          "sleeve",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::effect::secured",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "flush_with",
+          "screw",
+          "sleeve"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s06::effect::flush",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "secured_to",
+          "sleeve",
+          "metal_rod"
+        ],
+        "condition": {
+          "args": [
+            "sleeve",
+            "metal_rod"
+          ],
+          "name": "secured_to"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_06",
+        "type": "previous_produced_effect"
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "flush_with",
+          "screw",
+          "sleeve"
+        ],
+        "condition": {
+          "args": [
+            "screw",
+            "sleeve"
+          ],
+          "name": "flush_with"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_06_flush_with_screw_sleeve",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_06",
+        "type": "previous_produced_effect"
+      }
+    ],
+    "status": "accepted",
+    "step_id": "step::pilot_rod_assembly::step_06",
+    "warnings": []
+  },
+  {
+    "confidence": 1.0,
+    "constraint_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "cleaned_with",
+          "rod_assembly",
+          "ethanol"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "avoided_contact_with",
+          "copper_sleeve",
+          "paper"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_07_avoided_contact_with_copper_sleeve_paper",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "secured_to",
+          "sleeve",
+          "metal_rod"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      }
+    ],
+    "dependency_evidence": [
+      {
+        "required_condition": {
+          "args": [
+            "sleeve",
+            "metal_rod"
+          ],
+          "name": "secured_to"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_06",
+            "secured_to",
+            "sleeve",
+            "metal_rod"
+          ],
+          "condition": {
+            "args": [
+              "sleeve",
+              "metal_rod"
+            ],
+            "name": "secured_to"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_06",
+          "type": "previous_produced_effect"
+        }
+      }
+    ],
+    "diagnostics": {
+      "rule_coverage": {
+        "action_name": "clean",
+        "evidence_predicates": [
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_07",
+              "clean"
+            ],
+            "id": "pred::pilot::s07::action",
+            "name": "hasAction"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_07",
+              "rod_assembly"
+            ],
+            "id": "pred::pilot::s07::object::rod_assembly",
+            "name": "usesObject"
+          }
+        ],
+        "has_expected_effect": true,
+        "has_incompatibility": false,
+        "has_meaningful_evidence": true,
+        "has_requirement": true,
+        "has_rule_coverage": true,
+        "matched_rule_count": 2,
+        "object_args": [
+          "rod_assembly"
+        ],
+        "predicate_count": 8,
+        "produced_constraint_count": 3,
+        "step_id": "step::pilot_rod_assembly::step_07",
+        "step_index": 7,
+        "suggested_fix": "",
+        "warning_code": "",
+        "warning_message": ""
+      },
+      "warnings": []
+    },
+    "incompatibility_evidence": [],
+    "invalidated_effects": [],
+    "missing_requirements": [],
+    "predicate_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "clean"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasAction",
+        "notes": null,
+        "predicate_id": "pred::pilot::s07::action",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          531,
+          566
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasTimeWindow",
+        "notes": null,
+        "predicate_id": "pred::pilot::s07::time",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "rod_assembly"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s07::object::rod_assembly",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "ethanol"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesMaterial",
+        "notes": null,
+        "predicate_id": "pred::pilot::s07::material::ethanol",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "paper"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesMaterial",
+        "notes": null,
+        "predicate_id": "pred::pilot::s07::material::paper",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "secured_to",
+          "sleeve",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s07::requires::secured",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "cleaned_with",
+          "rod_assembly",
+          "ethanol"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s07::effect::cleaned",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "avoided_contact_with",
+          "copper_sleeve",
+          "paper"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s07::effect::avoid_polish",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "cleaned_with",
+          "rod_assembly",
+          "ethanol"
+        ],
+        "condition": {
+          "args": [
+            "rod_assembly",
+            "ethanol"
+          ],
+          "name": "cleaned_with"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_07",
+        "type": "previous_produced_effect"
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_07",
+          "avoided_contact_with",
+          "copper_sleeve",
+          "paper"
+        ],
+        "condition": {
+          "args": [
+            "copper_sleeve",
+            "paper"
+          ],
+          "name": "avoided_contact_with"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_07_avoided_contact_with_copper_sleeve_paper",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_07",
+        "type": "previous_produced_effect"
+      }
+    ],
+    "status": "accepted",
+    "step_id": "step::pilot_rod_assembly::step_07",
+    "warnings": []
+  },
+  {
+    "confidence": 1.0,
+    "constraint_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "lubricated_with",
+          "silver_sleeve",
+          "grease"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_08_lubricated_with_silver_sleeve_grease",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "avoided_contact_with",
+          "copper_sleeve",
+          "grease"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_08_avoided_contact_with_copper_sleeve_grease",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "cleaned_with",
+          "rod_assembly",
+          "ethanol"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_08_cleaned_with_rod_assembly_ethanol",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "secured_to",
+          "sleeve",
+          "metal_rod"
+        ],
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        }
+      }
+    ],
+    "dependency_evidence": [
+      {
+        "required_condition": {
+          "args": [
+            "rod_assembly",
+            "ethanol"
+          ],
+          "name": "cleaned_with"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_07",
+            "cleaned_with",
+            "rod_assembly",
+            "ethanol"
+          ],
+          "condition": {
+            "args": [
+              "rod_assembly",
+              "ethanol"
+            ],
+            "name": "cleaned_with"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_07",
+          "type": "previous_produced_effect"
+        }
+      },
+      {
+        "required_condition": {
+          "args": [
+            "sleeve",
+            "metal_rod"
+          ],
+          "name": "secured_to"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_06",
+            "secured_to",
+            "sleeve",
+            "metal_rod"
+          ],
+          "condition": {
+            "args": [
+              "sleeve",
+              "metal_rod"
+            ],
+            "name": "secured_to"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_06",
+          "type": "previous_produced_effect"
+        }
+      }
+    ],
+    "diagnostics": {
+      "rule_coverage": {
+        "action_name": "lubricate",
+        "evidence_predicates": [
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_08",
+              "lubricate"
+            ],
+            "id": "pred::pilot::s08::action",
+            "name": "hasAction"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_08",
+              "silver_sleeve"
+            ],
+            "id": "pred::pilot::s08::object::silver_sleeve",
+            "name": "usesObject"
+          },
+          {
+            "args": [
+              "step::pilot_rod_assembly::step_08",
+              "sponge"
+            ],
+            "id": "pred::pilot::s08::tool::sponge",
+            "name": "usesTool"
+          }
+        ],
+        "has_expected_effect": true,
+        "has_incompatibility": false,
+        "has_meaningful_evidence": true,
+        "has_requirement": true,
+        "has_rule_coverage": true,
+        "matched_rule_count": 2,
+        "object_args": [
+          "silver_sleeve",
+          "sponge"
+        ],
+        "predicate_count": 9,
+        "produced_constraint_count": 4,
+        "step_id": "step::pilot_rod_assembly::step_08",
+        "step_index": 8,
+        "suggested_fix": "",
+        "warning_code": "",
+        "warning_message": ""
+      },
+      "warnings": []
+    },
+    "incompatibility_evidence": [],
+    "invalidated_effects": [],
+    "missing_requirements": [],
+    "predicate_evidence": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "lubricate"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasAction",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::action",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          566,
+          642
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasTimeWindow",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::time",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "silver_sleeve"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesObject",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::object::silver_sleeve",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "sponge"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesTool",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::tool::sponge",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "grease"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "usesMaterial",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::material::grease",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "cleaned_with",
+          "rod_assembly",
+          "ethanol"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::requires::cleaned",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "secured_to",
+          "sleeve",
+          "metal_rod"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasRequiredCondition",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::requires::secured",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "lubricated_with",
+          "silver_sleeve",
+          "grease"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::effect::lubricated",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "avoided_contact_with",
+          "copper_sleeve",
+          "grease"
+        ],
+        "category": null,
+        "conf": 1.0,
+        "name": "hasObservedEffect",
+        "notes": null,
+        "predicate_id": "pred::pilot::s08::effect::avoid_copper",
+        "predicate_key": null,
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      }
+    ],
+    "produced_effect_lifecycle": [
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "lubricated_with",
+          "silver_sleeve",
+          "grease"
+        ],
+        "condition": {
+          "args": [
+            "silver_sleeve",
+            "grease"
+          ],
+          "name": "lubricated_with"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_08_lubricated_with_silver_sleeve_grease",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_08",
+        "type": "previous_produced_effect"
+      },
+      {
+        "args": [
+          "step::pilot_rod_assembly::step_08",
+          "avoided_contact_with",
+          "copper_sleeve",
+          "grease"
+        ],
+        "condition": {
+          "args": [
+            "copper_sleeve",
+            "grease"
+          ],
+          "name": "avoided_contact_with"
+        },
+        "conf": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_08_avoided_contact_with_copper_sleeve_grease",
+        "effect_lifecycle_status": "active",
+        "invalidated_by_constraint_id": null,
+        "producer_status": "accepted",
+        "provisional": false,
+        "step_id": "step::pilot_rod_assembly::step_08",
+        "type": "previous_produced_effect"
+      }
+    ],
+    "status": "accepted",
+    "step_id": "step::pilot_rod_assembly::step_08",
+    "warnings": []
+  }
+]

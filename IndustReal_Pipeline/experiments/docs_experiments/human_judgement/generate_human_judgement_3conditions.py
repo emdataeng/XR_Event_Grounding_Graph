@@ -122,6 +122,26 @@ def infer_clip_name(rows: list[dict[str, Any]]) -> str:
     return "unknown"
 
 
+def infer_question_set_metadata(rows: list[dict[str, Any]]) -> dict[str, str]:
+    """Infer question-set metadata from response rows."""
+    metadata: dict[str, str] = {}
+    for row in rows:
+        question_set = row.get("question_set")
+        if not isinstance(question_set, dict):
+            continue
+        for source_key, output_key in (
+            ("path", "path"),
+            ("question_set_id", "id"),
+            ("question_set_version", "version"),
+            ("case_count", "case_count"),
+            ("sha256", "sha256"),
+        ):
+            value = question_set.get(source_key)
+            if value is not None and output_key not in metadata:
+                metadata[output_key] = str(value)
+    return metadata
+
+
 def response_status(row: dict[str, Any]) -> str:
     """Return a normalized status for answer-key metadata."""
     if "response_status" in row:
@@ -175,6 +195,7 @@ def render_blind_packet(
     generated_at: str,
     seed: int,
     clip_name: str,
+    question_set_metadata: dict[str, str],
     condition_count: int,
 ) -> str:
     """Render the blind judgement packet."""
@@ -184,6 +205,7 @@ def render_blind_packet(
         f"Generated at: `{generated_at}`",
         f"Random seed: `{seed}`",
         f"Clip name: `{clip_name}`",
+        f"Question set path: `{question_set_metadata.get('path') or 'unknown'}`",
         "",
         "This packet contains one question-answer pair per item.",
         "The order of all items is randomized globally across questions and hidden conditions.",
@@ -222,6 +244,7 @@ def render_answer_key(
     generated_at: str,
     seed: int,
     clip_name: str,
+    question_set_metadata: dict[str, str],
     condition_count: int,
 ) -> str:
     """Render the non-blind answer key."""
@@ -231,6 +254,7 @@ def render_answer_key(
         f"Generated at: `{generated_at}`",
         f"Random seed: `{seed}`",
         f"Clip name: `{clip_name}`",
+        f"Question set path: `{question_set_metadata.get('path') or 'unknown'}`",
         "",
         "Do not share this file with judges before scoring.",
         "",
@@ -241,6 +265,18 @@ def render_answer_key(
     ]
     for condition, path in source_paths.items():
         lines.append(f"- `{condition}`: `{path}`")
+    lines.extend(
+        [
+            "",
+            "## Question Set",
+            "",
+            f"- Path: `{question_set_metadata.get('path') or 'unknown'}`",
+            f"- ID: `{question_set_metadata.get('id') or 'unknown'}`",
+            f"- Version: `{question_set_metadata.get('version') or 'unknown'}`",
+            f"- Case count: `{question_set_metadata.get('case_count') or 'unknown'}`",
+            f"- SHA-256: `{question_set_metadata.get('sha256') or 'unknown'}`",
+        ]
+    )
     lines.extend(
         [
             "",
@@ -291,6 +327,7 @@ def main() -> None:
     items, source_paths = build_items(args)
     condition_count = len(source_paths)
     clip_name = args.clip_name or infer_clip_name(items)
+    question_set_metadata = infer_question_set_metadata(items)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -303,6 +340,7 @@ def main() -> None:
             generated_at=generated_at,
             seed=seed,
             clip_name=clip_name,
+            question_set_metadata=question_set_metadata,
             condition_count=condition_count,
         ),
         encoding="utf-8",
@@ -314,6 +352,7 @@ def main() -> None:
             generated_at=generated_at,
             seed=seed,
             clip_name=clip_name,
+            question_set_metadata=question_set_metadata,
             condition_count=condition_count,
         ),
         encoding="utf-8",

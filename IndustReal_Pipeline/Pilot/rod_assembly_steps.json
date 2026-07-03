@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "exported_at": "2020-01-01T00:00:00Z",
+  "instruction": {
+    "id": 1,
+    "remote_instruction_id": "inst-anon-0001",
+    "title": "Assembly of a metal rod with sleeves",
+    "description": "An instructional video showing step by step how to assemble a metal rod with various sleeves, O-rings and screws, as well as how to glue, clean and lubricate it.",
+    "created_at": "2020-01-01T00:00:00Z",
+    "updated_at": "2020-01-01T00:00:00Z"
+  },
+  "video": {
+    "id": 1,
+    "title": "sample_video_a",
+    "duration_seconds": 642
+  },
+  "steps": [
+    {
+      "step_order": 1,
+      "title": "Step 1",
+      "start_timestamp": 0,
+      "end_timestamp": 15,
+      "duration_seconds": 15,
+      "notes": "The operator places a long metal rod on the workbench.",
+      "subtitle_text": "The operator places a long metal rod on the workbench."
+    },
+    {
+      "step_order": 2,
+      "title": "Step 2",
+      "start_timestamp": 15,
+      "end_timestamp": 89,
+      "duration_seconds": 74,
+      "notes": "The operator slides a combination of long, short and copper sleeves onto the rod.\n\nThe copper sleeve should be facing to the right.\n\nIt is important to have six copper sleeves, as well as 5 long sleeves (the longest ones we have). Start and finish with copper sleeves.",
+      "subtitle_text": "The operator slides a combination of long, short and copper sleeves onto the rod."
+    },
+    {
+      "step_order": 3,
+      "title": "Step 3",
+      "start_timestamp": 89,
+      "end_timestamp": 196,
+      "duration_seconds": 107,
+      "notes": "The operator places O-rings in the holes on the rod and adjusts the sleeves over them.",
+      "subtitle_text": "The operator places O-rings in the holes on the rod and adjusts the sleeves over them."
+    },
+    {
+      "step_order": 4,
+      "title": "Step 4",
+      "start_timestamp": 196,
+      "end_timestamp": 376,
+      "duration_seconds": 180,
+      "notes": "The operator drives the screws halfway into all holes using a power screwdriver.",
+      "subtitle_text": "The operator drives the screws halfway into all holes using a power screwdriver."
+    },
+    {
+      "step_order": 5,
+      "title": "Step 5",
+      "start_timestamp": 376,
+      "end_timestamp": 429,
+      "duration_seconds": 53,
+      "notes": "The operator applies threadlocker (Loctite) to all partially inserted screws.",
+      "subtitle_text": "The operator applies threadlocker (Loctite) to all partially inserted screws."
+    },
+    {
+      "step_order": 6,
+      "title": "Step 6",
+      "start_timestamp": 429,
+      "end_timestamp": 531,
+      "duration_seconds": 102,
+      "notes": "The operator fully tightens all screws to secure the sleeves.\n\nHere it is important that the screw is not screwed in too far: all the way into the sleeve, but not so far that it sticks out.",
+      "subtitle_text": "The operator fully tightens all screws to secure the sleeves."
+    },
+    {
+      "step_order": 7,
+      "title": "Step 7",
+      "start_timestamp": 531,
+      "end_timestamp": 566,
+      "duration_seconds": 35,
+      "notes": "The operator cleans the rod and sleeves with ethanol and paper.\n\nDo not polish the copper part.",
+      "subtitle_text": "The operator cleans the rod and sleeves with ethanol and paper."
+    },
+    {
+      "step_order": 8,
+      "title": "Step 8",
+      "start_timestamp": 566,
+      "end_timestamp": 642,
+      "duration_seconds": 76,
+      "notes": "The operator applies grease to a sponge and lubricates the silver-colored sleeves, while avoiding the copper sleeves.",
+      "subtitle_text": "The operator applies grease to a sponge and lubricates the silver-colored sleeves, while avoiding the copper sleeves."
+    }
+  ]
+}

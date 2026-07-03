@@ -1,0 +1,159 @@
+# =============================================================================
+# rod_assembly_domain.yaml
+# =============================================================================
+# Rod-assembly domain ontology using the same schema contract as
+# IndustReal_Pipeline/config/domain_config.yaml.
+#
+# Equivalence here means structural/schema equivalence, not identical content:
+# this file uses the same top-level concepts (`type_hierarchy`, `type_defaults`,
+# `condition_vocabulary`, `predicate_aliases`, `entities`, and `components`) and
+# the same `name` / `generic_type` entry shape, but the vocabulary describes the
+# rod-with-sleeves procedure instead of the robot-kit assembly domain.
+# =============================================================================
+
+schema_version: rod_assembly_domain_config.v1
+domain_name: rod_assembly
+
+type_hierarchy:
+  Component:
+    parents: []
+  Rod:
+    parents: [Component]
+  Sleeve:
+    parents: [Component]
+  Fastener:
+    parents: [Component]
+  Sealing:
+    parents: [Component]
+  Location:
+    parents: []
+  Workspace:
+    parents: [Location]
+  Tool:
+    parents: []
+  Material:
+    parents: []
+
+# We avoid type defaults here because the evaluation should not add requirements beyond the source JSON notes.
+type_defaults: {}
+
+# arity: 0 means each condition is a self-contained state flag — its objects are
+# baked into the name (e.g. rod_on_workbench), so it takes no separate arguments.
+ 
+condition_vocabulary:
+  rod_on_workbench:
+    arity: 0
+    description: "The rod is placed on the workbench."
+  sleeves_on_rod:
+    arity: 0
+    description: "The sleeves are slid onto the rod."
+  o_rings_in_rod_holes:
+    arity: 0
+    description: "The O-rings are placed in the rod holes."
+  sleeves_adjusted_over_o_rings:
+    arity: 0
+    description: "The sleeves are adjusted over the O-rings."
+  screws_partially_inserted:
+    arity: 0
+    description: "The screws are driven halfway into the holes."
+  threadlocker_applied_to_screws:
+    arity: 0
+    description: "Threadlocker is applied to the partially inserted screws."
+  sleeves_secured:
+    arity: 0
+    description: "The sleeves are secured by fully tightened screws."
+  rod_and_sleeves_cleaned:
+    arity: 0
+    description: "The rod and sleeves are cleaned."
+  silver_sleeves_lubricated:
+    arity: 0
+    description: "The silver-colored sleeves are lubricated."
+
+predicate_aliases:
+  stepHasAction: hasAction
+  actsOn: usesObject
+  typeOf: isA
+  has_action: hasAction
+  acts_on: usesObject
+  target_object: hasTarget
+  uses_tool: usesTool
+  uses_material: usesMaterial
+
+# Non-component individuals: locations, tools, and materials.
+entities:
+  workbench:
+    name: workbench
+    display_name: "workbench"
+    generic_type: Workspace
+  rod_holes:
+    name: rod_holes
+    display_name: "holes on the rod"
+    generic_type: Location
+  power_screwdriver:
+    name: power_screwdriver
+    display_name: "power screwdriver"
+    generic_type: Tool
+  sponge:
+    name: sponge
+    display_name: "sponge"
+    generic_type: Tool
+  threadlocker_loctite:
+    name: threadlocker_loctite
+    display_name: "threadlocker (Loctite)"
+    generic_type: Material
+  ethanol:
+    name: ethanol
+    display_name: "ethanol"
+    generic_type: Material
+  paper:
+    name: paper
+    display_name: "paper"
+    generic_type: Material
+  grease:
+    name: grease
+    display_name: "grease"
+    generic_type: Material
+
+# Component individuals used by the procedure. `installation_target` is included
+# only where the source procedure/rules identify a clear target relation.
+components:
+  metal_rod:
+    name: metal_rod
+    display_name: "metal rod"
+    generic_type: Rod
+    installation_target: workbench
+  long_sleeve:
+    name: long_sleeve
+    display_name: "long sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  short_sleeve:
+    name: short_sleeve
+    display_name: "short sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  copper_sleeve:
+    name: copper_sleeve
+    display_name: "copper sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  silver_sleeve:
+    name: silver_sleeve
+    display_name: "silver-colored sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  sleeve:
+    name: sleeve
+    display_name: "sleeve"
+    generic_type: Sleeve
+    installation_target: metal_rod
+  o_ring:
+    name: o_ring
+    display_name: "O-ring"
+    generic_type: Sealing
+    installation_target: rod_holes
+  screw:
+    name: screw
+    display_name: "screw"
+    generic_type: Fastener
+    installation_target: rod_holes

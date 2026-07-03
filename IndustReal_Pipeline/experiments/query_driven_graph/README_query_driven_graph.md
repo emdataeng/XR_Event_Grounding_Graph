@@ -196,6 +196,33 @@ URL, model name, temperature, max tokens, timeout, and retry count, but never th
 API key. Evaluation metadata is saved for later analysis but is not sent to the
 LLM.
 
+## Human Judgement Packets
+
+After running the query-driven graph condition and the matching ablation
+conditions for the same clip and question set, generate blind human-judgement
+packets with the shared packet builder:
+
+```powershell
+.venv\Scripts\python.exe experiments\docs_experiments\human_judgement\generate_human_judgement_3conditions.py `
+  --steps-only experiments\llm_guidance_ablation\outputs\<responses_steps_only_clip_timestamp>.jsonl `
+  --symbolic-domain experiments\llm_guidance_ablation\outputs\<responses_symbolic_domain_clip_timestamp>.jsonl `
+  --graph-grounded experiments\llm_guidance_ablation\outputs\<responses_graph_grounded_clip_timestamp>.jsonl `
+  --query-driven-graph experiments\query_driven_graph\outputs\<responses_query_driven_graph_clip_timestamp>.jsonl `
+  --clip-name "<clip_label_for_packet>" `
+  --write-docx
+```
+
+The script writes a randomized blind judge packet and a separate answer key to
+`experiments/docs_experiments/human_judgement/`. With `--graph-grounded`, the
+packet includes four conditions: `steps_only`, `symbolic_domain`,
+`graph_grounded`, and `query_driven_graph`. Without `--graph-grounded`, it
+creates a three-condition packet.
+
+The `--write-docx` flag also converts the Markdown packets to DOCX files using
+Pandoc, so `pandoc` must be installed and available on `PATH`. If DOCX
+generation is not needed or Pandoc is unavailable, omit `--write-docx` and use
+the generated Markdown files.
+
 ## Prompt Identifier Compaction
 
 Upstream graph identifiers remain unchanged for Neo4j queries, stored query

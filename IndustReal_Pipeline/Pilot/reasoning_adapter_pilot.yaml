@@ -1,0 +1,18 @@
+schema_version: pilot_reasoning_adapter_config.v1
+default_run_id: pilot_rod_assembly_symbolic
+description: "Reasoning-only Pilot adapter bundle. The Pilot path starts from hand-authored symbolic records rather than IndustReal graph CSVs."
+paths:
+  source_steps: Pilot/rod_assembly_steps.json
+  domain_config: Pilot/domain_config_pilot.yaml
+  predicate_config: Pilot/rules_pilot.yaml
+  observation_contract: Pilot/observation_contract_pilot.yaml
+  step_records: Pilot/step_records.jsonl
+  predicates: Pilot/predicates.jsonl
+  inferred_constraints: Pilot/inferred_constraints.csv
+  validation_records: Pilot/validation_records.jsonl
+  procedural_reasoning_graph_dir: Pilot/procedural_reasoning_graph
+symbolic_input_contract:
+  step_record_schema: thesis_reasoning_adapter.v1
+  predicate_record_schema: thesis_reasoning_predicate.v1
+  confidence_source: manual_symbolic_annotation
+  confidence: 1.0

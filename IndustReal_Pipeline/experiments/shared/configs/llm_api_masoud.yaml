@@ -1,6 +1,7 @@
 # OpenAI-compatible API settings for Masoud's hosted LM Studio server.
 # This is intentionally separate from llm_api.yaml so local runs stay unchanged.
-api_base_url: "https://earl-doctor-timber-exciting.trycloudflare.com/v1"
+# "qwen/qwen3.6-27b" 
+api_base_url: "https://sunset-encountered-atomic-sonic.trycloudflare.com/v1"
 api_key: "anything"
 model_name: "google/gemma-4-26b-a4b-qat"
 temperature: 0.0
