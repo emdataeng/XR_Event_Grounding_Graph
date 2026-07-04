@@ -9,12 +9,12 @@
             "metal_rod",
             "workbench"
           ],
-          "name": "on"
+          "name": "secured"
         },
         "supporting_effect": {
           "args": [
             "step::pilot_rod_assembly::step_01",
-            "on",
+            "secured",
             "metal_rod",
             "workbench"
           ],
@@ -23,9 +23,9 @@
               "metal_rod",
               "workbench"
             ],
-            "name": "on"
+            "name": "secured"
           },
-          "constraint_id": "step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench",
+          "constraint_id": "step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
           "producer_status": "accepted",
           "provisional": false,
           "step_id": "step::pilot_rod_assembly::step_01",
@@ -70,6 +70,42 @@
       },
       "source": "Step::step::pilot_rod_assembly::step_03",
       "target": "Step::step::pilot_rod_assembly::step_02",
+      "type": "DEPENDS_ON"
+    },
+    {
+      "properties": {
+        "confidence": 1.0,
+        "provisional": false,
+        "required_condition": {
+          "args": [
+            "o_ring",
+            "rod_holes"
+          ],
+          "name": "aligned"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_03",
+            "aligned",
+            "o_ring",
+            "rod_holes"
+          ],
+          "condition": {
+            "args": [
+              "o_ring",
+              "rod_holes"
+            ],
+            "name": "aligned"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_03",
+          "type": "previous_produced_effect"
+        }
+      },
+      "source": "Step::step::pilot_rod_assembly::step_04",
+      "target": "Step::step::pilot_rod_assembly::step_03",
       "type": "DEPENDS_ON"
     },
     {
@@ -133,7 +169,43 @@
             ],
             "name": "adjusted_over"
           },
-          "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+          "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+          "producer_status": "accepted",
+          "provisional": false,
+          "step_id": "step::pilot_rod_assembly::step_03",
+          "type": "previous_produced_effect"
+        }
+      },
+      "source": "Step::step::pilot_rod_assembly::step_04",
+      "target": "Step::step::pilot_rod_assembly::step_03",
+      "type": "DEPENDS_ON"
+    },
+    {
+      "properties": {
+        "confidence": 1.0,
+        "provisional": false,
+        "required_condition": {
+          "args": [
+            "sleeve",
+            "o_ring"
+          ],
+          "name": "aligned"
+        },
+        "supporting_effect": {
+          "args": [
+            "step::pilot_rod_assembly::step_03",
+            "aligned",
+            "sleeve",
+            "o_ring"
+          ],
+          "condition": {
+            "args": [
+              "sleeve",
+              "o_ring"
+            ],
+            "name": "aligned"
+          },
+          "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
           "producer_status": "accepted",
           "provisional": false,
           "step_id": "step::pilot_rod_assembly::step_03",
@@ -255,18 +327,18 @@
     {
       "properties": {
         "confidence": 1.0,
-        "provisional": false,
+        "provisional": true,
         "required_condition": {
           "args": [
             "sleeve",
             "metal_rod"
           ],
-          "name": "secured_to"
+          "name": "secured"
         },
         "supporting_effect": {
           "args": [
             "step::pilot_rod_assembly::step_06",
-            "secured_to",
+            "secured",
             "sleeve",
             "metal_rod"
           ],
@@ -275,11 +347,11 @@
               "sleeve",
               "metal_rod"
             ],
-            "name": "secured_to"
+            "name": "secured"
           },
-          "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
-          "producer_status": "accepted",
-          "provisional": false,
+          "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
+          "producer_status": "uncertain",
+          "provisional": true,
           "step_id": "step::pilot_rod_assembly::step_06",
           "type": "previous_produced_effect"
         }
@@ -291,18 +363,18 @@
     {
       "properties": {
         "confidence": 1.0,
-        "provisional": false,
+        "provisional": true,
         "required_condition": {
           "args": [
             "sleeve",
             "metal_rod"
           ],
-          "name": "secured_to"
+          "name": "secured"
         },
         "supporting_effect": {
           "args": [
             "step::pilot_rod_assembly::step_06",
-            "secured_to",
+            "secured",
             "sleeve",
             "metal_rod"
           ],
@@ -311,11 +383,11 @@
               "sleeve",
               "metal_rod"
             ],
-            "name": "secured_to"
+            "name": "secured"
           },
-          "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
-          "producer_status": "accepted",
-          "provisional": false,
+          "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
+          "producer_status": "uncertain",
+          "provisional": true,
           "step_id": "step::pilot_rod_assembly::step_06",
           "type": "previous_produced_effect"
         }
@@ -368,6 +440,12 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
+      "target": "Rule::effect_observed_pilot_condition",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod",
       "target": "Rule::effect_observed_pilot_condition",
       "type": "DERIVED_FROM"
@@ -392,7 +470,7 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
+      "source": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
       "target": "Rule::precondition_required_pilot_condition",
       "type": "DERIVED_FROM"
     },
@@ -404,7 +482,19 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+      "target": "Rule::effect_observed_pilot_condition",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "target": "Rule::effect_observed_pilot_condition",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
       "target": "Rule::effect_observed_pilot_condition",
       "type": "DERIVED_FROM"
     },
@@ -428,7 +518,19 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
+      "target": "Rule::precondition_required_pilot_condition",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "target": "Rule::precondition_required_pilot_condition",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
       "target": "Rule::precondition_required_pilot_condition",
       "type": "DERIVED_FROM"
     },
@@ -452,7 +554,7 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
       "target": "Rule::effect_observed_pilot_condition",
       "type": "DERIVED_FROM"
     },
@@ -476,6 +578,18 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes",
+      "target": "Rule::precondition_required_pilot_condition",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring",
+      "target": "Rule::precondition_required_pilot_condition",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver",
       "target": "Rule::tool_required_by_pilot_step",
       "type": "DERIVED_FROM"
@@ -494,7 +608,7 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
       "target": "Rule::precondition_required_pilot_condition",
       "type": "DERIVED_FROM"
     },
@@ -518,7 +632,7 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
       "target": "Rule::precondition_required_pilot_condition",
       "type": "DERIVED_FROM"
     },
@@ -532,6 +646,12 @@
       "properties": {},
       "source": "Predicate::pred::pilot::s01::effect::on",
       "target": "Source::dcf252eb33b7d491",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s01::effect::rod_secured",
+      "target": "Source::33983d91e669b308",
       "type": "DERIVED_FROM"
     },
     {
@@ -614,8 +734,8 @@
     },
     {
       "properties": {},
-      "source": "Predicate::pred::pilot::s02::requires::on_rod_workbench",
-      "target": "Source::dcf252eb33b7d491",
+      "source": "Predicate::pred::pilot::s02::requires::rod_secured",
+      "target": "Source::45fe16580eb76567",
       "type": "DERIVED_FROM"
     },
     {
@@ -632,7 +752,19 @@
     },
     {
       "properties": {},
+      "source": "Predicate::pred::pilot::s03::effect::oring_aligned",
+      "target": "Source::dcf252eb33b7d491",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::pred::pilot::s03::effect::oring_inserted",
+      "target": "Source::dcf252eb33b7d491",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s03::effect::sleeve_aligned",
       "target": "Source::dcf252eb33b7d491",
       "type": "DERIVED_FROM"
     },
@@ -710,8 +842,20 @@
     },
     {
       "properties": {},
+      "source": "Predicate::pred::pilot::s04::requires::oring_aligned",
+      "target": "Source::45fe16580eb76567",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
       "source": "Predicate::pred::pilot::s04::requires::oring_inserted",
       "target": "Source::dcf252eb33b7d491",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s04::requires::sleeve_aligned",
+      "target": "Source::45fe16580eb76567",
       "type": "DERIVED_FROM"
     },
     {
@@ -808,6 +952,18 @@
       "properties": {},
       "source": "Predicate::pred::pilot::s06::requires::partially_inserted",
       "target": "Source::dcf252eb33b7d491",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s06::requires::screw_aligned_o_ring",
+      "target": "Source::45fe16580eb76567",
+      "type": "DERIVED_FROM"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes",
+      "target": "Source::45fe16580eb76567",
       "type": "DERIVED_FROM"
     },
     {
@@ -938,6 +1094,12 @@
     },
     {
       "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_01",
+      "target": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_02",
       "target": "Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod",
       "type": "HAS_CONSTRAINT"
@@ -963,7 +1125,7 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_02",
-      "target": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
+      "target": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
       "type": "HAS_CONSTRAINT"
     },
     {
@@ -975,7 +1137,19 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_03",
-      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_03",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_03",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
       "type": "HAS_CONSTRAINT"
     },
     {
@@ -999,7 +1173,19 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_04",
-      "target": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "target": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_04",
+      "target": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_04",
+      "target": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
       "type": "HAS_CONSTRAINT"
     },
     {
@@ -1023,7 +1209,7 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_06",
-      "target": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+      "target": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
       "type": "HAS_CONSTRAINT"
     },
     {
@@ -1047,6 +1233,18 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_06",
+      "target": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_06",
+      "target": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring",
+      "type": "HAS_CONSTRAINT"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_06",
       "target": "Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver",
       "type": "HAS_CONSTRAINT"
     },
@@ -1065,7 +1263,7 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_07",
-      "target": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
+      "target": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
       "type": "HAS_CONSTRAINT"
     },
     {
@@ -1089,7 +1287,7 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_08",
-      "target": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
+      "target": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
       "type": "HAS_CONSTRAINT"
     },
     {
@@ -1101,6 +1299,18 @@
     {
       "properties": {},
       "source": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench",
+      "target": "Entity::workbench",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
+      "target": "Entity::metal_rod",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
       "target": "Entity::workbench",
       "type": "HAS_ENTITY"
     },
@@ -1154,13 +1364,13 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
+      "source": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
       "target": "Entity::metal_rod",
       "type": "HAS_ENTITY"
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
+      "source": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
       "target": "Entity::workbench",
       "type": "HAS_ENTITY"
     },
@@ -1178,13 +1388,37 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
       "target": "Entity::o_ring",
       "type": "HAS_ENTITY"
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+      "target": "Entity::rod_holes",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "target": "Entity::sleeve",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
       "target": "Entity::sleeve",
       "type": "HAS_ENTITY"
     },
@@ -1226,13 +1460,37 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
       "target": "Entity::o_ring",
       "type": "HAS_ENTITY"
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
+      "target": "Entity::rod_holes",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "target": "Entity::sleeve",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
       "target": "Entity::sleeve",
       "type": "HAS_ENTITY"
     },
@@ -1268,13 +1526,13 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
       "target": "Entity::metal_rod",
       "type": "HAS_ENTITY"
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
       "target": "Entity::sleeve",
       "type": "HAS_ENTITY"
     },
@@ -1316,6 +1574,30 @@
     },
     {
       "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes",
+      "target": "Entity::rod_holes",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes",
+      "target": "Entity::screw",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring",
+      "target": "Entity::screw",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver",
       "target": "Entity::power_screwdriver",
       "type": "HAS_ENTITY"
@@ -1346,13 +1628,13 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
       "target": "Entity::metal_rod",
       "type": "HAS_ENTITY"
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
       "target": "Entity::sleeve",
       "type": "HAS_ENTITY"
     },
@@ -1394,13 +1676,13 @@
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
       "target": "Entity::metal_rod",
       "type": "HAS_ENTITY"
     },
     {
       "properties": {},
-      "source": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
       "target": "Entity::sleeve",
       "type": "HAS_ENTITY"
     },
@@ -1413,6 +1695,18 @@
     {
       "properties": {},
       "source": "Predicate::pred::pilot::s01::effect::on",
+      "target": "Entity::workbench",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s01::effect::rod_secured",
+      "target": "Entity::metal_rod",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s01::effect::rod_secured",
       "target": "Entity::workbench",
       "type": "HAS_ENTITY"
     },
@@ -1508,14 +1802,26 @@
     },
     {
       "properties": {},
-      "source": "Predicate::pred::pilot::s02::requires::on_rod_workbench",
+      "source": "Predicate::pred::pilot::s02::requires::rod_secured",
       "target": "Entity::metal_rod",
       "type": "HAS_ENTITY"
     },
     {
       "properties": {},
-      "source": "Predicate::pred::pilot::s02::requires::on_rod_workbench",
+      "source": "Predicate::pred::pilot::s02::requires::rod_secured",
       "target": "Entity::workbench",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s03::effect::oring_aligned",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s03::effect::oring_aligned",
+      "target": "Entity::rod_holes",
       "type": "HAS_ENTITY"
     },
     {
@@ -1528,6 +1834,18 @@
       "properties": {},
       "source": "Predicate::pred::pilot::s03::effect::oring_inserted",
       "target": "Entity::rod_holes",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s03::effect::sleeve_aligned",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s03::effect::sleeve_aligned",
+      "target": "Entity::sleeve",
       "type": "HAS_ENTITY"
     },
     {
@@ -1622,6 +1940,18 @@
     },
     {
       "properties": {},
+      "source": "Predicate::pred::pilot::s04::requires::oring_aligned",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s04::requires::oring_aligned",
+      "target": "Entity::rod_holes",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
       "source": "Predicate::pred::pilot::s04::requires::oring_inserted",
       "target": "Entity::o_ring",
       "type": "HAS_ENTITY"
@@ -1630,6 +1960,18 @@
       "properties": {},
       "source": "Predicate::pred::pilot::s04::requires::oring_inserted",
       "target": "Entity::rod_holes",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s04::requires::sleeve_aligned",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s04::requires::sleeve_aligned",
+      "target": "Entity::sleeve",
       "type": "HAS_ENTITY"
     },
     {
@@ -1737,6 +2079,30 @@
     {
       "properties": {},
       "source": "Predicate::pred::pilot::s06::requires::partially_inserted",
+      "target": "Entity::screw",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s06::requires::screw_aligned_o_ring",
+      "target": "Entity::o_ring",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s06::requires::screw_aligned_o_ring",
+      "target": "Entity::screw",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes",
+      "target": "Entity::rod_holes",
+      "type": "HAS_ENTITY"
+    },
+    {
+      "properties": {},
+      "source": "Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes",
       "target": "Entity::screw",
       "type": "HAS_ENTITY"
     },
@@ -1893,6 +2259,12 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_01",
+      "target": "Predicate::pred::pilot::s01::effect::rod_secured",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_01",
       "target": "Predicate::pred::pilot::s01::object::metal_rod",
       "type": "HAS_PREDICATE"
     },
@@ -1971,7 +2343,7 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_02",
-      "target": "Predicate::pred::pilot::s02::requires::on_rod_workbench",
+      "target": "Predicate::pred::pilot::s02::requires::rod_secured",
       "type": "HAS_PREDICATE"
     },
     {
@@ -1989,7 +2361,19 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_03",
+      "target": "Predicate::pred::pilot::s03::effect::oring_aligned",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_03",
       "target": "Predicate::pred::pilot::s03::effect::oring_inserted",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_03",
+      "target": "Predicate::pred::pilot::s03::effect::sleeve_aligned",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2067,7 +2451,19 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_04",
+      "target": "Predicate::pred::pilot::s04::requires::oring_aligned",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_04",
       "target": "Predicate::pred::pilot::s04::requires::oring_inserted",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_04",
+      "target": "Predicate::pred::pilot::s04::requires::sleeve_aligned",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2164,6 +2560,18 @@
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_06",
       "target": "Predicate::pred::pilot::s06::requires::partially_inserted",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_06",
+      "target": "Predicate::pred::pilot::s06::requires::screw_aligned_o_ring",
+      "type": "HAS_PREDICATE"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_06",
+      "target": "Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes",
       "type": "HAS_PREDICATE"
     },
     {
@@ -2336,6 +2744,12 @@
     },
     {
       "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_01",
+      "target": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
+      "type": "PRODUCES"
+    },
+    {
+      "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_02",
       "target": "Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod",
       "type": "PRODUCES"
@@ -2367,7 +2781,19 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_03",
-      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+      "type": "PRODUCES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_03",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "type": "PRODUCES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_03",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
       "type": "PRODUCES"
     },
     {
@@ -2385,7 +2811,7 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_06",
-      "target": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+      "target": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
       "type": "PRODUCES"
     },
     {
@@ -2421,7 +2847,7 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_02",
-      "target": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
+      "target": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
       "type": "REQUIRES"
     },
     {
@@ -2439,7 +2865,19 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_04",
-      "target": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "target": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_04",
+      "target": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_04",
+      "target": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
       "type": "REQUIRES"
     },
     {
@@ -2469,13 +2907,25 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_06",
+      "target": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_06",
+      "target": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring",
+      "type": "REQUIRES"
+    },
+    {
+      "properties": {},
+      "source": "Step::step::pilot_rod_assembly::step_06",
       "target": "Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver",
       "type": "REQUIRES"
     },
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_07",
-      "target": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
+      "target": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
       "type": "REQUIRES"
     },
     {
@@ -2487,15 +2937,15 @@
     {
       "properties": {},
       "source": "Step::step::pilot_rod_assembly::step_08",
-      "target": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
+      "target": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
       "type": "REQUIRES"
     },
     {
       "properties": {
         "support_type": "previous_produced_effect"
       },
-      "source": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
-      "target": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench",
+      "source": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
+      "target": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
       "type": "SUPPORTED_BY"
     },
     {
@@ -2518,8 +2968,24 @@
       "properties": {
         "support_type": "previous_produced_effect"
       },
-      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
-      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+      "type": "SUPPORTED_BY"
+    },
+    {
+      "properties": {
+        "support_type": "previous_produced_effect"
+      },
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "type": "SUPPORTED_BY"
+    },
+    {
+      "properties": {
+        "support_type": "previous_produced_effect"
+      },
+      "source": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
+      "target": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
       "type": "SUPPORTED_BY"
     },
     {
@@ -2550,8 +3016,8 @@
       "properties": {
         "support_type": "previous_produced_effect"
       },
-      "source": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
-      "target": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
+      "target": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
       "type": "SUPPORTED_BY"
     },
     {
@@ -2566,8 +3032,8 @@
       "properties": {
         "support_type": "previous_produced_effect"
       },
-      "source": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
-      "target": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+      "source": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
+      "target": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
       "type": "SUPPORTED_BY"
     },
     {
@@ -2724,7 +3190,7 @@
       "type": "USES"
     }
   ],
-  "graph_name": "pilot_rod_assembly_procedural_reasoning_graph",
+  "graph_name": "procedural_reasoning_graph::pilot_rod_assembly",
   "nodes": [
     {
       "id": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench",
@@ -2745,6 +3211,33 @@
         "name": "produces",
         "rule_id": "effect_observed_pilot_condition",
         "short_id": "step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "observed"
+      },
+      "type": "Constraint"
+    },
+    {
+      "id": "Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          "secured",
+          "metal_rod",
+          "workbench"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
+        "display_label": "produces secured(metal_rod, workbench) [observed]",
+        "display_name": "produces secured",
+        "effect_lifecycle_status": "active",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "short_id": "step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench",
         "support": {
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
@@ -2862,23 +3355,23 @@
       "type": "Constraint"
     },
     {
-      "id": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
+      "id": "Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_02",
-          "on",
+          "secured",
           "metal_rod",
           "workbench"
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "constraint_id": "step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
-        "display_label": "requires on(metal_rod, workbench) [supported]",
-        "display_name": "requires on",
+        "constraint_id": "step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
+        "display_label": "requires secured(metal_rod, workbench) [supported]",
+        "display_name": "requires secured",
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_required_pilot_condition",
-        "short_id": "step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench",
+        "short_id": "step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench",
         "support": {
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
@@ -2915,7 +3408,34 @@
       "type": "Constraint"
     },
     {
-      "id": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+      "id": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "aligned",
+          "o_ring",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+        "display_label": "produces aligned(o_ring, rod_holes) [observed]",
+        "display_name": "produces aligned",
+        "effect_lifecycle_status": "active",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "short_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "observed"
+      },
+      "type": "Constraint"
+    },
+    {
+      "id": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_03",
@@ -2925,14 +3445,41 @@
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+        "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
         "display_label": "produces adjusted_over(sleeve, o_ring) [observed]",
         "display_name": "produces adjusted_over",
         "effect_lifecycle_status": "active",
         "kind": "expected_effect",
         "name": "produces",
         "rule_id": "effect_observed_pilot_condition",
-        "short_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+        "short_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "observed"
+      },
+      "type": "Constraint"
+    },
+    {
+      "id": "Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "aligned",
+          "sleeve",
+          "o_ring"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
+        "display_label": "produces aligned(sleeve, o_ring) [observed]",
+        "display_name": "produces aligned",
+        "effect_lifecycle_status": "active",
+        "kind": "expected_effect",
+        "name": "produces",
+        "rule_id": "effect_observed_pilot_condition",
+        "short_id": "step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring",
         "support": {
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
@@ -3021,7 +3568,33 @@
       "type": "Constraint"
     },
     {
-      "id": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+      "id": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "aligned",
+          "o_ring",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
+        "display_label": "requires aligned(o_ring, rod_holes) [supported]",
+        "display_name": "requires aligned",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "short_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "supported"
+      },
+      "type": "Constraint"
+    },
+    {
+      "id": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_04",
@@ -3031,13 +3604,39 @@
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "constraint_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+        "constraint_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
         "display_label": "requires adjusted_over(sleeve, o_ring) [supported]",
         "display_name": "requires adjusted_over",
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_required_pilot_condition",
-        "short_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+        "short_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "supported"
+      },
+      "type": "Constraint"
+    },
+    {
+      "id": "Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "aligned",
+          "sleeve",
+          "o_ring"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
+        "display_label": "requires aligned(sleeve, o_ring) [supported]",
+        "display_name": "requires aligned",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "short_id": "step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring",
         "support": {
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
@@ -3124,24 +3723,24 @@
       "type": "Constraint"
     },
     {
-      "id": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+      "id": "Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_06",
-          "secured_to",
+          "secured",
           "sleeve",
           "metal_rod"
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
-        "display_label": "produces secured_to(sleeve, metal_rod) [observed]",
-        "display_name": "produces secured_to",
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
+        "display_label": "produces secured(sleeve, metal_rod) [observed]",
+        "display_name": "produces secured",
         "effect_lifecycle_status": "active",
         "kind": "expected_effect",
         "name": "produces",
         "rule_id": "effect_observed_pilot_condition",
-        "short_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod",
+        "short_id": "step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod",
         "support": {
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
@@ -3230,6 +3829,58 @@
       "type": "Constraint"
     },
     {
+      "id": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "aligned",
+          "screw",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes",
+        "display_label": "requires aligned(screw, rod_holes) [missing]",
+        "display_name": "requires aligned",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "short_id": "step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "missing"
+      },
+      "type": "Constraint"
+    },
+    {
+      "id": "Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "aligned",
+          "screw",
+          "o_ring"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "constraint_id": "step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring",
+        "display_label": "requires aligned(screw, o_ring) [missing]",
+        "display_name": "requires aligned",
+        "kind": "inferred_precondition",
+        "name": "requires",
+        "rule_id": "precondition_required_pilot_condition",
+        "short_id": "step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring",
+        "support": {
+          "notes": "Constraint observed in the step.",
+          "type": "same_step_constraint"
+        },
+        "support_status": "missing"
+      },
+      "type": "Constraint"
+    },
+    {
       "id": "Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver",
       "properties": {
         "args": [
@@ -3308,23 +3959,23 @@
       "type": "Constraint"
     },
     {
-      "id": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
+      "id": "Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_07",
-          "secured_to",
+          "secured",
           "sleeve",
           "metal_rod"
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "constraint_id": "step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
-        "display_label": "requires secured_to(sleeve, metal_rod) [supported]",
-        "display_name": "requires secured_to",
+        "constraint_id": "step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
+        "display_label": "requires secured(sleeve, metal_rod) [supported]",
+        "display_name": "requires secured",
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_required_pilot_condition",
-        "short_id": "step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod",
+        "short_id": "step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod",
         "support": {
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
@@ -3414,23 +4065,23 @@
       "type": "Constraint"
     },
     {
-      "id": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
+      "id": "Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_08",
-          "secured_to",
+          "secured",
           "sleeve",
           "metal_rod"
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "constraint_id": "step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
-        "display_label": "requires secured_to(sleeve, metal_rod) [supported]",
-        "display_name": "requires secured_to",
+        "constraint_id": "step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
+        "display_label": "requires secured(sleeve, metal_rod) [supported]",
+        "display_name": "requires secured",
         "kind": "inferred_precondition",
         "name": "requires",
         "rule_id": "precondition_required_pilot_condition",
-        "short_id": "step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod",
+        "short_id": "step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod",
         "support": {
           "notes": "Constraint observed in the step.",
           "type": "same_step_constraint"
@@ -3682,6 +4333,29 @@
         "source": {
           "file": "Pilot/rod_assembly_steps.json",
           "type": "manual_symbolic_annotation"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::pred::pilot::s01::effect::rod_secured",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_01",
+          "secured",
+          "metal_rod",
+          "workbench"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasObservedEffect(step_01, secured, metal_rod, workbench)",
+        "display_name": "hasObservedEffect",
+        "name": "hasObservedEffect",
+        "predicate_id": "pred::pilot::s01::effect::rod_secured",
+        "short_id": "pred::pilot::s01::effect::rod_secured",
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_expert_annotation"
         }
       },
       "type": "Predicate"
@@ -3969,24 +4643,24 @@
       "type": "Predicate"
     },
     {
-      "id": "Predicate::pred::pilot::s02::requires::on_rod_workbench",
+      "id": "Predicate::pred::pilot::s02::requires::rod_secured",
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_02",
-          "on",
+          "secured",
           "metal_rod",
           "workbench"
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "display_label": "hasRequiredCondition(step_02, on, metal_rod, workbench)",
+        "display_label": "hasRequiredCondition(step_02, secured, metal_rod, workbench)",
         "display_name": "hasRequiredCondition",
         "name": "hasRequiredCondition",
-        "predicate_id": "pred::pilot::s02::requires::on_rod_workbench",
-        "short_id": "pred::pilot::s02::requires::on_rod_workbench",
+        "predicate_id": "pred::pilot::s02::requires::rod_secured",
+        "short_id": "pred::pilot::s02::requires::rod_secured",
         "source": {
-          "file": "Pilot/rod_assembly_steps.json",
-          "type": "manual_symbolic_annotation"
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_default"
         }
       },
       "type": "Predicate"
@@ -4035,6 +4709,29 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::pred::pilot::s03::effect::oring_aligned",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "aligned",
+          "o_ring",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasObservedEffect(step_03, aligned, o_ring, rod_holes)",
+        "display_name": "hasObservedEffect",
+        "name": "hasObservedEffect",
+        "predicate_id": "pred::pilot::s03::effect::oring_aligned",
+        "short_id": "pred::pilot::s03::effect::oring_aligned",
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::pred::pilot::s03::effect::oring_inserted",
       "properties": {
         "args": [
@@ -4050,6 +4747,29 @@
         "name": "hasObservedEffect",
         "predicate_id": "pred::pilot::s03::effect::oring_inserted",
         "short_id": "pred::pilot::s03::effect::oring_inserted",
+        "source": {
+          "file": "Pilot/rod_assembly_steps.json",
+          "type": "manual_symbolic_annotation"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::pred::pilot::s03::effect::sleeve_aligned",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_03",
+          "aligned",
+          "sleeve",
+          "o_ring"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasObservedEffect(step_03, aligned, sleeve, o_ring)",
+        "display_name": "hasObservedEffect",
+        "name": "hasObservedEffect",
+        "predicate_id": "pred::pilot::s03::effect::sleeve_aligned",
+        "short_id": "pred::pilot::s03::effect::sleeve_aligned",
         "source": {
           "file": "Pilot/rod_assembly_steps.json",
           "type": "manual_symbolic_annotation"
@@ -4317,6 +5037,29 @@
       "type": "Predicate"
     },
     {
+      "id": "Predicate::pred::pilot::s04::requires::oring_aligned",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "aligned",
+          "o_ring",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasRequiredCondition(step_04, aligned, o_ring, rod_holes)",
+        "display_name": "hasRequiredCondition",
+        "name": "hasRequiredCondition",
+        "predicate_id": "pred::pilot::s04::requires::oring_aligned",
+        "short_id": "pred::pilot::s04::requires::oring_aligned",
+        "source": {
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_default"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
       "id": "Predicate::pred::pilot::s04::requires::oring_inserted",
       "properties": {
         "args": [
@@ -4335,6 +5078,29 @@
         "source": {
           "file": "Pilot/rod_assembly_steps.json",
           "type": "manual_symbolic_annotation"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::pred::pilot::s04::requires::sleeve_aligned",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_04",
+          "aligned",
+          "sleeve",
+          "o_ring"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasRequiredCondition(step_04, aligned, sleeve, o_ring)",
+        "display_name": "hasRequiredCondition",
+        "name": "hasRequiredCondition",
+        "predicate_id": "pred::pilot::s04::requires::sleeve_aligned",
+        "short_id": "pred::pilot::s04::requires::sleeve_aligned",
+        "source": {
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_default"
         }
       },
       "type": "Predicate"
@@ -4606,13 +5372,13 @@
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_06",
-          "secured_to",
+          "secured",
           "sleeve",
           "metal_rod"
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "display_label": "hasObservedEffect(step_06, secured_to, sleeve, metal_rod)",
+        "display_label": "hasObservedEffect(step_06, secured, sleeve, metal_rod)",
         "display_name": "hasObservedEffect",
         "name": "hasObservedEffect",
         "predicate_id": "pred::pilot::s06::effect::secured",
@@ -4685,6 +5451,52 @@
         "source": {
           "file": "Pilot/rod_assembly_steps.json",
           "type": "manual_symbolic_annotation"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::pred::pilot::s06::requires::screw_aligned_o_ring",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "aligned",
+          "screw",
+          "o_ring"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasRequiredCondition(step_06, aligned, screw, o_ring)",
+        "display_name": "hasRequiredCondition",
+        "name": "hasRequiredCondition",
+        "predicate_id": "pred::pilot::s06::requires::screw_aligned_o_ring",
+        "short_id": "pred::pilot::s06::requires::screw_aligned_o_ring",
+        "source": {
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_default"
+        }
+      },
+      "type": "Predicate"
+    },
+    {
+      "id": "Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes",
+      "properties": {
+        "args": [
+          "step::pilot_rod_assembly::step_06",
+          "aligned",
+          "screw",
+          "rod_holes"
+        ],
+        "conf": 1.0,
+        "confidence": 1.0,
+        "display_label": "hasRequiredCondition(step_06, aligned, screw, rod_holes)",
+        "display_name": "hasRequiredCondition",
+        "name": "hasRequiredCondition",
+        "predicate_id": "pred::pilot::s06::requires::screw_aligned_rod_holes",
+        "short_id": "pred::pilot::s06::requires::screw_aligned_rod_holes",
+        "source": {
+          "file": "Pilot/domain_config_pilot.yaml",
+          "type": "pilot_domain_default"
         }
       },
       "type": "Predicate"
@@ -4890,13 +5702,13 @@
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_07",
-          "secured_to",
+          "secured",
           "sleeve",
           "metal_rod"
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "display_label": "hasRequiredCondition(step_07, secured_to, sleeve, metal_rod)",
+        "display_label": "hasRequiredCondition(step_07, secured, sleeve, metal_rod)",
         "display_name": "hasRequiredCondition",
         "name": "hasRequiredCondition",
         "predicate_id": "pred::pilot::s07::requires::secured",
@@ -5067,13 +5879,13 @@
       "properties": {
         "args": [
           "step::pilot_rod_assembly::step_08",
-          "secured_to",
+          "secured",
           "sleeve",
           "metal_rod"
         ],
         "conf": 1.0,
         "confidence": 1.0,
-        "display_label": "hasRequiredCondition(step_08, secured_to, sleeve, metal_rod)",
+        "display_label": "hasRequiredCondition(step_08, secured, sleeve, metal_rod)",
         "display_name": "hasRequiredCondition",
         "name": "hasRequiredCondition",
         "predicate_id": "pred::pilot::s08::requires::secured",
@@ -5159,6 +5971,30 @@
       "type": "Rule"
     },
     {
+      "id": "Source::33983d91e669b308",
+      "properties": {
+        "display_label": "manual_expert_annotation:rod_assembly_steps.json",
+        "display_name": "manual_expert_annotation:rod_assembly_steps.json",
+        "file": "Pilot/rod_assembly_steps.json",
+        "short_id": "33983d91e669b308",
+        "source_id": "33983d91e669b308",
+        "source_type": "manual_expert_annotation"
+      },
+      "type": "Source"
+    },
+    {
+      "id": "Source::45fe16580eb76567",
+      "properties": {
+        "display_label": "pilot_domain_default:domain_config_pilot.yaml",
+        "display_name": "pilot_domain_default:domain_config_pilot.yaml",
+        "file": "Pilot/domain_config_pilot.yaml",
+        "short_id": "45fe16580eb76567",
+        "source_id": "45fe16580eb76567",
+        "source_type": "pilot_domain_default"
+      },
+      "type": "Source"
+    },
+    {
       "id": "Source::dcf252eb33b7d491",
       "properties": {
         "display_label": "manual_symbolic_annotation:rod_assembly_steps.json",
@@ -5204,7 +6040,7 @@
           "workbench"
         ],
         "object_summary": "metal_rod, workbench",
-        "produced_constraint_count": 1,
+        "produced_constraint_count": 2,
         "run_id": "pilot_rod_assembly_symbolic",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "step_01",
@@ -5276,7 +6112,7 @@
           "sleeve"
         ],
         "object_summary": "o_ring, rod_holes, sleeve",
-        "produced_constraint_count": 3,
+        "produced_constraint_count": 5,
         "run_id": "pilot_rod_assembly_symbolic",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "step_03",
@@ -5311,7 +6147,7 @@
           "power_screwdriver"
         ],
         "object_summary": "screw, rod_holes, power_screwdriver",
-        "produced_constraint_count": 4,
+        "produced_constraint_count": 6,
         "run_id": "pilot_rod_assembly_symbolic",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "step_04",
@@ -5366,7 +6202,7 @@
         "clip": "sample_video_a",
         "clip_result_id": "pilot_rod_assembly",
         "confidence": 1.0,
-        "display_label": "Step 6 [accepted]",
+        "display_label": "Step 6 [uncertain]",
         "display_name": "Step 6",
         "has_expected_effect": true,
         "has_rule_coverage": true,
@@ -5380,12 +6216,12 @@
           "power_screwdriver"
         ],
         "object_summary": "screw, sleeve, power_screwdriver",
-        "produced_constraint_count": 5,
+        "produced_constraint_count": 7,
         "run_id": "pilot_rod_assembly_symbolic",
         "schema_version": "thesis_layer4_validation.v1",
         "short_id": "step_06",
         "source_event_id": "pilot_rod_assembly::step_06",
-        "status": "accepted",
+        "status": "uncertain",
         "step_id": "step::pilot_rod_assembly::step_06",
         "unsupported_action": false,
         "warning_count": 0
@@ -5467,22 +6303,22 @@
   ],
   "provenance": {
     "builder": "src.procedural_reasoning_graph.build_procedural_reasoning_graph",
-    "built_at": "2026-07-03T12:44:19+02:00",
+    "built_at": "2026-07-04T12:41:24+02:00",
     "graph_schema_version": "1.0",
     "input_artifacts": {
       "constraints": {
         "exists": true,
-        "modified_at": "2026-07-03T12:43:55+02:00",
+        "modified_at": "2026-07-04T12:41:08+02:00",
         "path": "Pilot\\inferred_constraints.csv",
-        "sha256": "0a1fbb657372cb4a817139853234fbadf31c36ece0faa6b42d5229ed2f667af3",
-        "size_bytes": 12292
+        "sha256": "ef7139bb270289d484c209b52ff3a2ae6b6e8ddf63b0cda685a19f281cee9b9b",
+        "size_bytes": 15408
       },
       "predicates": {
         "exists": true,
-        "modified_at": "2026-07-03T12:43:46+02:00",
+        "modified_at": "2026-07-04T12:41:03+02:00",
         "path": "Pilot\\predicates.jsonl",
-        "sha256": "e079377b76e057bab703bbf872bd86635c6bcdceddd76091ca93964685223f68",
-        "size_bytes": 18670
+        "sha256": "7362570c1cb3f5d5929a557415b82cd020e1ef48947673627a18cdce105b304d",
+        "size_bytes": 20728
       },
       "step_records": {
         "exists": true,
@@ -5493,21 +6329,21 @@
       },
       "validations": {
         "exists": true,
-        "modified_at": "2026-07-03T12:44:06+02:00",
+        "modified_at": "2026-07-04T12:41:15+02:00",
         "path": "Pilot\\validation_records.jsonl",
-        "sha256": "283bf36e77ac3e2c8bf34354ca44816adbd291d5c04f42cb7e2b464b06f4af1b",
-        "size_bytes": 146791
+        "sha256": "a99bf117ab9730ce07519d5b9ac9ba9746fbba55f83fadf4b2d394c022874293",
+        "size_bytes": 170047
       }
     },
     "source_files": {
       "domain_config": {
         "domain_model_version": "0.1.0",
         "exists": true,
-        "modified_at": "2026-07-03T12:43:45+02:00",
+        "modified_at": "2026-07-04T12:22:03+02:00",
         "path": "Pilot\\domain_config_pilot.yaml",
         "schema_version": "pilot_domain_config.v1",
-        "sha256": "5ec911bd65f5a1afd157849eda781ba2dccec259b6b0ef360ef4b6087e635d05",
-        "size_bytes": 4250
+        "sha256": "3db6578d1622d6201bb56d89264372f45f0af79532d35e8c7499dfc400a35dc5",
+        "size_bytes": 4852
       },
       "thesis_rules": {
         "exists": true,

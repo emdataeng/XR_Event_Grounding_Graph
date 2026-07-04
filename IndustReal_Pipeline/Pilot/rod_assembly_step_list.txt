@@ -1,0 +1,17 @@
+Pilot rod assembly procedure:
+
+Step 1 [0-15s]: The operator places a long metal rod on the workbench.
+
+Step 2 [15-89s]: The operator slides a combination of long, short and copper sleeves onto the rod. The copper sleeve should face to the right. The procedure specifies six copper sleeves and five long sleeves, starting and finishing with copper sleeves.
+
+Step 3 [89-196s]: The operator places O-rings in the holes on the rod and adjusts the sleeves over them.
+
+Step 4 [196-376s]: The operator drives the screws halfway into all holes using a power screwdriver.
+
+Step 5 [376-429s]: The operator applies threadlocker (Loctite) to all partially inserted screws.
+
+Step 6 [429-531s]: The operator fully tightens all screws to secure the sleeves. The screws should go all the way into the sleeve, but not so far that they stick out.
+
+Step 7 [531-566s]: The operator cleans the rod and sleeves with ethanol and paper. The copper part should not be polished.
+
+Step 8 [566-642s]: The operator applies grease to a sponge and lubricates the silver-colored sleeves while avoiding the copper sleeves.

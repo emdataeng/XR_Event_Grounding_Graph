@@ -1,0 +1,403 @@
+# Operator prompts for Pilot rod-assembly novice-support test cases.
+#
+# This battery targets the reasoning-only Pilot graph:
+#   graph_name: procedural_reasoning_graph::pilot_rod_assembly
+#
+# It follows the same broad scenario design used for the IndustReal novice
+# questions, but adapts the cases to the Pilot rod/sleeve/O-ring/screw domain.
+# The `question` field is sent to the LLM. The group key, status,
+# expected_answer_elements, what_to_query, and improvement notes are
+# evaluation/design metadata and should not be sent to the LLM.
+
+question_set_id: novice_questions_pilot_rod_assembly
+question_set_version: v1
+clip_result_id: pilot_rod_assembly
+graph_name: procedural_reasoning_graph::pilot_rod_assembly
+
+pilot_graph_context:
+  source_steps: Pilot/rod_assembly_steps.json
+  domain_config: Pilot/domain_config_pilot.yaml
+  predicates: Pilot/predicates.jsonl
+  rules: Pilot/rules_pilot.yaml
+  procedural_reasoning_graph: Pilot/procedural_reasoning_graph/procedural_reasoning_graph.json
+  current_validation_summary:
+    accepted: 7
+    uncertain: 1
+    rejected: 0
+  known_current_gap:
+    - "Step 6 is uncertain because aligned(screw, rod_holes) and aligned(screw, o_ring) are required but not currently produced as observed effects."
+  provenance_policy:
+    manual_symbolic_annotation: "Direct symbolic encoding of the Pilot step text."
+    manual_expert_annotation: "Expert interpretation added for reasoning, not literally stated in the step text."
+    pilot_domain_default: "Requirement or metadata derived from Pilot/domain_config_pilot.yaml."
+
+what_to_query:
+  narrative:
+    - "Each question belongs to a scenario."
+    - "The scenario describes the kind of operator problem being tested."
+    - "Retrieval should preserve the distinction between observed effects, required conditions, supported requirements, missing requirements, and provenance."
+  reusable_retrieval_evidence_contract:
+    step_identity:
+      - "current step fields: step_id, index, action_name, status, confidence"
+      - "current step -> NEXT neighbors"
+    current_object_or_component:
+      - "current step -> HAS_PREDICATE -> usesObject(args)"
+      - "current step -> HAS_ENTITY -> Entity(entity_id, display_label, generic_type)"
+      - "current step -> HAS_PREDICATE -> isA(args)"
+      - "current step -> HAS_PREDICATE -> hasParentComponent(args)"
+    actions_tools_materials:
+      - "current step -> HAS_PREDICATE -> hasAction(args)"
+      - "current step -> HAS_PREDICATE -> usesTool(args)"
+      - "current step -> HAS_PREDICATE -> usesMaterial(args)"
+      - "current step -> REQUIRES -> requiresTool(args)"
+    requirements_and_preconditions:
+      - "current step -> REQUIRES -> Constraint(name, kind, args, support_status)"
+      - "current step -> HAS_CONSTRAINT -> requires(args)"
+      - "Constraint -> SUPPORTED_BY -> earlier produced effect or same-step evidence"
+    produced_effects:
+      - "current step -> PRODUCES -> Constraint(name, kind, args, producer_status, provisional)"
+      - "current step -> HAS_CONSTRAINT -> produces(args)"
+    support_and_provenance:
+      - "Constraint -> DERIVED_FROM -> Predicate or Rule"
+      - "Predicate source.type: manual_symbolic_annotation, manual_expert_annotation, pilot_domain_default"
+      - "Keep domain requirements separate from observed evidence."
+    dependencies_and_sequence:
+      - "current step -> DEPENDS_ON -> prerequisite step"
+      - "dependent step -> DEPENDS_ON -> current step"
+      - "previous step -> NEXT -> current step -> NEXT -> next step"
+    lifecycle_and_invalidation:
+      - "No removal action exists in the current Pilot graph."
+      - "State when invalidation/rework cannot be answered from current graph evidence."
+    missing_evidence_controls:
+      - "current_step_found flag for unknown step ids"
+      - "absence of support should be treated as unknown or not confirmed"
+      - "do not infer raw video facts, torque values, exact counts by instance, or physical quality beyond the graph"
+
+scenario_query_deltas:
+  scenario_a_dependency_and_prerequisite_checks:
+    focus:
+      - "sequence, prerequisites, produced effects, support chains, and next-step readiness"
+  scenario_b_alignment_and_implicit_conditions:
+    focus:
+      - "O-ring, sleeve, and screw alignment requirements versus observed alignment evidence"
+  scenario_c_tools_materials_counts_and_orientation:
+    focus:
+      - "power screwdriver, threadlocker, ethanol, paper, grease, sleeve orientation, and sleeve count requirements"
+  scenario_d_state_lifecycle_and_rework_limits:
+    focus:
+      - "what the graph can and cannot say about rework, removal, invalidation, and redo actions"
+  scenario_e_validation_status_provenance_and_relation_precision:
+    focus:
+      - "accepted versus uncertain status, provenance, support, target/support/tool distinctions"
+  scenario_f_missing_evidence_controls:
+    focus:
+      - "unknown steps, unmodeled torque, direct video confirmation, exact instance counts, and ambiguous operator questions"
+
+scenario_groups:
+  scenario_a_dependency_and_prerequisite_checks:
+    - case_id: "q01_start_sequence_current_action"
+      step_id: "step::pilot_rod_assembly::step_01"
+      status: "Runnable now"
+      question: "I am at the first step. What should I put where, and what does this make possible later?"
+      expected_answer_elements:
+        - "identify metal_rod and workbench"
+        - "state that the rod is placed on the workbench"
+        - "mention that secured(metal_rod, workbench) is available as expert-annotated support for later sleeve installation"
+        - "distinguish on(metal_rod, workbench) from secured(metal_rod, workbench)"
+
+    - case_id: "q02_step_two_readiness"
+      step_id: "step::pilot_rod_assembly::step_02"
+      status: "Runnable now"
+      question: "Can I start sliding the sleeves onto the rod, or does something need to be true first?"
+      expected_answer_elements:
+        - "identify required secured(metal_rod, workbench)"
+        - "identify Step 1 as the supporting producer"
+        - "state that the requirement is supported"
+        - "avoid saying the domain default alone proves the condition"
+
+    - case_id: "q03_step_three_dependency"
+      step_id: "step::pilot_rod_assembly::step_03"
+      status: "Runnable now"
+      question: "Before placing the O-rings, what earlier sleeve condition must already hold?"
+      expected_answer_elements:
+        - "identify required sleeves_on(sleeve, metal_rod)"
+        - "identify Step 2 as support"
+        - "explain that Step 3 depends on Step 2"
+
+    - case_id: "q04_step_four_readiness"
+      step_id: "step::pilot_rod_assembly::step_04"
+      status: "Runnable now"
+      question: "Before I drive the screws halfway in, what must already be done with the O-rings and sleeves?"
+      expected_answer_elements:
+        - "identify inserted_in(o_ring, rod_holes)"
+        - "identify aligned(o_ring, rod_holes)"
+        - "identify adjusted_over(sleeve, o_ring)"
+        - "identify aligned(sleeve, o_ring)"
+        - "identify Step 3 as support for these requirements"
+
+    - case_id: "q05_threadlocker_dependency"
+      step_id: "step::pilot_rod_assembly::step_05"
+      status: "Runnable now"
+      question: "Can I apply Loctite now, and what earlier screw state supports that?"
+      expected_answer_elements:
+        - "identify partially_inserted_in(screw, rod_holes)"
+        - "identify Step 4 as the supporting step"
+        - "state that threadlocker is applied to the screw"
+
+    - case_id: "q06_next_step_after_cleaning"
+      step_id: "step::pilot_rod_assembly::step_07"
+      status: "Runnable now"
+      question: "After cleaning with ethanol and paper, what step comes next and what condition does cleaning support?"
+      expected_answer_elements:
+        - "identify Step 8 as the next step"
+        - "identify cleaned_with(rod_assembly, ethanol)"
+        - "state that Step 8 requires the cleaned condition"
+
+  scenario_b_alignment_and_implicit_conditions:
+    - case_id: "q07_o_ring_alignment_requirement"
+      step_id: "step::pilot_rod_assembly::step_03"
+      status: "Runnable now"
+      question: "Where should the O-rings be aligned, and is that represented as something achieved in this step?"
+      expected_answer_elements:
+        - "identify rod_holes as the O-ring installation target"
+        - "state aligned(o_ring, rod_holes)"
+        - "state that Step 3 produces this as manual symbolic annotation"
+
+    - case_id: "q08_sleeve_alignment_requirement"
+      step_id: "step::pilot_rod_assembly::step_03"
+      status: "Runnable now"
+      question: "The sleeve is on the rod, but what should it be aligned with after the O-rings are placed?"
+      expected_answer_elements:
+        - "identify o_ring as the sleeve alignment reference"
+        - "state aligned(sleeve, o_ring)"
+        - "explain that this is distinct from the sleeve installation target metal_rod"
+
+    - case_id: "q09_screw_alignment_before_tightening"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now; expected uncertain"
+      question: "Before fully tightening the screws, what screw alignment checks are still not confirmed?"
+      expected_answer_elements:
+        - "identify aligned(screw, rod_holes)"
+        - "identify aligned(screw, o_ring)"
+        - "state that these are missing or unsupported in the current graph"
+        - "explain that this is why Step 6 is uncertain"
+
+    - case_id: "q10_requirement_not_observation"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now; expected uncertain"
+      question: "The model says the screw must align with the O-ring. Does that mean the graph observed it?"
+      expected_answer_elements:
+        - "answer no"
+        - "distinguish required condition from observed effect"
+        - "identify pilot_domain_default as requirement provenance"
+        - "avoid treating configured requirement as evidence"
+
+    - case_id: "q11_rod_holes_belong_to_rod"
+      step_id: "step::pilot_rod_assembly::step_04"
+      status: "Runnable now"
+      question: "When the instruction says all holes, are those holes modeled as part of the rod or as separate components?"
+      expected_answer_elements:
+        - "identify rod_holes"
+        - "state that rod_holes are modeled as RodHole or RodFeature"
+        - "state hasParentComponent(rod_holes, metal_rod)"
+        - "avoid calling rod_holes an installable component"
+
+  scenario_c_tools_materials_counts_and_orientation:
+    - case_id: "q12_power_screwdriver_step_four"
+      step_id: "step::pilot_rod_assembly::step_04"
+      status: "Runnable now"
+      question: "Which tool do I need to drive the screws halfway in, and is its use observed or only required?"
+      expected_answer_elements:
+        - "identify power_screwdriver"
+        - "state that Step 4 has usesTool(power_screwdriver)"
+        - "state that Step 4 also has a requiresTool condition"
+        - "distinguish observed tool use from required tool"
+
+    - case_id: "q13_power_screwdriver_step_six"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now; step uncertain for non-tool reasons"
+      question: "For fully tightening the screws, is the required power screwdriver confirmed, or is the uncertainty caused by something else?"
+      expected_answer_elements:
+        - "identify power_screwdriver as required and observed"
+        - "state that tool support is present"
+        - "state that uncertainty comes from missing screw alignment support"
+
+    - case_id: "q14_threadlocker_material"
+      step_id: "step::pilot_rod_assembly::step_05"
+      status: "Runnable now"
+      question: "What material is applied to the screws before final tightening, and what condition does it produce?"
+      expected_answer_elements:
+        - "identify threadlocker_loctite"
+        - "identify applied_to(threadlocker_loctite, screw)"
+        - "state that Step 6 requires this effect"
+
+    - case_id: "q15_sleeve_count_and_orientation"
+      step_id: "step::pilot_rod_assembly::step_02"
+      status: "Runnable now"
+      question: "What count and orientation checks are represented for the sleeves?"
+      expected_answer_elements:
+        - "identify count_verified(copper_sleeve, required_quantity_six)"
+        - "identify count_verified(long_sleeve, required_quantity_five)"
+        - "identify oriented(copper_sleeve, right_side)"
+        - "avoid claiming individual sleeve instance tracking"
+
+    - case_id: "q16_cleaning_materials"
+      step_id: "step::pilot_rod_assembly::step_07"
+      status: "Runnable now"
+      question: "What should I clean with, and what should I avoid doing to the copper sleeve?"
+      expected_answer_elements:
+        - "identify ethanol and paper"
+        - "identify cleaned_with(rod_assembly, ethanol)"
+        - "identify avoided_contact_with(copper_sleeve, paper)"
+        - "explain that the procedure says not to polish the copper part"
+
+    - case_id: "q17_grease_application"
+      step_id: "step::pilot_rod_assembly::step_08"
+      status: "Runnable now"
+      question: "Which sleeves get grease, what tool is used, and what should not get grease?"
+      expected_answer_elements:
+        - "identify silver_sleeve"
+        - "identify sponge"
+        - "identify grease"
+        - "identify avoided_contact_with(copper_sleeve, grease)"
+
+  scenario_d_state_lifecycle_and_rework_limits:
+    - case_id: "q18_no_removal_action"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now; tests limitation"
+      question: "If I remove a sleeve after tightening, will the graph mark secured(sleeve, metal_rod) as invalidated?"
+      expected_answer_elements:
+        - "state that no sleeve removal action is represented in the current Pilot graph"
+        - "state that no invalidation evidence exists"
+        - "avoid inventing a removal lifecycle"
+        - "suggest that removal/rework steps would need to be modeled"
+
+    - case_id: "q19_redo_o_ring_step"
+      step_id: "step::pilot_rod_assembly::step_03"
+      status: "Runnable now; tests limitation"
+      question: "If an O-ring was placed in the wrong hole and then corrected, where would I see that in the graph?"
+      expected_answer_elements:
+        - "state that the current graph has no wrong-hole or correction event"
+        - "state that only the successful inserted/aligned effects are represented"
+        - "avoid claiming error recovery evidence"
+
+    - case_id: "q20_historical_effects_after_uncertain_step"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now"
+      question: "If Step 6 is uncertain, do its produced effects still support later steps?"
+      expected_answer_elements:
+        - "state that Step 6 effects are provisional because the producer is uncertain"
+        - "identify secured(sleeve, metal_rod) as produced by Step 6"
+        - "explain that later support can be provisional"
+
+    - case_id: "q21_what_to_add_for_rework"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Design probe"
+      question: "What additional graph evidence would you need to answer questions about loosening, removing, or reinstalling screws?"
+      expected_answer_elements:
+        - "request explicit remove/loosen/reinstall actions"
+        - "request effects that invalidate secured or inserted conditions"
+        - "request new observed effects after rework"
+        - "avoid pretending current graph already supports this"
+
+  scenario_e_validation_status_provenance_and_relation_precision:
+    - case_id: "q22_why_step_six_uncertain"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now"
+      question: "Why is the final tightening step uncertain even though the threadlocker and power screwdriver are present?"
+      expected_answer_elements:
+        - "identify supported applied_to(threadlocker_loctite, screw)"
+        - "identify supported partially_inserted_in(screw, rod_holes)"
+        - "identify supported required tool power_screwdriver"
+        - "identify missing aligned(screw, rod_holes) and aligned(screw, o_ring)"
+
+    - case_id: "q23_expert_annotation_provenance"
+      step_id: "step::pilot_rod_assembly::step_02"
+      status: "Runnable now"
+      question: "The sleeve step depends on the rod being secured. Was that direct step text, a domain requirement, or an expert assumption?"
+      expected_answer_elements:
+        - "state that Step 2 requires secured(metal_rod, workbench) from pilot_domain_default"
+        - "state that Step 1 produces secured(metal_rod, workbench) as manual_expert_annotation"
+        - "distinguish this from direct text evidence on(metal_rod, workbench)"
+
+    - case_id: "q24_relation_precision_targets"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now"
+      question: "What is the screw installed into, what does it need to align with, and what does it eventually secure?"
+      expected_answer_elements:
+        - "installation target is rod_holes"
+        - "alignment requirements are rod_holes and o_ring"
+        - "final secured relation is secured(sleeve, metal_rod)"
+        - "avoid conflating screw target with sleeve secured target"
+
+    - case_id: "q25_why_step_three_accepted"
+      step_id: "step::pilot_rod_assembly::step_03"
+      status: "Runnable now"
+      question: "Why is the O-ring placement step accepted? What earlier step makes it valid?"
+      expected_answer_elements:
+        - "identify required sleeves_on(sleeve, metal_rod)"
+        - "identify Step 2 as support"
+        - "identify Step 3 produced effects for O-ring insertion/alignment and sleeve adjustment/alignment"
+
+    - case_id: "q26_domain_default_not_fake_observation"
+      step_id: "step::pilot_rod_assembly::step_04"
+      status: "Runnable now"
+      question: "Some requirements come from the domain model. How can I tell whether they were actually observed?"
+      expected_answer_elements:
+        - "use provenance to distinguish pilot_domain_default from manual_symbolic_annotation"
+        - "check SUPPORTED_BY or produced effects"
+        - "explain that requirements are not observations by themselves"
+
+  scenario_f_missing_evidence_controls:
+    - case_id: "q27_unknown_step"
+      step_id: "step::pilot_rod_assembly::step_99"
+      status: "Runnable now"
+      question: "I cannot find this step in the rod assembly. What should I do next?"
+      expected_answer_elements:
+        - "state that the step is absent"
+        - "request a valid step id or procedure context"
+        - "avoid fabricating a step"
+
+    - case_id: "q28_unmodeled_torque"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now"
+      question: "What torque should I use when fully tightening the screws?"
+      expected_answer_elements:
+        - "state that no torque value is represented"
+        - "avoid inventing a torque"
+        - "refer to the official procedure or supervisor"
+
+    - case_id: "q29_direct_video_confirmation"
+      step_id: "step::pilot_rod_assembly::step_04"
+      status: "Runnable now"
+      question: "Can you confirm from the video that every screw is aligned with every O-ring?"
+      expected_answer_elements:
+        - "state that no raw video evidence is available in this reasoning graph"
+        - "state that screw-O-ring alignment is not confirmed"
+        - "distinguish graph requirement from visual confirmation"
+
+    - case_id: "q30_exact_instance_count"
+      step_id: "step::pilot_rod_assembly::step_02"
+      status: "Runnable now"
+      question: "Can you list the exact identity of each of the six copper sleeves and five long sleeves?"
+      expected_answer_elements:
+        - "state that the graph has aggregate sleeve entities"
+        - "state that count_verified facts exist"
+        - "avoid inventing individual sleeve identifiers"
+
+    - case_id: "q31_ambiguous_okay_question"
+      step_id: "step::pilot_rod_assembly::step_06"
+      status: "Runnable now"
+      question: "Is this okay?"
+      expected_answer_elements:
+        - "ask what specific condition or component the operator is concerned about"
+        - "mention that Step 6 has unresolved screw alignment requirements"
+        - "avoid giving a blanket go-ahead"
+
+improvement_suggestions:
+  - "Add explicit observed screw alignment predicates if the source data or an expert annotation justifies them; this would test how Step 6 changes from uncertain to accepted."
+  - "Add negative or rework variants, such as wrong O-ring placement, loosen screw, remove sleeve, reinstall sleeve, or retighten screw, to test invalidation and lifecycle recovery."
+  - "Split aggregate objects into indexed instances, for example copper_sleeve_01 through copper_sleeve_06, o_ring_01, screw_01, and rod_hole_01, to test one-to-one alignment and count reasoning."
+  - "Add confidence values below 1.0 for expert annotations or inferred symbolic predicates to test confidence-sensitive explanations."
+  - "Add an explicit initial-state artifact if the rod is considered secured before Step 1 rather than expert-annotated as an effect of Step 1."
+  - "Add a small set of intentionally unsupported questions for raw video, torque, and physical quality checks to verify that the model refuses unsupported claims."

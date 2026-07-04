@@ -1,0 +1,40 @@
+llm_config: "experiments\\shared\\configs\\llm_api_masoud.yaml"
+graph_retrieval_config: "experiments\\shared\\configs\\graph_retrieval.yaml"
+
+runtime:
+  continue_on_llm_error: true
+
+dataset:
+  default_kind: "custom"
+  default_clip_id: "pilot_rod_assembly"
+  available_kinds:
+    - "industreal"
+    - "custom"
+
+input_paths:
+  industreal_root: "results\\neo4j\\raw_cad_dataset__all_test_clips"
+  step_list: "Pilot\\rod_assembly_step_list.txt"
+  predicate_contexts: "Pilot\\predicate_contexts_pilot_rod_assembly_h1.json"
+  thesis_rules: "Pilot\\rules_pilot.yaml"
+  procedural_reasoning_graph: "Pilot\\procedural_reasoning_graph\\procedural_reasoning_graph.json"
+  test_cases: "experiments\\shared\\configs\\novice_questions_v1_pilot_rod_assembly.yaml"
+
+artifact_sources:
+  step_records: "Pilot\\step_records.jsonl"
+  predicates: "Pilot\\predicates.jsonl"
+
+prompt_paths:
+  prompts: "experiments\\llm_guidance_ablation\\configs\\prompts.yaml"
+
+output_paths:
+  root: "Pilot\\Experiments\\llm_guidance_ablation"
+  responses: "Pilot\\Experiments\\llm_guidance_ablation\\responses.jsonl"
+  evaluations: "Pilot\\Experiments\\llm_guidance_ablation\\evaluations.jsonl"
+
+pipeline_scripts:
+  - "scripts\\14_build_layer3_reasoning_adapter.py"
+  - "scripts\\15_run_layer3_inference.py"
+  - "scripts\\16_run_layer4_validation.py"
+  - "scripts\\17_build_procedural_reasoning_graph.py"
+  - "scripts\\18_import_procedural_reasoning_graph_neo4j.py"
+  - "scripts\\19_build_graph_data_js.py"

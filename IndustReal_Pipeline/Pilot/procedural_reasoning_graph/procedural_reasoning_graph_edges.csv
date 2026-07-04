@@ -1,43 +1,53 @@
 source,target,type,properties
-Step::step::pilot_rod_assembly::step_02,Step::step::pilot_rod_assembly::step_01,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""metal_rod"", ""workbench""], ""name"": ""on""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_01"", ""on"", ""metal_rod"", ""workbench""], ""condition"": {""args"": [""metal_rod"", ""workbench""], ""name"": ""on""}, ""constraint_id"": ""step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_01"", ""type"": ""previous_produced_effect""}}"
+Step::step::pilot_rod_assembly::step_02,Step::step::pilot_rod_assembly::step_01,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""metal_rod"", ""workbench""], ""name"": ""secured""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_01"", ""secured"", ""metal_rod"", ""workbench""], ""condition"": {""args"": [""metal_rod"", ""workbench""], ""name"": ""secured""}, ""constraint_id"": ""step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_01"", ""type"": ""previous_produced_effect""}}"
 Step::step::pilot_rod_assembly::step_03,Step::step::pilot_rod_assembly::step_02,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""sleeves_on""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_02"", ""sleeves_on"", ""sleeve"", ""metal_rod""], ""condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""sleeves_on""}, ""constraint_id"": ""step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_02"", ""type"": ""previous_produced_effect""}}"
+Step::step::pilot_rod_assembly::step_04,Step::step::pilot_rod_assembly::step_03,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""o_ring"", ""rod_holes""], ""name"": ""aligned""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_03"", ""aligned"", ""o_ring"", ""rod_holes""], ""condition"": {""args"": [""o_ring"", ""rod_holes""], ""name"": ""aligned""}, ""constraint_id"": ""step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_03"", ""type"": ""previous_produced_effect""}}"
 Step::step::pilot_rod_assembly::step_04,Step::step::pilot_rod_assembly::step_03,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""o_ring"", ""rod_holes""], ""name"": ""inserted_in""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_03"", ""inserted_in"", ""o_ring"", ""rod_holes""], ""condition"": {""args"": [""o_ring"", ""rod_holes""], ""name"": ""inserted_in""}, ""constraint_id"": ""step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_03"", ""type"": ""previous_produced_effect""}}"
-Step::step::pilot_rod_assembly::step_04,Step::step::pilot_rod_assembly::step_03,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""sleeve"", ""o_ring""], ""name"": ""adjusted_over""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_03"", ""adjusted_over"", ""sleeve"", ""o_ring""], ""condition"": {""args"": [""sleeve"", ""o_ring""], ""name"": ""adjusted_over""}, ""constraint_id"": ""step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_03"", ""type"": ""previous_produced_effect""}}"
+Step::step::pilot_rod_assembly::step_04,Step::step::pilot_rod_assembly::step_03,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""sleeve"", ""o_ring""], ""name"": ""adjusted_over""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_03"", ""adjusted_over"", ""sleeve"", ""o_ring""], ""condition"": {""args"": [""sleeve"", ""o_ring""], ""name"": ""adjusted_over""}, ""constraint_id"": ""step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_03"", ""type"": ""previous_produced_effect""}}"
+Step::step::pilot_rod_assembly::step_04,Step::step::pilot_rod_assembly::step_03,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""sleeve"", ""o_ring""], ""name"": ""aligned""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_03"", ""aligned"", ""sleeve"", ""o_ring""], ""condition"": {""args"": [""sleeve"", ""o_ring""], ""name"": ""aligned""}, ""constraint_id"": ""step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_03"", ""type"": ""previous_produced_effect""}}"
 Step::step::pilot_rod_assembly::step_05,Step::step::pilot_rod_assembly::step_04,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""screw"", ""rod_holes""], ""name"": ""partially_inserted_in""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_04"", ""partially_inserted_in"", ""screw"", ""rod_holes""], ""condition"": {""args"": [""screw"", ""rod_holes""], ""name"": ""partially_inserted_in""}, ""constraint_id"": ""step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_04"", ""type"": ""previous_produced_effect""}}"
 Step::step::pilot_rod_assembly::step_06,Step::step::pilot_rod_assembly::step_04,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""screw"", ""rod_holes""], ""name"": ""partially_inserted_in""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_04"", ""partially_inserted_in"", ""screw"", ""rod_holes""], ""condition"": {""args"": [""screw"", ""rod_holes""], ""name"": ""partially_inserted_in""}, ""constraint_id"": ""step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_04"", ""type"": ""previous_produced_effect""}}"
 Step::step::pilot_rod_assembly::step_06,Step::step::pilot_rod_assembly::step_05,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""threadlocker_loctite"", ""screw""], ""name"": ""applied_to""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_05"", ""applied_to"", ""threadlocker_loctite"", ""screw""], ""condition"": {""args"": [""threadlocker_loctite"", ""screw""], ""name"": ""applied_to""}, ""constraint_id"": ""step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_05"", ""type"": ""previous_produced_effect""}}"
-Step::step::pilot_rod_assembly::step_07,Step::step::pilot_rod_assembly::step_06,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""secured_to""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_06"", ""secured_to"", ""sleeve"", ""metal_rod""], ""condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""secured_to""}, ""constraint_id"": ""step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_06"", ""type"": ""previous_produced_effect""}}"
-Step::step::pilot_rod_assembly::step_08,Step::step::pilot_rod_assembly::step_06,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""secured_to""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_06"", ""secured_to"", ""sleeve"", ""metal_rod""], ""condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""secured_to""}, ""constraint_id"": ""step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_06"", ""type"": ""previous_produced_effect""}}"
+Step::step::pilot_rod_assembly::step_07,Step::step::pilot_rod_assembly::step_06,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": true, ""required_condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""secured""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_06"", ""secured"", ""sleeve"", ""metal_rod""], ""condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""secured""}, ""constraint_id"": ""step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod"", ""producer_status"": ""uncertain"", ""provisional"": true, ""step_id"": ""step::pilot_rod_assembly::step_06"", ""type"": ""previous_produced_effect""}}"
+Step::step::pilot_rod_assembly::step_08,Step::step::pilot_rod_assembly::step_06,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": true, ""required_condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""secured""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_06"", ""secured"", ""sleeve"", ""metal_rod""], ""condition"": {""args"": [""sleeve"", ""metal_rod""], ""name"": ""secured""}, ""constraint_id"": ""step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod"", ""producer_status"": ""uncertain"", ""provisional"": true, ""step_id"": ""step::pilot_rod_assembly::step_06"", ""type"": ""previous_produced_effect""}}"
 Step::step::pilot_rod_assembly::step_08,Step::step::pilot_rod_assembly::step_07,DEPENDS_ON,"{""confidence"": 1.0, ""provisional"": false, ""required_condition"": {""args"": [""rod_assembly"", ""ethanol""], ""name"": ""cleaned_with""}, ""supporting_effect"": {""args"": [""step::pilot_rod_assembly::step_07"", ""cleaned_with"", ""rod_assembly"", ""ethanol""], ""condition"": {""args"": [""rod_assembly"", ""ethanol""], ""name"": ""cleaned_with""}, ""constraint_id"": ""step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol"", ""producer_status"": ""accepted"", ""provisional"": false, ""step_id"": ""step::pilot_rod_assembly::step_07"", ""type"": ""previous_produced_effect""}}"
 Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_02_oriented_copper_sleeve_right_side,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_02_count_verified_copper_sleeve_required_quantity,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_02_count_verified_long_sleeve_required_quantity_f,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
-Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
-Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_03::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_03_sleeves_on_sleeve_metal_rod,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_04_inserted_in_o_ring_rod_holes,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
-Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_04::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_04_power_screwdriver,Rule::tool_required_by_pilot_step,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_05::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_05_partially_inserted_in_screw_rod_holes,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
-Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_06_flush_with_screw_sleeve,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_06_applied_to_threadlocker_loctite_screw,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_06_partially_inserted_in_screw_rod_holes,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver,Rule::tool_required_by_pilot_step,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_07_avoided_contact_with_copper_sleeve_paper,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
-Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_08_lubricated_with_silver_sleeve_grease,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_08_avoided_contact_with_copper_sleeve_grease,Rule::effect_observed_pilot_condition,DERIVED_FROM,{}
 Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_08_cleaned_with_rod_assembly_ethanol,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
-Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
+Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod,Rule::precondition_required_pilot_condition,DERIVED_FROM,{}
 Predicate::pred::pilot::s01::action,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s01::effect::on,Source::dcf252eb33b7d491,DERIVED_FROM,{}
+Predicate::pred::pilot::s01::effect::rod_secured,Source::33983d91e669b308,DERIVED_FROM,{}
 Predicate::pred::pilot::s01::object::metal_rod,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s01::object::workbench,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s01::time,Source::dcf252eb33b7d491,DERIVED_FROM,{}
@@ -51,10 +61,12 @@ Predicate::pred::pilot::s02::object::long_sleeve,Source::dcf252eb33b7d491,DERIVE
 Predicate::pred::pilot::s02::object::metal_rod,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s02::object::short_sleeve,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s02::object::sleeve,Source::dcf252eb33b7d491,DERIVED_FROM,{}
-Predicate::pred::pilot::s02::requires::on_rod_workbench,Source::dcf252eb33b7d491,DERIVED_FROM,{}
+Predicate::pred::pilot::s02::requires::rod_secured,Source::45fe16580eb76567,DERIVED_FROM,{}
 Predicate::pred::pilot::s02::time,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s03::action,Source::dcf252eb33b7d491,DERIVED_FROM,{}
+Predicate::pred::pilot::s03::effect::oring_aligned,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s03::effect::oring_inserted,Source::dcf252eb33b7d491,DERIVED_FROM,{}
+Predicate::pred::pilot::s03::effect::sleeve_aligned,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s03::effect::sleeves_adjusted,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s03::object::o_ring,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s03::object::sleeve,Source::dcf252eb33b7d491,DERIVED_FROM,{}
@@ -67,7 +79,9 @@ Predicate::pred::pilot::s04::effect::partially_inserted,Source::dcf252eb33b7d491
 Predicate::pred::pilot::s04::object::screw,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s04::parent::rod_holes,Source::f8a54470d6ca242e,DERIVED_FROM,{}
 Predicate::pred::pilot::s04::required_tool,Source::dcf252eb33b7d491,DERIVED_FROM,{}
+Predicate::pred::pilot::s04::requires::oring_aligned,Source::45fe16580eb76567,DERIVED_FROM,{}
 Predicate::pred::pilot::s04::requires::oring_inserted,Source::dcf252eb33b7d491,DERIVED_FROM,{}
+Predicate::pred::pilot::s04::requires::sleeve_aligned,Source::45fe16580eb76567,DERIVED_FROM,{}
 Predicate::pred::pilot::s04::requires::sleeves_adjusted,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s04::time,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s04::tool::power_screwdriver,Source::dcf252eb33b7d491,DERIVED_FROM,{}
@@ -84,6 +98,8 @@ Predicate::pred::pilot::s06::effect::secured,Source::dcf252eb33b7d491,DERIVED_FR
 Predicate::pred::pilot::s06::object::screw,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s06::required_tool,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s06::requires::partially_inserted,Source::dcf252eb33b7d491,DERIVED_FROM,{}
+Predicate::pred::pilot::s06::requires::screw_aligned_o_ring,Source::45fe16580eb76567,DERIVED_FROM,{}
+Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes,Source::45fe16580eb76567,DERIVED_FROM,{}
 Predicate::pred::pilot::s06::requires::threadlocker,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s06::time,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s06::tool::power_screwdriver,Source::dcf252eb33b7d491,DERIVED_FROM,{}
@@ -105,34 +121,43 @@ Predicate::pred::pilot::s08::requires::secured,Source::dcf252eb33b7d491,DERIVED_
 Predicate::pred::pilot::s08::time,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Predicate::pred::pilot::s08::tool::sponge,Source::dcf252eb33b7d491,DERIVED_FROM,{}
 Step::step::pilot_rod_assembly::step_01,Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_01,Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_02_oriented_copper_sleeve_right_side,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_02_count_verified_copper_sleeve_required_quantity,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_02_count_verified_long_sleeve_required_quantity_f,HAS_CONSTRAINT,{}
-Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes,HAS_CONSTRAINT,{}
-Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_03_sleeves_on_sleeve_metal_rod,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_04_inserted_in_o_ring_rod_holes,HAS_CONSTRAINT,{}
-Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_04_power_screwdriver,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_05,Constraint::step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_05,Constraint::step::pilot_rod_assembly::step_05::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_05_partially_inserted_in_screw_rod_holes,HAS_CONSTRAINT,{}
-Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_06_flush_with_screw_sleeve,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_06_applied_to_threadlocker_loctite_screw,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_06_partially_inserted_in_screw_rod_holes,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_07,Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_07,Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_07_avoided_contact_with_copper_sleeve_paper,HAS_CONSTRAINT,{}
-Step::step::pilot_rod_assembly::step_07,Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_07,Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_08_lubricated_with_silver_sleeve_grease,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_08_avoided_contact_with_copper_sleeve_grease,HAS_CONSTRAINT,{}
 Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_08_cleaned_with_rod_assembly_ethanol,HAS_CONSTRAINT,{}
-Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod,HAS_CONSTRAINT,{}
+Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod,HAS_CONSTRAINT,{}
 Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench,Entity::metal_rod,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench,Entity::workbench,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench,Entity::metal_rod,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench,Entity::workbench,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod,Entity::metal_rod,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod,Entity::sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_02_oriented_copper_sleeve_right_side,Entity::copper_sleeve,HAS_ENTITY,{}
@@ -141,50 +166,64 @@ Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_conditio
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_02_count_verified_copper_sleeve_required_quantity,Entity::required_quantity_six,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_02_count_verified_long_sleeve_required_quantity_f,Entity::long_sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_02_count_verified_long_sleeve_required_quantity_f,Entity::required_quantity_five,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench,Entity::metal_rod,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench,Entity::workbench,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench,Entity::metal_rod,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench,Entity::workbench,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes,Entity::o_ring,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,Entity::o_ring,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,Entity::sleeve,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes,Entity::o_ring,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,Entity::o_ring,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,Entity::sleeve,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring,Entity::o_ring,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring,Entity::sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_03::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_03_sleeves_on_sleeve_metal_rod,Entity::metal_rod,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_03::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_03_sleeves_on_sleeve_metal_rod,Entity::sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes,Entity::screw,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_04_inserted_in_o_ring_rod_holes,Entity::o_ring,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_04_inserted_in_o_ring_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,Entity::o_ring,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,Entity::sleeve,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes,Entity::o_ring,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,Entity::o_ring,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,Entity::sleeve,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring,Entity::o_ring,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring,Entity::sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_04::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_04_power_screwdriver,Entity::power_screwdriver,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw,Entity::screw,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw,Entity::threadlocker_loctite,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_05::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_05_partially_inserted_in_screw_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_05::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_05_partially_inserted_in_screw_rod_holes,Entity::screw,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod,Entity::metal_rod,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod,Entity::sleeve,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod,Entity::metal_rod,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod,Entity::sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_06_flush_with_screw_sleeve,Entity::screw,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_06_flush_with_screw_sleeve,Entity::sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_06_applied_to_threadlocker_loctite_screw,Entity::screw,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_06_applied_to_threadlocker_loctite_screw,Entity::threadlocker_loctite,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_06_partially_inserted_in_screw_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_06_partially_inserted_in_screw_rod_holes,Entity::screw,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes,Entity::screw,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring,Entity::o_ring,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring,Entity::screw,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver,Entity::power_screwdriver,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol,Entity::ethanol,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol,Entity::rod_assembly,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_07_avoided_contact_with_copper_sleeve_paper,Entity::copper_sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_07_avoided_contact_with_copper_sleeve_paper,Entity::paper,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod,Entity::metal_rod,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod,Entity::sleeve,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod,Entity::metal_rod,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod,Entity::sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_08_lubricated_with_silver_sleeve_grease,Entity::grease,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_08_lubricated_with_silver_sleeve_grease,Entity::silver_sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_08_avoided_contact_with_copper_sleeve_grease,Entity::copper_sleeve,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_08_avoided_contact_with_copper_sleeve_grease,Entity::grease,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_08_cleaned_with_rod_assembly_ethanol,Entity::ethanol,HAS_ENTITY,{}
 Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_08_cleaned_with_rod_assembly_ethanol,Entity::rod_assembly,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod,Entity::metal_rod,HAS_ENTITY,{}
-Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod,Entity::sleeve,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod,Entity::metal_rod,HAS_ENTITY,{}
+Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod,Entity::sleeve,HAS_ENTITY,{}
 Predicate::pred::pilot::s01::effect::on,Entity::metal_rod,HAS_ENTITY,{}
 Predicate::pred::pilot::s01::effect::on,Entity::workbench,HAS_ENTITY,{}
+Predicate::pred::pilot::s01::effect::rod_secured,Entity::metal_rod,HAS_ENTITY,{}
+Predicate::pred::pilot::s01::effect::rod_secured,Entity::workbench,HAS_ENTITY,{}
 Predicate::pred::pilot::s01::object::metal_rod,Entity::metal_rod,HAS_ENTITY,{}
 Predicate::pred::pilot::s01::object::workbench,Entity::workbench,HAS_ENTITY,{}
 Predicate::pred::pilot::s02::effect::copper_count,Entity::copper_sleeve,HAS_ENTITY,{}
@@ -200,10 +239,14 @@ Predicate::pred::pilot::s02::object::long_sleeve,Entity::long_sleeve,HAS_ENTITY,
 Predicate::pred::pilot::s02::object::metal_rod,Entity::metal_rod,HAS_ENTITY,{}
 Predicate::pred::pilot::s02::object::short_sleeve,Entity::short_sleeve,HAS_ENTITY,{}
 Predicate::pred::pilot::s02::object::sleeve,Entity::sleeve,HAS_ENTITY,{}
-Predicate::pred::pilot::s02::requires::on_rod_workbench,Entity::metal_rod,HAS_ENTITY,{}
-Predicate::pred::pilot::s02::requires::on_rod_workbench,Entity::workbench,HAS_ENTITY,{}
+Predicate::pred::pilot::s02::requires::rod_secured,Entity::metal_rod,HAS_ENTITY,{}
+Predicate::pred::pilot::s02::requires::rod_secured,Entity::workbench,HAS_ENTITY,{}
+Predicate::pred::pilot::s03::effect::oring_aligned,Entity::o_ring,HAS_ENTITY,{}
+Predicate::pred::pilot::s03::effect::oring_aligned,Entity::rod_holes,HAS_ENTITY,{}
 Predicate::pred::pilot::s03::effect::oring_inserted,Entity::o_ring,HAS_ENTITY,{}
 Predicate::pred::pilot::s03::effect::oring_inserted,Entity::rod_holes,HAS_ENTITY,{}
+Predicate::pred::pilot::s03::effect::sleeve_aligned,Entity::o_ring,HAS_ENTITY,{}
+Predicate::pred::pilot::s03::effect::sleeve_aligned,Entity::sleeve,HAS_ENTITY,{}
 Predicate::pred::pilot::s03::effect::sleeves_adjusted,Entity::o_ring,HAS_ENTITY,{}
 Predicate::pred::pilot::s03::effect::sleeves_adjusted,Entity::sleeve,HAS_ENTITY,{}
 Predicate::pred::pilot::s03::object::o_ring,Entity::o_ring,HAS_ENTITY,{}
@@ -219,8 +262,12 @@ Predicate::pred::pilot::s04::object::screw,Entity::screw,HAS_ENTITY,{}
 Predicate::pred::pilot::s04::parent::rod_holes,Entity::metal_rod,HAS_ENTITY,{}
 Predicate::pred::pilot::s04::parent::rod_holes,Entity::rod_holes,HAS_ENTITY,{}
 Predicate::pred::pilot::s04::required_tool,Entity::power_screwdriver,HAS_ENTITY,{}
+Predicate::pred::pilot::s04::requires::oring_aligned,Entity::o_ring,HAS_ENTITY,{}
+Predicate::pred::pilot::s04::requires::oring_aligned,Entity::rod_holes,HAS_ENTITY,{}
 Predicate::pred::pilot::s04::requires::oring_inserted,Entity::o_ring,HAS_ENTITY,{}
 Predicate::pred::pilot::s04::requires::oring_inserted,Entity::rod_holes,HAS_ENTITY,{}
+Predicate::pred::pilot::s04::requires::sleeve_aligned,Entity::o_ring,HAS_ENTITY,{}
+Predicate::pred::pilot::s04::requires::sleeve_aligned,Entity::sleeve,HAS_ENTITY,{}
 Predicate::pred::pilot::s04::requires::sleeves_adjusted,Entity::o_ring,HAS_ENTITY,{}
 Predicate::pred::pilot::s04::requires::sleeves_adjusted,Entity::sleeve,HAS_ENTITY,{}
 Predicate::pred::pilot::s04::tool::power_screwdriver,Entity::power_screwdriver,HAS_ENTITY,{}
@@ -239,6 +286,10 @@ Predicate::pred::pilot::s06::object::screw,Entity::screw,HAS_ENTITY,{}
 Predicate::pred::pilot::s06::required_tool,Entity::power_screwdriver,HAS_ENTITY,{}
 Predicate::pred::pilot::s06::requires::partially_inserted,Entity::rod_holes,HAS_ENTITY,{}
 Predicate::pred::pilot::s06::requires::partially_inserted,Entity::screw,HAS_ENTITY,{}
+Predicate::pred::pilot::s06::requires::screw_aligned_o_ring,Entity::o_ring,HAS_ENTITY,{}
+Predicate::pred::pilot::s06::requires::screw_aligned_o_ring,Entity::screw,HAS_ENTITY,{}
+Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes,Entity::rod_holes,HAS_ENTITY,{}
+Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes,Entity::screw,HAS_ENTITY,{}
 Predicate::pred::pilot::s06::requires::threadlocker,Entity::screw,HAS_ENTITY,{}
 Predicate::pred::pilot::s06::requires::threadlocker,Entity::threadlocker_loctite,HAS_ENTITY,{}
 Predicate::pred::pilot::s06::tool::power_screwdriver,Entity::power_screwdriver,HAS_ENTITY,{}
@@ -264,6 +315,7 @@ Predicate::pred::pilot::s08::requires::secured,Entity::sleeve,HAS_ENTITY,{}
 Predicate::pred::pilot::s08::tool::sponge,Entity::sponge,HAS_ENTITY,{}
 Step::step::pilot_rod_assembly::step_01,Predicate::pred::pilot::s01::action,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_01,Predicate::pred::pilot::s01::effect::on,HAS_PREDICATE,{}
+Step::step::pilot_rod_assembly::step_01,Predicate::pred::pilot::s01::effect::rod_secured,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_01,Predicate::pred::pilot::s01::object::metal_rod,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_01,Predicate::pred::pilot::s01::object::workbench,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_01,Predicate::pred::pilot::s01::time,HAS_PREDICATE,{}
@@ -277,10 +329,12 @@ Step::step::pilot_rod_assembly::step_02,Predicate::pred::pilot::s02::object::lon
 Step::step::pilot_rod_assembly::step_02,Predicate::pred::pilot::s02::object::metal_rod,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_02,Predicate::pred::pilot::s02::object::short_sleeve,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_02,Predicate::pred::pilot::s02::object::sleeve,HAS_PREDICATE,{}
-Step::step::pilot_rod_assembly::step_02,Predicate::pred::pilot::s02::requires::on_rod_workbench,HAS_PREDICATE,{}
+Step::step::pilot_rod_assembly::step_02,Predicate::pred::pilot::s02::requires::rod_secured,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_02,Predicate::pred::pilot::s02::time,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_03,Predicate::pred::pilot::s03::action,HAS_PREDICATE,{}
+Step::step::pilot_rod_assembly::step_03,Predicate::pred::pilot::s03::effect::oring_aligned,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_03,Predicate::pred::pilot::s03::effect::oring_inserted,HAS_PREDICATE,{}
+Step::step::pilot_rod_assembly::step_03,Predicate::pred::pilot::s03::effect::sleeve_aligned,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_03,Predicate::pred::pilot::s03::effect::sleeves_adjusted,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_03,Predicate::pred::pilot::s03::object::o_ring,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_03,Predicate::pred::pilot::s03::object::sleeve,HAS_PREDICATE,{}
@@ -293,7 +347,9 @@ Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::effect::par
 Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::object::screw,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::parent::rod_holes,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::required_tool,HAS_PREDICATE,{}
+Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::requires::oring_aligned,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::requires::oring_inserted,HAS_PREDICATE,{}
+Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::requires::sleeve_aligned,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::requires::sleeves_adjusted,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::time,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_04,Predicate::pred::pilot::s04::tool::power_screwdriver,HAS_PREDICATE,{}
@@ -310,6 +366,8 @@ Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::effect::sec
 Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::object::screw,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::required_tool,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::requires::partially_inserted,HAS_PREDICATE,{}
+Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::requires::screw_aligned_o_ring,HAS_PREDICATE,{}
+Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::requires::screw_aligned_rod_holes,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::requires::threadlocker,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::time,HAS_PREDICATE,{}
 Step::step::pilot_rod_assembly::step_06,Predicate::pred::pilot::s06::tool::power_screwdriver,HAS_PREDICATE,{}
@@ -338,42 +396,51 @@ Step::step::pilot_rod_assembly::step_05,Step::step::pilot_rod_assembly::step_06,
 Step::step::pilot_rod_assembly::step_06,Step::step::pilot_rod_assembly::step_07,NEXT,{}
 Step::step::pilot_rod_assembly::step_07,Step::step::pilot_rod_assembly::step_08,NEXT,{}
 Step::step::pilot_rod_assembly::step_01,Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench,PRODUCES,{}
+Step::step::pilot_rod_assembly::step_01,Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_02_oriented_copper_sleeve_right_side,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_02_count_verified_copper_sleeve_required_quantity,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_02_count_verified_long_sleeve_required_quantity_f,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes,PRODUCES,{}
-Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,PRODUCES,{}
+Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes,PRODUCES,{}
+Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,PRODUCES,{}
+Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_05,Constraint::step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw,PRODUCES,{}
-Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod,PRODUCES,{}
+Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_06_flush_with_screw_sleeve,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_07,Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_07,Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_07_avoided_contact_with_copper_sleeve_paper,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_08_lubricated_with_silver_sleeve_grease,PRODUCES,{}
 Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_08_avoided_contact_with_copper_sleeve_grease,PRODUCES,{}
-Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench,REQUIRES,{}
+Step::step::pilot_rod_assembly::step_02,Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench,REQUIRES,{}
 Step::step::pilot_rod_assembly::step_03,Constraint::step::pilot_rod_assembly::step_03::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_03_sleeves_on_sleeve_metal_rod,REQUIRES,{}
 Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_04_inserted_in_o_ring_rod_holes,REQUIRES,{}
-Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,REQUIRES,{}
+Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes,REQUIRES,{}
+Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,REQUIRES,{}
+Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring,REQUIRES,{}
 Step::step::pilot_rod_assembly::step_04,Constraint::step::pilot_rod_assembly::step_04::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_04_power_screwdriver,REQUIRES,{}
 Step::step::pilot_rod_assembly::step_05,Constraint::step::pilot_rod_assembly::step_05::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_05_partially_inserted_in_screw_rod_holes,REQUIRES,{}
 Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_06_applied_to_threadlocker_loctite_screw,REQUIRES,{}
 Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_06_partially_inserted_in_screw_rod_holes,REQUIRES,{}
+Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_rod_holes,REQUIRES,{}
+Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_06_aligned_screw_o_ring,REQUIRES,{}
 Step::step::pilot_rod_assembly::step_06,Constraint::step::pilot_rod_assembly::step_06::c::tool_required_by_pilot_step::0_0::requirestool::step__pilot_rod_assembly__step_06_power_screwdriver,REQUIRES,{}
-Step::step::pilot_rod_assembly::step_07,Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod,REQUIRES,{}
+Step::step::pilot_rod_assembly::step_07,Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod,REQUIRES,{}
 Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_08_cleaned_with_rod_assembly_ethanol,REQUIRES,{}
-Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod,REQUIRES,{}
-Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_on_metal_rod_workbench,Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_01_on_metal_rod_workbench,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
+Step::step::pilot_rod_assembly::step_08,Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod,REQUIRES,{}
+Constraint::step::pilot_rod_assembly::step_02::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_02_secured_metal_rod_workbench,Constraint::step::pilot_rod_assembly::step_01::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_01_secured_metal_rod_workbench,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
 Constraint::step::pilot_rod_assembly::step_03::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_03_sleeves_on_sleeve_metal_rod,Constraint::step::pilot_rod_assembly::step_02::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_02_sleeves_on_sleeve_metal_rod,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
 Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_04_inserted_in_o_ring_rod_holes,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_03_inserted_in_o_ring_rod_holes,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
-Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_04_aligned_o_ring_rod_holes,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::1_0::produces::step__pilot_rod_assembly__step_03_aligned_o_ring_rod_holes,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::2_0::requires::step__pilot_rod_assembly__step_04_adjusted_over_sleeve_o_ring,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::2_0::produces::step__pilot_rod_assembly__step_03_adjusted_over_sleeve_o_ring,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
+Constraint::step::pilot_rod_assembly::step_04::c::precondition_required_pilot_condition::3_0::requires::step__pilot_rod_assembly__step_04_aligned_sleeve_o_ring,Constraint::step::pilot_rod_assembly::step_03::c::effect_observed_pilot_condition::3_0::produces::step__pilot_rod_assembly__step_03_aligned_sleeve_o_ring,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
 Constraint::step::pilot_rod_assembly::step_05::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_05_partially_inserted_in_screw_rod_holes,Constraint::step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
 Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_06_applied_to_threadlocker_loctite_screw,Constraint::step::pilot_rod_assembly::step_05::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_05_applied_to_threadlocker_loctite_screw,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
 Constraint::step::pilot_rod_assembly::step_06::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_06_partially_inserted_in_screw_rod_holes,Constraint::step::pilot_rod_assembly::step_04::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_04_partially_inserted_in_screw_rod_holes,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
-Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_to_sleeve_metal_rod,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
+Constraint::step::pilot_rod_assembly::step_07::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_07_secured_sleeve_metal_rod,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
 Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::0_0::requires::step__pilot_rod_assembly__step_08_cleaned_with_rod_assembly_ethanol,Constraint::step::pilot_rod_assembly::step_07::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_07_cleaned_with_rod_assembly_ethanol,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
-Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_to_sleeve_metal_rod,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_to_sleeve_metal_rod,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
+Constraint::step::pilot_rod_assembly::step_08::c::precondition_required_pilot_condition::1_0::requires::step__pilot_rod_assembly__step_08_secured_sleeve_metal_rod,Constraint::step::pilot_rod_assembly::step_06::c::effect_observed_pilot_condition::0_0::produces::step__pilot_rod_assembly__step_06_secured_sleeve_metal_rod,SUPPORTED_BY,"{""support_type"": ""previous_produced_effect""}"
 Step::step::pilot_rod_assembly::step_01,Entity::metal_rod,USES,"{""predicate_id"": ""pred::pilot::s01::object::metal_rod"", ""predicate_name"": ""usesObject""}"
 Step::step::pilot_rod_assembly::step_01,Entity::workbench,USES,"{""predicate_id"": ""pred::pilot::s01::object::workbench"", ""predicate_name"": ""usesObject""}"
 Step::step::pilot_rod_assembly::step_02,Entity::copper_sleeve,USES,"{""predicate_id"": ""pred::pilot::s02::object::copper_sleeve"", ""predicate_name"": ""usesObject""}"

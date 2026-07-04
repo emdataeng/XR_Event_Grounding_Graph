@@ -13,6 +13,8 @@ type_hierarchy:
     parents: [Component]
   Sealing:
     parents: [Component]
+  ORing:
+    parents: [Sealing, Component]
   Assembly:
     parents: [Component]
   Location:
@@ -28,12 +30,37 @@ type_hierarchy:
   Material:
     parents: []
 
-type_defaults: {}
+type_defaults:
+  Component: {}
+  Rod:
+    required_conditions:
+      - name: secured
+        args: ["$self", "$installation_target"]
+  ORing:
+    required_conditions:
+      - name: aligned
+        args: ["$self", "$installation_target"]
+  Sleeve:
+    required_conditions:
+      - name: aligned
+        args: ["$self", "o_ring"]
+  Fastener:
+    required_conditions:
+      - name: aligned
+        args: ["$self", "$installation_target"]
+      - name: aligned
+        args: ["$self", "o_ring"]
 
 condition_vocabulary:
   on:
     arity: 2
     description: "An object is on a support or workspace."
+  secured:
+    arity: 2
+    description: "An entity is secured to a support or target."
+  aligned:
+    arity: 2
+    description: "Two entities are aligned for assembly."
   sleeves_on:
     arity: 2
     description: "Sleeves are positioned on the rod."
@@ -55,9 +82,6 @@ condition_vocabulary:
   applied_to:
     arity: 2
     description: "A material is applied to a component."
-  secured_to:
-    arity: 2
-    description: "A component is secured to a target."
   flush_with:
     arity: 2
     description: "A fastener is seated flush with a surrounding component."
@@ -163,7 +187,7 @@ components:
   o_ring:
     name: o_ring
     display_name: "O-ring"
-    generic_type: Sealing
+    generic_type: ORing
     installation_target: rod_holes
   screw:
     name: screw
