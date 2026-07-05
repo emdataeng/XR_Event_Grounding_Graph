@@ -1,0 +1,19 @@
+{
+  "patched_suffix": "patched_20260704T130004+0200",
+  "patched_at": "2026-07-05T15:24:06+02:00",
+  "jsonl_outputs": [
+    "experiments\\llm_guidance_ablation\\outputs\\responses_graph_grounded_od_only_03_assy_01_20260703T135008+0200_patched_20260703T135008+0200.jsonl",
+    "experiments\\llm_guidance_ablation\\outputs\\responses_graph_grounded_od_plus_error_hints_03_assy_1_3_20260703T144026+0200_patched_20260703T144026+0200.jsonl",
+    "experiments\\llm_guidance_ablation\\outputs\\responses_graph_grounded_od_plus_error_hints_08_assy_0_1_20260703T141454+0200_patched_20260703T141454+0200.jsonl",
+    "experiments\\llm_guidance_ablation\\outputs\\responses_steps_only_od_only_03_assy_01_20260703T134410+0200_patched_20260703T134410+0200.jsonl",
+    "experiments\\llm_guidance_ablation\\outputs\\responses_steps_only_od_plus_error_hints_03_assy_1_3_20260703T143418+0200_patched_20260703T143418+0200.jsonl",
+    "experiments\\llm_guidance_ablation\\outputs\\responses_steps_only_od_plus_error_hints_08_assy_0_1_20260703T140405+0200_patched_20260703T140405+0200.jsonl",
+    "experiments\\llm_guidance_ablation\\outputs\\responses_symbolic_domain_od_only_03_assy_01_20260703T134615+0200_patched_20260703T134615+0200.jsonl",
+    "experiments\\llm_guidance_ablation\\outputs\\responses_symbolic_domain_od_plus_error_hints_03_assy_1_3_20260703T143628+0200_patched_20260703T143628+0200.jsonl",
+    "experiments\\llm_guidance_ablation\\outputs\\responses_symbolic_domain_od_plus_error_hints_08_assy_0_1_20260703T140639+0200_patched_20260703T140639+0200.jsonl",
+    "experiments\\query_driven_graph\\outputs\\responses_query_driven_graph_od_only_03_assy_01_20260703T135325+0200_patched_20260703T135325+0200.jsonl",
+    "experiments\\query_driven_graph\\outputs\\responses_query_driven_graph_od_plus_error_hints_03_assy_1_3_20260703T145314+0200_patched_20260703T145314+0200.jsonl",
+    "experiments\\query_driven_graph\\outputs\\responses_query_driven_graph_od_plus_error_hints_08_assy_0_1_20260703T142119+0200_patched_20260703T142119+0200.jsonl"
+  ],
+  "note": "Human-judgement packets use the original human packet timestamp; one-to-one response/report artifacts use each source JSONL timestamp."
+}

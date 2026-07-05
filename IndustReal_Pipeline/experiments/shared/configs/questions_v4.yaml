@@ -80,14 +80,14 @@ scenario_groups:
         - "verify that the front bracket is already installed on the front chassis"
         - "avoid inventing torque, hole geometry, or physical damage evidence"
 
-    - case_id: "q09_root_component_alignment_exception"
+    - case_id: "q09_root_component_alignment_scope"
       step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0"
       status: "Runnable now"
       question: "Do I need to align the base with the workspace before installing it, or can I just place it down?"
       expected_answer_elements:
         - "answer no"
-        - "explain that the base explicitly overrides inherited required conditions"
-        - "avoid applying the general component alignment requirement to the base"
+        - "state whether alignment is required for the current component under the configured domain scope"
+        - "avoid inferring an alignment requirement when no configured required condition applies"
 
     - case_id: "q10_alignment_requirement_versus_satisfaction"
       step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4"

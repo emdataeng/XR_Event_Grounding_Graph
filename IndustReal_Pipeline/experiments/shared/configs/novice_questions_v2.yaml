@@ -68,9 +68,9 @@ scenario_query_deltas:
       - "include SUPPORTED_BY so required vs satisfied conditions can be separated"
   scenario_b_troubleshooting_implicit_conditions:
     focus:
-      - "implicit assembly requirements such as alignment, their support status, and exception/override evidence"
+      - "implicit assembly requirements such as alignment, their support status, and scope/provenance evidence"
     gaps_to_cover:
-      - "retrieve DERIVED_FROM or rule provenance when a general condition is overridden, such as base alignment"
+      - "retrieve DERIVED_FROM or rule provenance when a requirement is absent because it is outside the configured alignment scope"
       - "do not treat a requirement as observed evidence unless SUPPORTED_BY evidence exists"
   scenario_c_safety_and_tool_constraints:
     focus:
@@ -176,14 +176,14 @@ scenario_groups:
         - "verify that the front bracket is already installed on the front chassis"
         - "avoid inventing torque, hole geometry, or physical damage evidence"
 
-    - case_id: "q09_root_component_alignment_exception"
+    - case_id: "q09_root_component_alignment_scope"
       step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_0"
       status: "Runnable now"
       question: "Does the model require the base to be aligned with the workspace before installation?"
       expected_answer_elements:
         - "answer no"
-        - "explain that the base explicitly overrides inherited required conditions"
-        - "avoid applying the general component alignment requirement to the base"
+        - "state whether alignment is required for the current component under the configured domain scope"
+        - "avoid inferring an alignment requirement when no configured required condition applies"
 
     - case_id: "q10_alignment_requirement_versus_satisfaction"
       step_id: "raw_cad_dataset__all_test_clips::od_only::test_p1::03_assy_0_1::event_4"

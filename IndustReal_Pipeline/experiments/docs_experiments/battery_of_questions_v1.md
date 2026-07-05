@@ -176,7 +176,7 @@ These are the main evaluation cases, so the evaluation covers relation precision
   - verify that the front bracket is already installed on the front chassis;
   - avoid inventing torque, hole geometry, or physical damage evidence.
 
-#### Q9. Root-Component Alignment Exception
+#### Q9. Root-Component Alignment Scope
 
 - Status: **Runnable now**
 - Step: `event_0` - install base
@@ -187,8 +187,10 @@ These are the main evaluation cases, so the evaluation covers relation precision
 
 - Expected answer elements:
   - answer no;
-  - explain that the base explicitly overrides inherited required conditions;
-  - avoid applying the general component alignment requirement to the base.
+  - state whether alignment is required for the current component under the
+    configured domain scope;
+  - avoid inferring an alignment requirement when no configured required
+    condition applies.
 
 - Why it is discriminative:
   - this tests inheritance plus a component-level exception, not keyword

@@ -378,6 +378,7 @@ def render_blind_packet(
         "",
     ]
     for index, row in enumerate(items, start=1):
+        expected_answer_lines = render_expected_answer_elements(row.get("expected_answer_elements"))
         lines.extend(
             [
                 f"## Item {index:02d}",
@@ -386,6 +387,7 @@ def render_blind_packet(
                 f"- Step: `{compact_step_id(row.get('step_id'))}`",
                 f"- Step time window: `{step_time_window_label(row, step_time_windows)}`",
                 f"- Question: {row.get('question') or ''}",
+                *expected_answer_lines,
                 "",
                 "### Answer",
                 "",
@@ -398,6 +400,16 @@ def render_blind_packet(
             ]
         )
     return "\n".join(lines).rstrip() + "\n"
+
+
+def render_expected_answer_elements(elements: Any) -> list[str]:
+    """Render evaluation target elements beside the blind question."""
+    if not isinstance(elements, list) or not elements:
+        return ["- Expected answer elements: none recorded"]
+    lines = ["- Expected answer elements:"]
+    for element in elements:
+        lines.append(f"  - {element}")
+    return lines
 
 
 def render_answer_key(
