@@ -31,6 +31,7 @@ experiments/llm_guidance_ablation/outputs
 experiments/query_driven_graph/data/
 experiments/query_driven_graph/outputs/
 experiments/docs_experiments/human_judgement/olds
+experiments/docs_experiments/human_judgement/4conditions
 data/part_geometries.zip
 data/raw/
 data/slices/
